@@ -1,30 +1,33 @@
-from pydantic import BaseModel
-from uuid import UUID
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
 
 class UserBase(BaseModel):
-    email: str
+    email: EmailStr
     username: str
 
+# --- Requests ---
 class UserCreate(UserBase):
     password: str
 
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
 
-class UserResponse(BaseModel):
-    id: UUID
-    email: str
-
-class LoginResponse(BaseModel):
-    access_token: str
-    user: UserResponse
-
-class UpdateUserRequest(BaseModel):
-    name: Optional[str] = None
-    is_active: Optional[bool] = None
+class UserAssign(BaseModel):
     role_id: Optional[str] = None
+    department_id: Optional[str] = None
 
-class UpdateUserResponse(BaseModel):
+class UserStatus(BaseModel):
+    is_active: bool
+
+# --- Responses ---
+class UserResponse(UserBase):
+    user_id: str
+    role_id: Optional[str] = None
+    department_id: Optional[str] = None
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ActionResponse(BaseModel):
     message: str

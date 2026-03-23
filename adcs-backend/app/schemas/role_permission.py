@@ -20,10 +20,19 @@ class RoleResponse(RoleBase):
     model_config = ConfigDict(from_attributes=True)
 
 # --- PERMISSION SCHEMAS ---
-class PermissionResponse(BaseModel):
-    permission_id: str
+class PermissionBase(BaseModel):
+    name: str
     code: str
     description: Optional[str] = None
+
+class PermissionCreate(RoleBase):
+    pass
+
+class PermissionUpdate(RoleBase):
+    pass
+
+class PermissionResponse(BaseModel):
+    permission_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 # --- MATRIX SCHEMAS ---
