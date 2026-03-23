@@ -14,7 +14,7 @@ class Role(Base):
 class Permission(Base):
     __tablename__ = "permissions"
     permission_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    code = Column(String, unique=True, nullable=False) # Frontend gọi là `key`
+    code = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
 
 class RolePermission(Base):

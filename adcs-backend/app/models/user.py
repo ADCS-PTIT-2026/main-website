@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Boolean
 import uuid
-from ..db.session import Base
+from sqlalchemy import Column, String, Boolean
+from app.db.session import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -9,5 +9,6 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String)
     password_hash = Column(String)
-    role_id = Column(String)
+    role_id = Column(String, nullable=True)
+    department_id = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)

@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas.user import UpdateUserRequest, UpdateUserResponse
-from app.services.user_service import approve_user
-from app.db.session import SessionLocal
 
-router = APIRouter()
+from app.db.session import SessionLocal
+from app.schemas.user import (
+    UserResponse, UserCreate, UserUpdate, 
+    UserAssign, UserStatus, ActionResponse
+)
+from app.crud import user as crud_user
+from app.services import user as user_service
+
+router = APIRouter(prefix="/api/users", tags=["Users"])
 
 def get_db():
     db = SessionLocal()
@@ -13,12 +19,49 @@ def get_db():
     finally:
         db.close()
 
+# 1. Lấy danh sách người dùng
+@router.get("", response_model=List[UserResponse])
+def get_users(db: Session = Depends(get_db)):
+    return crud_user.get_all_users(db)
 
-@router.put("/{id}", response_model=UpdateUserResponse)
-def update_user_api(id: str, request: UpdateUserRequest, db: Session = Depends(get_db)):
-    return approve_user(
-        db,
-        user_id=id,
-        name=request.name,
-        is_active=request.is_active
-    )
+# 2. Tạo tài khoản mới
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def create_user(request: UserCreate, db: Session = Depends(get_db)):
+    return user_service.create_new_user(db, request)
+
+# 3. Sửa thông tin user (username, email)
+@router.put("/{id}", response_model=UserResponse)
+def update_user_info(id: str, request: UserUpdate, db: Session = Depends(get_db)):
+    user = crud_user.get_user_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    
+    return crud_user.update_user_fields(db, user, request.model_dump(exclude_unset=True))
+
+# 4. Gán role + phòng ban
+@router.put("/{id}/assign", response_model=UserResponse)
+def assign_user_role_dept(id: str, request: UserAssign, db: Session = Depends(get_db)):
+    user = crud_user.get_user_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    
+    return crud_user.update_user_fields(db, user, request.model_dump(exclude_unset=True))
+
+# 5. Activate / deactivate (Duyệt người dùng)
+@router.put("/{id}/status", response_model=UserResponse)
+def change_user_status(id: str, request: UserStatus, db: Session = Depends(get_db)):
+    user = crud_user.get_user_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    
+    return crud_user.update_user_fields(db, user, request.model_dump())
+
+# 6. Xóa tài khoản
+@router.delete("/{id}", response_model=ActionResponse)
+def delete_user_account(id: str, db: Session = Depends(get_db)):
+    user = crud_user.get_user_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    
+    crud_user.delete_user(db, user)
+    return {"message": "Đã xóa tài khoản thành công"}

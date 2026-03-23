@@ -28,6 +28,24 @@ def delete_role(db: Session, role: Role):
 def get_all_permissions(db: Session):
     return db.query(Permission).all()
 
+def create_permission(db: Session, data: dict):
+    permission = Permission(**data)
+    db.add(permission)
+    db.commit()
+    db.refresh(permission)
+    return permission
+
+def update_permission(db: Session, permission: Permission, data: dict):
+    for key, value in data.items():
+        setattr(permission, key, value)
+    db.commit()
+    db.refresh(permission)
+    return permission
+
+def delete_permission(db: Session, permission: Permission):
+    db.delete(permission)
+    db.commit()
+
 def get_permission_matrix(db: Session) -> Dict[str, bool]:
     # Trả về format: {"PERMISSION_CODE_ROLE_ID": True}
     mappings = (
