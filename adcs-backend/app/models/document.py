@@ -1,12 +1,12 @@
-from sqlalchemy import Column, String, Date, DateTime, Integer, Float, ForeignKey
+import uuid
+from sqlalchemy import Column, String, Date, DateTime, Integer, Float
 from sqlalchemy.sql import func
 from app.db.session import Base
 
-
 class Document(Base):
     __tablename__ = "documents"
-
-    document_id = Column(String, primary_key=True, index=True)
+    
+    document_id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
 
     source_id = Column(String, nullable=True)
     title = Column(String, nullable=True)

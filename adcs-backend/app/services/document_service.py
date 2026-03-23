@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from fastapi import UploadFile, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import UploadFile, HTTPException, status
 from datetime import datetime
 from app.utils.file_handler import save_file
 from app.crud.document import create_document, get_document_by_id, update_document_ai_result
@@ -8,48 +9,41 @@ from app.crud.document import create_document, get_document_by_id, update_docume
 def send_to_ai_service(file_path: str):
     print(f"[AI SERVICE] Processing file: {file_path}")
 
-
 async def upload_document(db: Session, file: UploadFile):
     if not file:
         raise HTTPException(status_code=400, detail="File is required")
 
-    # lưu file vật lý
-    file_path, file_name = save_file(file)
+    try:
+        file_path, file_name = await save_file(file)
 
-    # lưu DB
-    document = create_document(db, file_name, file_path)
+        document = create_document(db, file_name, file_path)
 
-    # gửi sang AI service (async hoặc background)
-    send_to_ai_service(file_path)
+        # gửi sang AI service
+        send_to_ai_service(file_path)
 
-    return {
-        "document_id": str(document.document_id),
-        "status": document.status
-    }
-
+        return document
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi hệ thống khi lưu tài liệu!"
+        )
 
 def receive_ai_result(db: Session, document_id: str, payload: dict):
     document = get_document_by_id(db, document_id)
     if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu (Document not found)")
 
-    update_data = {
-        "title": payload.get("title"),
-        "document_number": payload.get("document_number"),
-        "signed_date": payload.get("signed_date"),
-        "document_type_id": payload.get("document_type_id"),
-        "assigned_department_id": payload.get("assigned_department_id"),
-        "assigned_user_id": payload.get("assigned_user_id"),
-        "priority": payload.get("priority"),
-        "confidence": payload.get("confidence"),
-        "summary": payload.get("summary"),
-        "status": payload.get("status", "success"),
-        "updated_at": datetime.utcnow(),
-    }
+    payload["updated_at"] = datetime.utcnow()
+    if "status" not in payload:
+        payload["status"] = "success"
 
-    updated_document = update_document_ai_result(db, document, update_data)
-
-    return {
-        "message": "AI result updated successfully",
-        "document": updated_document
-    }
+    try:
+        updated_document = update_document_ai_result(db, document, payload)
+        return updated_document
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi cơ sở dữ liệu khi cập nhật thông tin từ AI!"
+        )
