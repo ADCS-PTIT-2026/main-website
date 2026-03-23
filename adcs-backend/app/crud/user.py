@@ -10,7 +10,7 @@ def get_user_by_email(db: Session, email: str):
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi khi truy vấn email: {str(e)}"
+            detail=f"Lỗi khi truy vấn người dùng theo email: {str(e)}"
         )
 
 def get_user_by_id(db: Session, user_id: str):
@@ -19,7 +19,7 @@ def get_user_by_id(db: Session, user_id: str):
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Định dạng User ID không hợp lệ."
+            detail="Lỗi khi truy vấn người dùng theo ID"
         )
 
 def create_user(db: Session, name: str, email: str, password: str):
