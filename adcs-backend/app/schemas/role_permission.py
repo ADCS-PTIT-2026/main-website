@@ -25,10 +25,10 @@ class PermissionBase(BaseModel):
     code: str
     description: Optional[str] = None
 
-class PermissionCreate(RoleBase):
+class PermissionCreate(PermissionBase):
     pass
 
-class PermissionUpdate(RoleBase):
+class PermissionUpdate(PermissionBase):
     pass
 
 class PermissionResponse(BaseModel):

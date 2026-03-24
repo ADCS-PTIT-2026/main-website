@@ -3,26 +3,38 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import UploadFile, HTTPException, status
 from datetime import datetime
 from app.utils.file_handler import save_file
-from app.crud.document import create_document, get_document_by_id, update_document_ai_result
+from app.crud.document import get_document_by_id, create_document_entry, create_document_file, update_document_metadata
+import logging
 
 # giả lập AI service
 def send_to_ai_service(file_path: str):
     print(f"[AI SERVICE] Processing file: {file_path}")
 
-async def upload_document(db: Session, file: UploadFile):
+async def upload_document(db: Session, file: UploadFile, user_id: str):
     if not file:
         raise HTTPException(status_code=400, detail="File is required")
 
     try:
+        doc = create_document_entry(db)
         file_path, file_name = await save_file(file)
 
-        document = create_document(db, file_name, file_path)
+        file_info = {
+            "document_id": doc.document_id,
+            "file_name": file_name,
+            "file_path": file_path,
+            "size_bytes": file.size,
+            "uploaded_by": user_id,
+            "ocr_status": "Processing"
+        }
 
+        create_document_file(db, file_info)
         # gửi sang AI service
         send_to_ai_service(file_path)
 
-        return document
+        return doc
+    
     except SQLAlchemyError as e:
+        print(e)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -39,7 +51,7 @@ def receive_ai_result(db: Session, document_id: str, payload: dict):
         payload["status"] = "success"
 
     try:
-        updated_document = update_document_ai_result(db, document, payload)
+        updated_document = update_document_metadata(db, document, payload)
         return updated_document
     except SQLAlchemyError as e:
         db.rollback()
