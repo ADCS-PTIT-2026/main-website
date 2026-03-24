@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import logo from '../../../assets/ptit-logo.png';
+import { authAPI } from '../../../api/auth';
 
 const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,21 +15,23 @@ const LoginPage: React.FC = () => {
     setErrorMsg(null);
     try {
       if (isLogin) {
-        // Giả lập logic kiểm tra đăng nhập (có thể thay bằng gọi API thực tế)
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        if (formData.email.includes('error')) {
-          setErrorMsg('Tài khoản này chưa được kích hoạt hoặc bạn không có quyền truy cập. Vui lòng liên hệ quản trị viên.');
-        } else {
-          navigate('/dashboard');
-        }
+        const response = await authAPI.login(formData.email, formData.password);
+
+        localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+
+        navigate('/dashboard');
       } else {
-        // Giả lập logic đăng ký
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await authAPI.register(formData.name, formData.email, formData.password);
         alert('Yêu cầu cấp tài khoản đã được gửi đến Admin!');
         window.location.reload();
       }
-    } catch (error) {
-      setErrorMsg('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+    } catch (error: any) {
+      if (error.response && error.response.data && error.response.data.detail) {
+         setErrorMsg(error.response.data.detail);
+      } else {
+         setErrorMsg('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+      }
     } finally {
       setIsLoading(false);
     }
