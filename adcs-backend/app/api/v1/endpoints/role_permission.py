@@ -1,20 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict
-
+from app.db.session import get_db
 from app.db.session import SessionLocal
 from app.schemas.role_permission import RoleCreate, RoleUpdate, RoleResponse, PermissionCreate, PermissionUpdate, PermissionResponse, MatrixUpdateResponse
 from app.crud import role_permisson as crud
-from app.models.role_permission import Role
+from app.models.role_permission import Role, Permission
 
 router = APIRouter()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # ----------------- ROLES -----------------
 # 1. lấy danh sách roles
@@ -58,7 +51,7 @@ def add_permission(payload: PermissionCreate, db: Session = Depends(get_db)):
 # 7. sửa permission
 @router.put("/permissions/{permission_id}", response_model=PermissionResponse)
 def edit_permission(permission_id: str, payload: PermissionUpdate, db: Session = Depends(get_db)):
-    permission = db.query(permission).filter(permission.permission_id == permission_id).first()
+    permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
     if not permission:
         raise HTTPException(status_code=404, detail="Không tìm thấy quyền")
     return crud.update_permission(db, permission, payload.model_dump())

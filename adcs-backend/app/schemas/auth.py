@@ -12,6 +12,7 @@ class UserResponse(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     user: UserResponse
 
 class RegisterRequest(BaseModel):
@@ -22,3 +23,10 @@ class RegisterRequest(BaseModel):
 class RegisterResponse(BaseModel):
     message: str
     is_active: bool
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
