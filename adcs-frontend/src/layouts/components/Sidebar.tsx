@@ -6,13 +6,13 @@ const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Bảng điều khiển', path: '/dashboard' },
   { icon: 'description', label: 'Xử lý tài liệu', path: '/documents' },
   { icon: 'archive', label: 'Kho tài liệu', path: '/archive' },
+  { icon: 'groups', label: 'Phòng ban', path: '/departments' },
   {
     icon: 'admin_panel_settings',
     label: 'Trang Quản lý',
     children: [
       { label: 'Tài khoản', path: '/admin/users' },
       { label: 'Nhóm quyền', path: '/admin/roles' },
-      { label: 'Phòng ban', path: '/admin/departments' },
       { label: 'AI Configuration', path: '/admin/ai-config' },
     ],
   },
