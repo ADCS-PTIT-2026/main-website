@@ -9,7 +9,6 @@ const MainLayout: React.FC = () => {
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        {/* Phần nội dung có thể scroll riêng biệt với Header */}
         <div className="flex-1 overflow-y-auto">
           <Outlet /> 
         </div>
