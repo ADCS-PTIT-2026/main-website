@@ -34,12 +34,12 @@ const DepartmentManagementPage: React.FC = () => {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
     setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Logic Toggle Đóng/Mở node
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedNodes(prev => {
@@ -143,6 +143,17 @@ const DepartmentManagementPage: React.FC = () => {
     }
   };
 
+  const handleAddClick = () => {
+    setIsCreating(true);
+    setSelectedId('new');
+    setFormData({
+      name: 'Phòng ban mới',
+      code: '',
+      description: '',
+      parent_id: ''
+    });
+  };
+
   // Component Đệ quy để vẽ từng Node của sơ đồ cây
   const RenderNode = ({ node, level }: { node: DepartmentTreeResponse, level: number }) => {
     const isSelected = node.department_id === selectedId;
@@ -150,7 +161,6 @@ const DepartmentManagementPage: React.FC = () => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes.has(node.department_id);
     
-    // ĐIỀU KIỆN 3: Kiểm tra xem các con của node này có phải là "Node lá" (không có con) hay không?
     const isLeafParent = hasChildren && node.children.every(c => !c.children || c.children.length === 0);
 
     return (
@@ -182,36 +192,42 @@ const DepartmentManagementPage: React.FC = () => {
           
           {isRoot && <span className="mt-2 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-bold uppercase">Cấp cao nhất</span>}
 
-          {/* ĐIỀU KIỆN 2: Nút Expand/Collapse */}
+          {/* Nút Expand / Collapse */}
           {hasChildren && (
             <button 
               onClick={(e) => toggleExpand(node.department_id, e)}
-              className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full flex items-center justify-center text-slate-600 hover:text-primary hover:border-primary shadow-sm transition-colors prevent-drag"
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full flex items-center justify-center text-slate-600 hover:text-primary hover:border-primary shadow-sm transition-colors prevent-drag outline-none"
             >
               <span className="material-symbols-outlined text-sm">{isExpanded ? 'remove' : 'add'}</span>
             </button>
           )}
         </div>
 
-        {/* Hiển thị các phòng ban con (nếu đang được Mở) */}
+        {/* Hiển thị các phòng ban con */}
         {isExpanded && hasChildren && (
           isLeafParent ? (
-            // --- LAYOUT DỌC (VERTICAL) CHO NODE LÁ ---
-            <div className="flex flex-col items-start mt-3 relative">
+            // --- FIX: LAYOUT DỌC CHO NODE LÁ ĐẢM BẢO LIỀN MẠCH ---
+            <div className="flex flex-col items-center mt-3 relative w-full">
               {/* Trục dọc nối từ nút Expand xuống */}
-              <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700 mx-auto"></div>
+              <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700"></div>
               
-              <div className="relative flex flex-col gap-3 pl-8 pb-2">
-                {/* Đường xương sống (Spine) bên trái */}
-                <div className="absolute top-0 bottom-1/2 left-0 w-0.5 bg-slate-300 dark:bg-slate-700"></div>
-                {/* Đoạn ngang nối xương sống với trục dọc */}
-                <div className="absolute top-0 left-0 w-8 h-0.5 bg-slate-300 dark:bg-slate-700" style={{ transform: 'translateX(-100%)' }}></div>
+              <div className="relative flex flex-col gap-4">
+                {/* Đường rẽ ngang từ trục dọc sang xương sống */}
+                <div className="absolute top-0 left-[-2rem] h-0.5 bg-slate-300 dark:bg-slate-700" style={{ width: 'calc(50% + 2rem)' }}></div>
 
-                {node.children.map(child => {
+                {node.children.map((child, index) => {
+                  const isLast = index === node.children.length - 1;
                   const isChildSelected = child.department_id === selectedId;
+                  
                   return (
                     <div key={child.department_id} className="relative prevent-drag">
-                      {/* Nối ngang từ xương sống ra Card */}
+                      {/* Đoạn xương sống (nối dọc) được chia thành từng khúc theo mỗi Node */}
+                      <div 
+                        className="absolute left-[-2rem] w-0.5 bg-slate-300 dark:bg-slate-700" 
+                        style={{ top: 0, bottom: isLast ? '50%' : '-1rem' }} 
+                      ></div>
+                      
+                      {/* Đoạn rẽ ngang vào Card */}
                       <div className="absolute top-1/2 left-[-2rem] w-8 h-0.5 bg-slate-300 dark:bg-slate-700 -translate-y-1/2"></div>
                       
                       {/* Thẻ con thu gọn (Compact Card) */}
@@ -221,7 +237,7 @@ const DepartmentManagementPage: React.FC = () => {
                           isChildSelected ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-slate-200 dark:border-slate-800 hover:border-primary/50'
                         }`}
                       >
-                        <div className={`size-8 rounded-full flex items-center justify-center mr-3 ${isChildSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                        <div className={`size-8 flex-shrink-0 rounded-full flex items-center justify-center mr-3 ${isChildSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                           <span className="material-symbols-outlined text-sm">groups</span>
                         </div>
                         <div>
@@ -238,7 +254,6 @@ const DepartmentManagementPage: React.FC = () => {
             <>
               <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 mt-3"></div>
               <div className="flex gap-12 relative pt-0">
-                {/* Đường kẻ ngang động nối các child với nhau */}
                 {node.children.length > 1 && (
                   <div className="absolute top-0 h-0.5 bg-slate-300 dark:bg-slate-700" 
                        style={{ left: `calc(${100 / (node.children.length * 2)}%)`, right: `calc(${100 / (node.children.length * 2)}%)` }}>
@@ -266,18 +281,19 @@ const DepartmentManagementPage: React.FC = () => {
             <button onClick={() => setZoom(z => Math.max(z - 0.1, 0.5))} className="p-2 hover:bg-slate-200 rounded outline-none"><span className="material-symbols-outlined">zoom_out</span></button>
             <button onClick={() => { setZoom(1); setPan({x:0, y:0}); }} className="p-2 hover:bg-slate-200 rounded border border-slate-200 ml-2 outline-none"><span className="material-symbols-outlined text-sm">center_focus_strong</span></button>
           </div>
-          {/* Nút Thêm mới... */}
+          <button onClick={handleAddClick} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 flex items-center gap-2 outline-none shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined text-base">add</span> Thêm phòng ban
+          </button>
         </div>
 
-        {/* ĐIỀU KIỆN 1: Khu vực Canvas hỗ trợ Kéo thả (Drag to Pan) */}
+        {/* FIX LỖI GIẬT KHI DRAG: Thêm select-none vào thẻ chứa Canvas */}
         <div 
-          className={`flex-1 overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`flex-1 overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-           {/* Thẻ bọc chịu trách nhiệm Di chuyển và Zoom */}
            <div 
              className="flex flex-col items-center min-w-max p-12 transition-transform duration-75 origin-top" 
              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}

@@ -9,6 +9,15 @@ const axiosClient = axios.create({
   },
 });
 
+const getToken = (key: string) => {
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
+};
+
+const clearTokens = () => {
+  localStorage.clear();
+  sessionStorage.clear();
+};
+
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
@@ -26,7 +35,7 @@ const processQueue = (error: any, token: string | null = null) => {
 // request interceptor để tự động thêm token vào header
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = getToken('access_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -44,7 +53,6 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -59,10 +67,10 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = getToken('refresh_token');
       
       if (!refreshToken) {
-         localStorage.clear();
+         clearTokens();
          window.location.href = '/login';
          return Promise.reject(error);
       }
@@ -71,24 +79,23 @@ axiosClient.interceptors.response.use(
         const { data } = await axios.post(`${API_URL}/auth/refresh`, {
           refresh_token: refreshToken
         });
-
         const newAccessToken = data.access_token;
         const newRefreshToken = data.refresh_token; 
 
-        localStorage.setItem('access_token', newAccessToken);
+        const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
+        
+        storage.setItem('access_token', newAccessToken);
         if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken);
+            storage.setItem('refresh_token', newRefreshToken);
         }
 
         originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
-        
         processQueue(null, newAccessToken);
-        
         return axiosClient(originalRequest);
-
+        
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.clear();
+        clearTokens();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

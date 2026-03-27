@@ -5,7 +5,7 @@ import logo from '../../assets/ptit-logo.png';
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Bảng điều khiển', path: '/dashboard' },
   { icon: 'description', label: 'Xử lý tài liệu', path: '/documents' },
-  { icon: 'archive', label: 'Kho tài liệu', path: '/archive' },
+  // { icon: 'archive', label: 'Kho tài liệu', path: '/archive' },
   { icon: 'groups', label: 'Phòng ban', path: '/departments' },
   {
     icon: 'admin_panel_settings',
@@ -13,7 +13,7 @@ const NAV_ITEMS = [
     children: [
       { label: 'Tài khoản', path: '/admin/users' },
       { label: 'Nhóm quyền', path: '/admin/roles' },
-      { label: 'AI Configuration', path: '/admin/ai-config' },
+      // { label: 'AI Configuration', path: '/admin/ai-config' },
     ],
   },
 ];
@@ -60,7 +60,6 @@ const Sidebar: React.FC = () => {
           const isActive =
             item.path && location.pathname === item.path;
 
-          // 🔥 UI chung
           const baseClass = `flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-colors ${
             isActive
               ? 'bg-primary/10 text-primary font-semibold'
@@ -69,7 +68,6 @@ const Sidebar: React.FC = () => {
 
           return (
             <div key={idx}>
-              {/* ✅ Nếu là parent → toggle */}
               {isParent ? (
                 <div
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
@@ -87,7 +85,6 @@ const Sidebar: React.FC = () => {
                   </span>
                 </div>
               ) : (
-                /* ✅ Nếu có path → dùng Link */
                 <Link to={item.path!} className={baseClass}>
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined">
@@ -126,10 +123,10 @@ const Sidebar: React.FC = () => {
         })}
 
         <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-          <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+          {/* <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
             <span className="material-symbols-outlined">settings</span>
             <span className="text-sm">Cài đặt</span>
-          </Link>
+          </Link> */}
         </div>
       </nav>
 

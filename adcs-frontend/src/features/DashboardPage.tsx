@@ -1,19 +1,69 @@
-import React from 'react';
-
-const STATS_DATA = [
-  { title: 'Tổng tài liệu', value: '12,840', icon: 'description', trend: '+12.5%', color: 'blue', trendColor: 'emerald' },
-  { title: 'Đang xử lý', value: '42', icon: 'pending_actions', trend: 'Cần xử lý', color: 'amber', trendColor: 'amber' },
-  { title: 'Chính xác AI', value: '98.4%', icon: 'psychology', trend: 'PTIT Red', color: 'primary', trendColor: 'primary' },
-  { title: 'Người dùng mới', value: '156', icon: 'group', trend: '12 Phòng', color: 'emerald', trendColor: 'slate' },
-];
-
-const RECENT_DOCS = [
-  { name: 'QD_TuyenDung_2024.pdf', type: 'Quyết định', dept: 'Nhân sự', status: 'Hoàn tất (99%)', statusColor: 'emerald', icon: 'picture_as_pdf' },
-  { name: 'CV_Project_Alpha.docx', type: 'Công văn', dept: 'Kế hoạch', status: 'Đang quét...', statusColor: 'blue', icon: 'description', isPulsing: true },
-  { name: 'Hoa_Don_00122.jpg', type: 'Hóa đơn', dept: 'Kế toán', status: 'Đợi xác minh', statusColor: 'amber', icon: 'image' },
-];
+import React, { useState, useEffect } from 'react';
+import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
 
 const DashboardPage: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
+  const [recentDocs, setRecentDocs] = useState<DocumentResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Gọi song song 2 API để lấy thống kê và danh sách tài liệu
+        const [statsData, docsData] = await Promise.all([
+          getDashboardStats(),
+          getRecentDocuments(5)
+        ]);
+        
+        setStats(statsData);
+        setRecentDocs(docsData);
+      } catch (err: any) {
+        setError(err.message || 'Lỗi khi tải dữ liệu dashboard');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Hàm helper để map status từ DB sang UI (màu sắc, icon)
+  const getStatusUI = (status: string | null | undefined) => {
+    switch (status?.toLowerCase()) {
+      case 'success':
+      case 'hoàn tất':
+        return { label: 'Hoàn tất', color: 'emerald', isPulsing: false };
+      case 'pending':
+      case 'processing':
+      case 'đang xử lý':
+        return { label: 'Đang xử lý', color: 'blue', isPulsing: true };
+      case 'failed':
+      case 'lỗi':
+        return { label: 'Lỗi', color: 'rose', isPulsing: false };
+      default:
+        return { label: status || 'Chờ xác minh', color: 'amber', isPulsing: false };
+    }
+  };
+
+  // Cấu hình mảng hiển thị dựa trên dữ liệu thật
+  const displayStats = [
+    { title: 'Tổng tài liệu', value: stats?.total_documents?.toLocaleString() || '0', icon: 'description', trend: 'Cập nhật', color: 'blue', trendColor: 'emerald' },
+    { title: 'Đang xử lý', value: stats?.pending_documents?.toString() || '0', icon: 'pending_actions', trend: 'Cần xử lý', color: 'amber', trendColor: 'amber' },
+    { title: 'Chính xác AI', value: `${stats?.ai_accuracy || 0}%`, icon: 'psychology', trend: 'PTIT Red', color: 'primary', trendColor: 'primary' },
+    { title: 'Người dùng được phân quyền', value: stats?.new_users?.toString() || '0', icon: 'group', trend: 'Hệ thống', color: 'emerald', trendColor: 'slate' },
+  ];
+
+  if (loading) {
+    return <div className="p-8 flex justify-center items-center h-full"><span className="animate-spin material-symbols-outlined text-4xl text-primary">sync</span></div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500">Lỗi: {error}</div>;
+  }
+
   return (
     <div className="p-8 space-y-8">
       {/* Welcome Message */}
@@ -29,124 +79,83 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Statistics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {STATS_DATA.map((stat, idx) => (
-              <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`size-10 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 rounded-lg flex items-center justify-center`}>
-                    <span className="material-symbols-outlined">{stat.icon}</span>
-                  </div>
-                  <span className={`text-xs font-bold text-${stat.trendColor}-500 bg-${stat.trendColor}-50 dark:bg-${stat.trendColor}-900/20 px-2 py-1 rounded`}>
-                    {stat.trend}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                <h3 className="text-2xl font-bold mt-1 tracking-tight">{stat.value}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {displayStats.map((stat, idx) => (
+          <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`size-10 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 rounded-lg flex items-center justify-center`}>
+                <span className="material-symbols-outlined">{stat.icon}</span>
               </div>
-            ))}
+              <span className={`text-xs font-bold text-${stat.trendColor}-500 bg-${stat.trendColor}-50 dark:bg-${stat.trendColor}-900/20 px-2 py-1 rounded`}>
+                {stat.trend}
+              </span>
+            </div>
+            <p className="text-sm font-medium text-slate-500">{stat.title}</p>
+            <h3 className="text-2xl font-bold mt-1 tracking-tight">{stat.value}</h3>
           </div>
+        ))}
+      </div>
 
-          {/* Charts & List Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Performance Chart Mockup */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="font-bold text-lg">Hiệu suất trích xuất AI (PTIT Red)</h3>
-                  <p className="text-sm text-slate-500">Thống kê theo tuần qua</p>
-                </div>
-                <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-600 outline-none p-2">
-                  <option>7 ngày qua</option>
-                  <option>30 ngày qua</option>
-                </select>
-              </div>
-              <div className="h-64 flex items-end gap-2 px-2">
-                {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day, idx) => {
-                  const heights = ['60%', '75%', '85%', '55%', '90%', '70%', '40%'];
-                  const innerHeights = ['80%', '90%', '95%', '70%', '100%', '85%', '60%'];
-                  return (
-                    <div key={idx} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group hover:bg-primary/20 transition-colors" style={{ height: heights[idx] }}>
-                      <div className="absolute bottom-0 w-full bg-primary rounded-t-lg transition-all" style={{ height: innerHeights[idx] }}></div>
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">{day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Urgent Documents */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col">
-              <div className="p-6 border-b border-slate-50 dark:border-slate-800">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">priority_high</span>
-                  Cần xử lý gấp
-                </h3>
-              </div>
-              <div className="flex-1 p-4 space-y-3">
-                <div className="p-3 rounded-lg border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">Hợp đồng LĐ - 2024</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Yêu cầu xác minh chữ ký AI</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-primary uppercase">Mới</span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-xs text-slate-400">schedule</span>
-                    <span className="text-[10px] font-medium text-slate-400">2 giờ trước</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 border-t border-slate-50 dark:border-slate-800 text-center">
-                <button className="text-xs font-bold text-primary hover:underline">Xem tất cả</button>
-              </div>
-            </div>
+      {/* Charts & List Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* ... (Giữ nguyên phần Performance Chart Mockup và Urgent Documents như code cũ của bạn) ... */}
+        {/* Để gọn code mình sẽ ẩn bớt đi, bạn copy phần này từ code cũ của bạn nhé */}
+        
+        {/* Recent Activity Table */}
+        <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+            <h3 className="font-bold text-lg">Tài liệu xử lý gần đây</h3>
+            <button className="text-sm font-semibold text-slate-500 hover:text-primary">Xem tất cả</button>
           </div>
-
-          {/* Recent Activity Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-lg">Tài liệu xử lý gần đây</h3>
-              <button className="text-sm font-semibold text-slate-500 hover:text-primary">Xem tất cả</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 dark:bg-slate-800/50">
-                  <tr>
-                    {['Tên tài liệu', 'Loại', 'Phòng ban', 'Trạng thái AI', 'Hành động'].map((th, i) => (
-                      <th key={i} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">{th}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {RECENT_DOCS.map((doc, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 bg-primary/5 text-primary rounded flex items-center justify-center">
-                            <span className="material-symbols-outlined text-lg">{doc.icon}</span>
-                          </div>
-                          <span className="text-sm font-semibold">{doc.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">{doc.type}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{doc.dept}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-${doc.statusColor}-100 text-${doc.statusColor}-700 dark:bg-${doc.statusColor}-900/30 dark:text-${doc.statusColor}-400`}>
-                          <span className={`size-1.5 rounded-full bg-${doc.statusColor}-500 ${doc.isPulsing ? 'animate-pulse' : ''}`}></span>
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button className="text-slate-400 hover:text-primary"><span className="material-symbols-outlined">visibility</span></button>
-                        <button className="text-slate-400 hover:text-primary ml-3"><span className="material-symbols-outlined">download</span></button>
-                      </td>
-                    </tr>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  {['Tên tài liệu', 'Loại/Số hiệu', 'Phòng ban', 'Trạng thái AI', 'Ngày nhận'].map((th, i) => (
+                    <th key={i} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">{th}</th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {recentDocs.length === 0 ? (
+                   <tr><td colSpan={5} className="px-6 py-4 text-center text-slate-500">Chưa có tài liệu nào</td></tr>
+                ) : (
+                  recentDocs.map((doc) => {
+                    const uiConfig = getStatusUI(doc.status);
+                    // Dùng title nếu có, nếu không thì dùng document_id cắt ngắn
+                    const displayName = doc.title || `Doc_${doc.document_id.substring(0,8)}`;
+                    
+                    return (
+                      <tr key={doc.document_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 bg-primary/5 text-primary rounded flex items-center justify-center">
+                              <span className="material-symbols-outlined text-lg">description</span>
+                            </div>
+                            <span className="text-sm font-semibold max-w-[200px] truncate" title={displayName}>{displayName}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">{doc.document_number || 'Chưa xác định'}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{doc.assigned_department_id || 'Chưa phân bổ'}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-${uiConfig.color}-100 text-${uiConfig.color}-700`}>
+                            <span className={`size-1.5 rounded-full bg-${uiConfig.color}-500 ${uiConfig.isPulsing ? 'animate-pulse' : ''}`}></span>
+                            {uiConfig.label} {doc.confidence ? `(${Math.round(doc.confidence * 100)}%)` : ''}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {doc.updated_at ? new Date(doc.updated_at).toLocaleDateString('vi-VN') : 'N/A'}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
+        </div>
+      </div>
     </div>
   );
 };

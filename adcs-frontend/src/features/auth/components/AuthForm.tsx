@@ -11,6 +11,10 @@ interface AuthFormProps {
 const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMsg }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [remember, setRemember] = useState(false); 
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,11 +23,27 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setLocalError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData, isLogin);
+    setLocalError(null);
+
+    if (!formData.email.endsWith('@ptit.edu.vn')) {
+      setLocalError('Email phải có định dạng đuôi @ptit.edu.vn');
+      return;
+    }
+
+    if (!isLogin) {
+      const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!strongPasswordRegex.test(formData.password)) {
+        setLocalError('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&).');
+        return;
+      }
+    }
+
+    onSubmit({ ...formData, remember }, isLogin);
   };
 
   return (
@@ -40,10 +60,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
         </div>
 
         {/* Alert Message */}
-        {errorMsg && (
+        {(errorMsg || localError) && (
           <div className="mb-6 flex gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50">
             <span className="material-symbols-outlined text-red-600 dark:text-red-400">warning</span>
-            <p className="text-sm text-red-800 dark:text-red-200">{errorMsg}</p>
+            <p className="text-sm text-red-800 dark:text-red-200">{localError || errorMsg}</p>
           </div>
         )}
 
@@ -136,7 +156,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
 
           {isLogin && (
             <div className="flex items-center gap-2">
-              <input className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" id="remember" type="checkbox" />
+              <input 
+                className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" 
+                id="remember" 
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)} // Cập nhật state
+              />
               <label className="text-sm text-slate-600 dark:text-slate-400" htmlFor="remember">
                 Ghi nhớ đăng nhập
               </label>

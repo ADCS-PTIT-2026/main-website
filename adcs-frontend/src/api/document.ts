@@ -102,3 +102,20 @@ export async function updateDocumentAIResult(
     body: JSON.stringify(payload),
   });
 }
+
+export type DashboardStatsResponse = {
+  total_documents: number;
+  pending_documents: number;
+  ai_accuracy: number;
+  new_users: number;
+};
+
+// Hàm lấy dữ liệu thống kê
+export async function getDashboardStats(): Promise<DashboardStatsResponse> {
+  return request<DashboardStatsResponse>(`${DOCUMENT_API}/stats`);
+}
+
+// Hàm lấy danh sách tài liệu gần đây
+export async function getRecentDocuments(limit: number = 5): Promise<DocumentResponse[]> {
+  return request<DocumentResponse[]>(`${DOCUMENT_API}?limit=${limit}`);
+}
