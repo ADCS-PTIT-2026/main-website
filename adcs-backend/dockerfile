@@ -1,0 +1,43 @@
+FROM python:3.11-slim as builder
+
+# Ngăn Python tạo ra các file .pyc và cho phép log hiển thị ngay lập tức
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+
+# Cài đặt các công cụ hệ thống cần thiết để build thư viện (như psycopg2 hoặc bcrypt)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+
+COPY . .
+
+# Tạo thư mục upload và gán quyền cho user non-root
+RUN mkdir -p /app/uploads && \
+    addgroup --system appgroup && \
+    adduser --system --group appuser && \
+    chown -R appuser:appgroup /app/uploads
+
+# Chuyển sang sử dụng user non-root để tăng tính bảo mật
+USER appuser
+
+# Khai báo Port
+EXPOSE 8000
+
+CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]

@@ -1,27 +1,29 @@
 from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_email, create_user, get_user_by_id
+from app.models.user import User
 from app.core.security import verify_password, create_access_token, create_refresh_token
 from fastapi import HTTPException, status
 from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
+from app.core.security import hash_password
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("HS256")
+ALGORITHM = os.getenv("ALGORITHM")
 
 def login(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
 
     if not user:
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác")
+        raise HTTPException(status_code=401, detail="Email chưa được đăng ký!")
 
     if not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác")
+        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác!")
 
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="Tài khoản chưa được kích hoạt hoặc bị khóa")
+        raise HTTPException(status_code=403, detail="Tài khoản chưa được kích hoạt hoặc bị khóa!")
 
     # Tạo cả 2 token
     access_token = create_access_token({"sub": str(user.user_id)})
@@ -37,8 +39,16 @@ def login(db: Session, email: str, password: str):
         }
     }
 
+
 def register(db: Session, name: str, email: str, password: str):
-    user = create_user(db, name, email, password)
+    hashed_pwd = hash_password(password)
+    new_user = User(
+        username=name,
+        email=email,
+        password_hash=hashed_pwd
+    )
+
+    user = create_user(db, new_user)
 
     return {
         "message": "Đăng ký thành công",

@@ -59,7 +59,7 @@ def edit_permission(permission_id: str, payload: PermissionUpdate, db: Session =
 # 8. xóa permission
 @router.delete("/permissions/{permission_id}")
 def remove_permission(permission_id: str, db: Session = Depends(get_db)):
-    permission = db.query(permission).filter(permission.permission_id == permission_id).first()
+    permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
     if not permission:
         raise HTTPException(status_code=404, detail="Không tìm thấy quyền")
     crud.delete_permission(db, permission)

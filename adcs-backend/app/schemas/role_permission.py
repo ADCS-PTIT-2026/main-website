@@ -33,6 +33,8 @@ class PermissionUpdate(PermissionBase):
 
 class PermissionResponse(BaseModel):
     permission_id: UUID
+    code: str  
+    description: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 # --- MATRIX SCHEMAS ---

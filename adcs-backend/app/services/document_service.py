@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import UploadFile, HTTPException, status
 from datetime import datetime
 from app.utils.file_handler import save_file
-from app.crud.document import get_document_by_id, create_document_entry, create_document_file, update_document_metadata
+from app.crud.document import get_document_by_id, create_document_entry, create_document_file, update_document_metadata, get_document_stats, get_recent_documents
 import logging
 
 # giả lập AI service
@@ -59,3 +59,9 @@ def receive_ai_result(db: Session, document_id: str, payload: dict):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Lỗi cơ sở dữ liệu khi cập nhật thông tin từ AI!"
         )
+    
+def get_dashboard_stats_service(db: Session):
+    return get_document_stats(db)
+
+def get_recent_documents_service(db: Session, limit: int):
+    return get_recent_documents(db, limit=limit)

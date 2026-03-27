@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("HS256")
+ALGORITHM = os.getenv("ALGORITHM")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
@@ -60,7 +60,7 @@ class RoleChecker:
         if not current_user.role_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
-                detail="Tài khoản chưa được phân vai trò."
+                detail="Tài khoản chưa được cấp quyền cho hành động này."
             )
             
         role = db.query(Role).filter(Role.role_id == current_user.role_id).first()
