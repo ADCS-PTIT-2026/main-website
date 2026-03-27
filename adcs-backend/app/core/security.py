@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("HS256")
+ALGORITHM = os.getenv("ALGORITHM")
 
 pwd_context = CryptContext(
     schemes=["bcrypt_sha256", "bcrypt"], 
@@ -18,6 +18,8 @@ pwd_context = CryptContext(
 def verify_password(plain_password, hashed_password):
     if isinstance(plain_password, str):
         plain_password = plain_password.encode('utf-8')
+    print(pwd_context.hash(plain_password))
+    print(hashed_password)
     return pwd_context.verify(plain_password, hashed_password)
 
 def hash_password(password):

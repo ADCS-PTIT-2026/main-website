@@ -77,3 +77,9 @@ class DocumentAIResultResponse(BaseModel):
 class AIResultUpdateResponse(BaseModel):
     message: str
     document: DocumentResponse
+
+class DashboardStatsResponse(BaseModel):
+    total_documents: int
+    pending_documents: int
+    ai_accuracy: float
+    new_users: int

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
+from uuid import UUID
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -14,7 +15,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
 
 class UserAssign(BaseModel):
-    role_id: Optional[str] = None
+    role_id: Optional[UUID] = None
     department_id: Optional[str] = None
 
 class UserStatus(BaseModel):
@@ -22,9 +23,9 @@ class UserStatus(BaseModel):
 
 # --- Responses ---
 class UserResponse(UserBase):
-    user_id: str
-    role_id: Optional[str] = None
-    department_id: Optional[str] = None
+    user_id: UUID
+    role_id: Optional[UUID] = None
+    department_id: Optional[UUID] = None
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)

@@ -12,7 +12,7 @@ from app.services.user_service import create_new_user
 
 from app.core.dependency import RoleChecker
 
-router = APIRouter(prefix="/api/users", tags=["Users"])
+router = APIRouter(prefix="", tags=["Users"])
 require_admin = RoleChecker(['admin'])
 
 
@@ -50,7 +50,7 @@ def change_user_status(id: str, request: UserStatus, db: Session = Depends(get_d
     user = crud_user.get_user_by_id(db, id)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
-    
+        
     return crud_user.update_user_fields(db, user, request.model_dump())
 
 # 6. Xóa tài khoản

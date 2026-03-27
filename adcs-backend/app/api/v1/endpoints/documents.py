@@ -1,14 +1,27 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.db.session import get_db
-from app.schemas.document import UploadResponse, AIResultUpdateRequest, AIResultUpdateResponse, DocumentResponse, DocumentAIResultResponse
-from app.services.document_service import upload_document, receive_ai_result
-from app.crud.document import get_document_by_id
+from app.schemas.document import UploadResponse, AIResultUpdateRequest, AIResultUpdateResponse, DocumentResponse, DocumentAIResultResponse, DashboardStatsResponse
+from app.services.document_service import upload_document, receive_ai_result, get_dashboard_stats_service, get_recent_documents_service, get_document_by_id
 from app.core.dependency import get_current_user
 from app.models.user import User
+from typing import List
 
 router = APIRouter()
+
+@router.get("/stats", response_model=DashboardStatsResponse)
+def get_document_stats_api(db: Session = Depends(get_db)):
+    """API lấy dữ liệu thống kê tổng quát cho Dashboard"""
+    return get_dashboard_stats_service(db)
+
+@router.get("", response_model=List[DocumentResponse])
+def get_documents_api(
+    limit: int = Query(5, description="Số lượng tài liệu cần lấy"),
+    db: Session = Depends(get_db)
+):
+    """API lấy danh sách tài liệu gần đây"""
+    return get_recent_documents_service(db, limit=limit)
 
 # 1. Lấy tài liệu
 @router.get("/{document_id}", response_model=DocumentResponse)
