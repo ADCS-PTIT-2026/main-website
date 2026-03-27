@@ -16,9 +16,14 @@ const LoginPage: React.FC = () => {
     try {
       if (isLogin) {
         const response = await authAPI.login(formData.email, formData.password);
-
-        localStorage.setItem('access_token', response.access_token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        const storage = formData.remember ? localStorage : sessionStorage;
+        
+        storage.setItem('access_token', response.access_token);
+        if (response.refresh_token) {
+           storage.setItem('refresh_token', response.refresh_token);
+        }
+        storage.setItem('user', JSON.stringify(response.user));
 
         navigate('/dashboard');
       } else {
