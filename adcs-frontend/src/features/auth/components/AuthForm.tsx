@@ -1,22 +1,19 @@
-// src/features/auth/components/AuthForm.tsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface AuthFormProps {
-  onSubmit: (data: any, isLogin: boolean) => void;
+  onSubmit: (data: any) => void;
   onSSO: () => void;
   isLoading: boolean;
   errorMsg?: string | null;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMsg }) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-
-  const [remember, setRemember] = useState(false); 
+  const [remember, setRemember] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: ''
   });
@@ -30,20 +27,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
     e.preventDefault();
     setLocalError(null);
 
+    // Validate Email nội bộ
     if (!formData.email.endsWith('@ptit.edu.vn')) {
       setLocalError('Email phải có định dạng đuôi @ptit.edu.vn');
       return;
     }
 
-    if (!isLogin) {
-      const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-      if (!strongPasswordRegex.test(formData.password)) {
-        setLocalError('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&).');
-        return;
-      }
-    }
-
-    onSubmit({ ...formData, remember }, isLogin);
+    // Truyền dữ liệu lên component cha
+    onSubmit({ ...formData, remember });
   };
 
   return (
@@ -52,10 +43,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
         {/* Header Text */}
         <div className="text-center mb-8">
           <h1 className="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight mb-2">
-            {isLogin ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}
+            Chào mừng trở lại
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-base">
-            {isLogin ? 'Vui lòng đăng nhập vào tài khoản của bạn' : 'Điền thông tin để tham gia hệ thống'}
+            Vui lòng đăng nhập vào tài khoản của bạn
           </p>
         </div>
 
@@ -87,25 +78,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
           <div className="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
         </div>
 
-        {/* Form Đăng nhập / Đăng ký */}
+        {/* Form Đăng nhập */}
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                Họ và tên
-              </label>
-              <input 
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required={!isLogin}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 focus:border-primary focus:ring-primary focus:ring-1 outline-none transition-all p-3 text-base placeholder:text-slate-400" 
-                placeholder="Nguyễn Văn A" 
-                type="text" 
-              />
-            </div>
-          )}
-
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Email công ty
@@ -126,11 +100,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Mật khẩu
               </label>
-              {isLogin && (
-                <a className="text-xs font-semibold text-primary hover:underline cursor-pointer">
-                  Quên mật khẩu?
-                </a>
-              )}
+              <a className="text-xs font-semibold text-primary hover:underline cursor-pointer">
+                Quên mật khẩu?
+              </a>
             </div>
             <div className="relative group">
               <input 
@@ -154,39 +126,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
             </div>
           </div>
 
-          {isLogin && (
-            <div className="flex items-center gap-2">
-              <input 
-                className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" 
-                id="remember" 
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)} // Cập nhật state
-              />
-              <label className="text-sm text-slate-600 dark:text-slate-400" htmlFor="remember">
-                Ghi nhớ đăng nhập
-              </label>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <input 
+              className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" 
+              id="remember" 
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)} 
+            />
+            <label className="text-sm text-slate-600 dark:text-slate-400" htmlFor="remember">
+              Ghi nhớ đăng nhập
+            </label>
+          </div>
 
           <button 
             disabled={isLoading}
             className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70" 
             type="submit"
           >
-            {isLoading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Yêu cầu cấp tài khoản')}
+            {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
             {!isLoading && <span className="material-symbols-outlined text-[20px]">arrow_forward</span>}
           </button>
         </form>
 
         <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
-          {isLogin ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
-          <button 
-            onClick={() => setIsLogin(!isLogin)}
-            className="font-bold text-primary hover:underline outline-none"
-          >
-            {isLogin ? 'Yêu cầu cấp tài khoản' : 'Đăng nhập ngay'}
-          </button>
+          Chưa có tài khoản?{' '}
+          <Link to="/register" className="font-bold text-primary hover:underline outline-none">
+            Yêu cầu cấp tài khoản
+          </Link>
         </p>
       </div>
 

@@ -4,9 +4,9 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const axiosClient = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // headers: {
+  //   'Content-Type': 'application/json',
+  // },
 });
 
 const getToken = (key: string) => {
@@ -52,6 +52,10 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest.url.includes('/auth/login')) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
@@ -70,8 +74,10 @@ axiosClient.interceptors.response.use(
       const refreshToken = getToken('refresh_token');
       
       if (!refreshToken) {
-         clearTokens();
-         window.location.href = '/login';
+        if (window.location.pathname !== '/login') {
+            clearTokens();
+            window.location.href = '/login';
+         }
          return Promise.reject(error);
       }
 

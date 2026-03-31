@@ -1,5 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const DOCUMENT_API = `${API_BASE}/documents`;
+import axiosClient from "./axiosClient";
 
 export type UploadResponse = {
   document_id: string;
@@ -18,22 +17,23 @@ export type DocumentResponse = {
   summary?: string | null;
   status?: string | null;
   updated_at?: string | null;
-};
-
-export type DocumentAIResultResponse = {
-  document_id: string;
-  assigned_department_id?: string | null;
-  document_type_id?: string | null;
   loai_van_ban_text?: string | null;
-  don_vi_ban_hanh?: string | null;
-  so_den?: string | null;
-  so_ky_hieu?: string | null;
   trich_yeu?: string | null;
+  so_ky_hieu?: string | null;
   ngay_van_ban?: string | null;
   ngay_het_han?: string | null;
-  summary?: string | null;
-  confidence?: number | null;
-  status?: string | null;
+  
+  don_vi_ban_hanh?: string | null;
+  nguoi_ky?: string | null;
+  chuc_vu_nguoi_ky?: string | null;
+  do_khan?: string | null;
+  noi_nhan?: string[] | null;
+  can_cu_phap_ly?: string[] | null;
+  yeu_cau_han_dong?: string | null;
+  key_points?: string[] | null;
+  muc_tin_cay?: string | null;
+  tong_so_chunk?: number | null;
+  processing_time?: number | null;
 };
 
 export type AIResultUpdateRequest = {
@@ -49,60 +49,6 @@ export type AIResultUpdateRequest = {
   status?: string | null;
 };
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-      ...(init?.headers ?? {}),
-    },
-  });
-
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`;
-    try {
-      const err = await res.json();
-      detail = err?.detail || err?.message || detail;
-    } catch {
-      const text = await res.text();
-      if (text) detail = text;
-    }
-    throw new Error(detail);
-  }
-
-  return res.json();
-}
-
-export async function uploadDocument(file: File): Promise<UploadResponse> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  return request<UploadResponse>(`${DOCUMENT_API}/upload`, {
-    method: "POST",
-    body: formData,
-  });
-}
-
-export async function getDocument(documentId: string): Promise<DocumentResponse> {
-  return request<DocumentResponse>(`${DOCUMENT_API}/${documentId}`);
-}
-
-export async function getDocumentAIResult(
-  documentId: string
-): Promise<DocumentAIResultResponse> {
-  return request<DocumentAIResultResponse>(`${DOCUMENT_API}/${documentId}/ai-result`);
-}
-
-export async function updateDocumentAIResult(
-  documentId: string,
-  payload: AIResultUpdateRequest
-): Promise<{ message: string; document: DocumentResponse }> {
-  return request(`${DOCUMENT_API}/${documentId}/ai-result`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
 export type DashboardStatsResponse = {
   total_documents: number;
   pending_documents: number;
@@ -110,12 +56,68 @@ export type DashboardStatsResponse = {
   new_users: number;
 };
 
-// Hàm lấy dữ liệu thống kê
-export async function getDashboardStats(): Promise<DashboardStatsResponse> {
-  return request<DashboardStatsResponse>(`${DOCUMENT_API}/stats`);
+export interface SearchParams {
+  query?: string;
+  department_id?: string;
+  document_type_ids?: string[];
+  sort_by?: 'confidence' | 'newest';
+  page?: number;
+  limit?: number;
 }
 
-// Hàm lấy danh sách tài liệu gần đây
+export interface PaginatedDocumentResponse {
+  data: DocumentResponse[];
+  total: number;
+  page: number;
+  total_pages: number;
+}
+
+export async function uploadDocument(file: File, is_save_file: boolean): Promise<UploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append('is_save_file', String(is_save_file));
+  return axiosClient.post(`/documents/upload`, formData);
+}
+
+export async function getDocument(documentId: string): Promise<DocumentResponse> {
+  return axiosClient.get(`/documents/${documentId}`);
+}
+
+export async function updateDocumentAIResult(
+  documentId: string,
+  payload: AIResultUpdateRequest
+): Promise<{ message: string; document: DocumentResponse }> {
+  return axiosClient.put(`/documents/${documentId}/ai-result`, payload);
+}
+
+export async function getDashboardStats(): Promise<DashboardStatsResponse> {
+  return axiosClient.get(`/documents/stats`);
+}
+
 export async function getRecentDocuments(limit: number = 5): Promise<DocumentResponse[]> {
-  return request<DocumentResponse[]>(`${DOCUMENT_API}?limit=${limit}`);
+  return axiosClient.get(`/documents?limit=${limit}`);
+}
+
+// Tìm kiếm tài liệu
+export async function searchDocuments(params: SearchParams): Promise<PaginatedDocumentResponse> {
+  const query = new URLSearchParams();
+  if (params.query) query.append('q', params.query);
+  if (params.department_id) query.append('department_id', params.department_id);
+  if (params.sort_by) query.append('sort_by', params.sort_by);
+  if (params.page) query.append('page', params.page.toString());
+  if (params.limit) query.append('limit', params.limit.toString());
+  
+  if (params.document_type_ids && params.document_type_ids.length > 0) {
+    params.document_type_ids.forEach(id => query.append('document_type_ids', id));
+  }
+
+  return axiosClient.get(`/documents/search?${query.toString()}`);
+}
+
+export interface DocumentType {
+  id: string;
+  name: string;
+}
+export async function getDocumentTypes(): Promise<DocumentType[]> {
+  return axiosClient.get(`/document-types`);
 }

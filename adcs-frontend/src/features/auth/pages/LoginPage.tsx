@@ -1,4 +1,3 @@
-// src/features/auth/pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
@@ -10,32 +9,27 @@ const LoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAuthSubmit = async (formData: any, isLogin: boolean) => {
+  const handleAuthSubmit = async (formData: any) => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      if (isLogin) {
-        const response = await authAPI.login(formData.email, formData.password);
-        
-        const storage = formData.remember ? localStorage : sessionStorage;
-        
-        storage.setItem('access_token', response.access_token);
-        if (response.refresh_token) {
-           storage.setItem('refresh_token', response.refresh_token);
-        }
-        storage.setItem('user', JSON.stringify(response.user));
-
-        navigate('/dashboard');
-      } else {
-        await authAPI.register(formData.name, formData.email, formData.password);
-        alert('Yêu cầu cấp tài khoản đã được gửi đến Admin!');
-        window.location.reload();
+      const response = await authAPI.login(formData.email, formData.password);
+      
+      // Xử lý ghi nhớ đăng nhập
+      const storage = formData.remember ? localStorage : sessionStorage;
+      
+      storage.setItem('access_token', response.access_token);
+      if (response.refresh_token) {
+         storage.setItem('refresh_token', response.refresh_token);
       }
+      storage.setItem('user', JSON.stringify(response.user));
+
+      navigate('/dashboard');
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.detail) {
          setErrorMsg(error.response.data.detail);
       } else {
-         setErrorMsg('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+         setErrorMsg('Tài khoản hoặc mật khẩu không chính xác.');
       }
     } finally {
       setIsLoading(false);
