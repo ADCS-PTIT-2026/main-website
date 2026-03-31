@@ -1,27 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import UserFormPage from './UserFormPage';
 import { type ApiUser, userApi } from '../../../api/user';
-
-const ROLE_LABELS: Record<string, string> = {
-  role_admin: 'Admin',
-  role_editor: 'Lãnh đạo học viện',
-  role_viewer: 'Cán bộ học viện',
-  role_clerk: 'Document Clerk',
-};
-
-const DEPT_LABELS: Record<string, string> = {
-  dept_1: 'Phòng Kế toán',
-  dept_2: 'Khối Tài chính',
-  dept_3: 'Phòng IT',
-  dept_4: 'Ban Văn thư',
-};
-
-const ROLE_STYLES: Record<string, string> = {
-  role_admin: 'bg-primary/5 text-primary border-primary/10',
-  role_editor: 'bg-slate-100 text-slate-600 border-slate-200',
-  role_viewer: 'bg-slate-100 text-slate-600 border-slate-200',
-  role_clerk: 'bg-slate-100 text-slate-600 border-slate-200',
-};
+import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from '../../../api/department';
+import { rolePermissionApi, type Role } from '../../../api/rolePermission';
 
 interface UserFormData {
   display_name: string;
@@ -57,6 +38,37 @@ const getInitials = (value: string) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
+const getRoleStyle = (roleName: string) => {
+  const lowerName = roleName.toLowerCase();
+  if (lowerName.includes('admin')) return 'bg-primary/5 text-primary border-primary/10';
+  if (lowerName.includes('editor') || lowerName.includes('lãnh đạo')) return 'bg-blue-50 text-blue-700 border-blue-200';
+  return 'bg-slate-100 text-slate-600 border-slate-200';
+};
+
+export interface FlatDepartment extends DepartmentResponse {
+  isRoot: boolean;
+  isLeaf: boolean;
+}
+
+const flattenDepartments = (nodes: DepartmentTreeResponse[]): FlatDepartment[] => {
+  let list: FlatDepartment[] = [];
+  
+  nodes.forEach((node) => {
+    const { children, ...rest } = node;
+    
+    const isRoot = !rest.parent_id; 
+    const isLeaf = !children || children.length === 0;
+
+    list.push({ ...rest, isRoot, isLeaf });
+
+    if (children && children.length > 0) {
+      list = list.concat(flattenDepartments(children));
+    }
+  });
+  
+  return list;
+};
+
 const UserManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
@@ -66,7 +78,11 @@ const UserManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // States lưu trữ dữ liệu từ API
   const [users, setUsers] = useState<ApiUser[]>([]);
+  const [departments, setDepartments] = useState<FlatDepartment[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -76,22 +92,48 @@ const UserManagementPage: React.FC = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<ApiUser | null>(null);
 
-  const loadUsers = async () => {
+  // Fetch toàn bộ dữ liệu song song (Users, Depts, Roles)
+  const loadAllData = async () => {
     setIsLoading(true);
     setError('');
     try {
-      const data = await userApi.getAll();
-      setUsers(data);
+      const [usersData, deptTreeData, rolesData] = await Promise.all([
+        userApi.getAll(),
+        departmentApi.getAll(),
+        rolePermissionApi.listRoles()
+      ]);
+      
+      // console.log('Fetched Users:', usersData);
+      // console.log('Fetched Departments (Tree):', deptTreeData);
+      // console.log('Fetched Roles:', rolesData);
+
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      setDepartments(Array.isArray(deptTreeData) ? flattenDepartments(deptTreeData) : []);
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+      
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Không thể tải danh sách người dùng.');
+      setError(err?.response?.data?.detail || err?.message || 'Không thể tải dữ liệu từ máy chủ.');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadUsers();
+    loadAllData();
   }, []);
+
+  // Map nhanh ID -> Tên
+  const deptMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    departments.forEach(d => { map[d.department_id] = d.name; });
+    return map;
+  }, [departments]);
+
+  const roleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    roles.forEach(r => { map[r.role_id] = r.name; });
+    return map;
+  }, [roles]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -102,26 +144,27 @@ const UserManagementPage: React.FC = () => {
     else document.body.style.overflow = '';
   }, [isDeleteOpen]);
 
-  useEffect(() => {
-    const totalPagesNow = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
-    if (currentPage > totalPagesNow) setCurrentPage(totalPagesNow);
-  }, [currentPage, pageSize]);
-
+  // Ánh xạ dữ liệu User sang cấu trúc hiển thị UI
   const userRows: UserRow[] = useMemo(() => {
+    if (!users || !Array.isArray(users)) return [];
+
     return users.map((u) => {
-      const isActive = u.is_active;
+      const isActive = u?.is_active;
+      const roleName = roleMap[u?.role_id || ''] || 'Chưa gán';
+      const deptName = deptMap[u?.department_id || ''] || 'Chưa gán';
+
       return {
         raw: u,
-        id: u.user_id,
-        avatarStr: getInitials(u.username),
+        id: u?.user_id || Math.random().toString(), // Fallback tránh lỗi key
+        avatarStr: getInitials(u?.username || ''),
         avatarBg: 'bg-slate-100 text-slate-500',
-        name: u.username,
-        deptId: u.department_id || '',
-        dept: DEPT_LABELS[u.department_id || ''] || 'Chưa gán',
-        email: u.email,
-        roleId: u.role_id || '',
-        role: ROLE_LABELS[u.role_id || ''] || 'Chưa gán',
-        roleStyle: ROLE_STYLES[u.role_id || ''] || 'bg-slate-100 text-slate-600 border-slate-200',
+        name: u?.username || 'Chưa cập nhật',
+        deptId: u?.department_id || '',
+        dept: deptName,
+        email: u?.email || '',
+        roleId: u?.role_id || '',
+        role: roleName,
+        roleStyle: getRoleStyle(roleName),
         status: isActive ? 'Đang hoạt động' : 'Chờ duyệt',
         statusColor: isActive ? 'emerald' : 'amber',
         statusDotClass: isActive ? 'bg-emerald-500' : 'bg-amber-500',
@@ -130,7 +173,7 @@ const UserManagementPage: React.FC = () => {
           : 'text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20',
       };
     });
-  }, [users]);
+  }, [users, roleMap, deptMap]);
 
   const filteredUsers = userRows.filter((user) => {
     const matchName = user.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -165,7 +208,7 @@ const UserManagementPage: React.FC = () => {
       await userApi.remove(userToDelete.user_id);
       setIsDeleteOpen(false);
       setUserToDelete(null);
-      await loadUsers();
+      await loadAllData();
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Xóa người dùng thất bại.');
     }
@@ -180,7 +223,7 @@ const UserManagementPage: React.FC = () => {
               isEditMode={!!selectedUser}
               userId={selectedUser?.user_id || null}
               initialData={selectedUser ? mapUserToFormData(selectedUser) : null}
-              onSaved={loadUsers}
+              onSaved={loadAllData}
               onClose={() => {
                 setIsFormOpen(false);
                 setSelectedUser(null);
@@ -247,10 +290,14 @@ const UserManagementPage: React.FC = () => {
                 className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
               >
                 <option value="">Tất cả phòng ban</option>
-                <option value="dept_1">Phòng Kế toán</option>
-                <option value="dept_2">Khối Tài chính</option>
-                <option value="dept_3">Phòng IT</option>
-                <option value="dept_4">Ban Văn thư</option>
+                
+                {(departments || [])
+                  .filter(dept => dept?.isRoot || dept?.isLeaf)
+                  .map((dept) => (
+                    <option key={dept.department_id} value={dept.department_id}>
+                      {dept.name}
+                    </option>
+                ))}
               </select>
             </div>
 
@@ -264,10 +311,11 @@ const UserManagementPage: React.FC = () => {
                 className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
               >
                 <option value="">Tất cả Role</option>
-                <option value="role_admin">Admin</option>
-                <option value="role_editor">Lãnh đạo học viện</option>
-                <option value="role_viewer">Cán bộ học viện</option>
-                <option value="role_clerk">Document Clerk</option>
+                {(roles || []).map((role) => (
+                  <option key={role.role_id} value={role.role_id}>
+                    {role.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -292,7 +340,7 @@ const UserManagementPage: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                   <tr>
-                    {['STT', 'Họ tên', 'Phòng ban', 'Email', 'Roles', 'Trạng thái tài khoản', 'Hành động'].map((header, idx) => (
+                    {['STT', 'Họ tên', 'Phòng ban', 'Email', 'Roles', 'Trạng thái', 'Hành động'].map((header, idx) => (
                       <th
                         key={idx}
                         className={`px-6 py-4 text-[12px] font-bold text-slate-500 uppercase tracking-wider ${
@@ -306,6 +354,13 @@ const UserManagementPage: React.FC = () => {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={7} className="text-center py-10 text-slate-400">
+                        <span className="material-symbols-outlined animate-spin text-3xl">sync</span>
+                      </td>
+                    </tr>
+                  )}
                   {!isLoading && filteredUsers.length === 0 && (
                     <tr>
                       <td colSpan={7} className="text-center py-10 text-slate-400">
@@ -314,11 +369,8 @@ const UserManagementPage: React.FC = () => {
                     </tr>
                   )}
 
-                  {paginatedUsers.map((user, index) => (
-                    <tr
-                      key={user.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                    >
+                  {!isLoading && paginatedUsers.map((user, index) => (
+                    <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-4 text-sm text-slate-500">
                         {(currentPage - 1) * pageSize + index + 1}
                       </td>
@@ -386,14 +438,15 @@ const UserManagementPage: React.FC = () => {
 
             <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
               <span className="text-xs text-slate-500 font-medium">
-                Hiển thị {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredUsers.length)} trong số {filteredUsers.length} người dùng
+                Hiển thị {filteredUsers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, filteredUsers.length)} trong số {filteredUsers.length} người dùng
               </span>
 
               <div className="flex items-center gap-2">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((prev) => prev - 1)}
-                  className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all outline-none"
+                  className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                 </button>
@@ -402,10 +455,10 @@ const UserManagementPage: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
+                    className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-all outline-none ${
                       currentPage === page
-                        ? 'bg-primary text-white'
-                        : 'border border-slate-200 text-slate-600'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'border border-slate-200 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
                     {page}
@@ -413,9 +466,9 @@ const UserManagementPage: React.FC = () => {
                 ))}
 
                 <button
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || totalPages === 0}
                   onClick={() => setCurrentPage((prev) => prev + 1)}
-                  className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all outline-none"
+                  className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                 </button>
@@ -425,6 +478,7 @@ const UserManagementPage: React.FC = () => {
         </main>
       )}
 
+      {/* Modal Xóa người dùng */}
       {isDeleteOpen && (
         <div
           onClick={() => setIsDeleteOpen(false)}
@@ -454,14 +508,14 @@ const UserManagementPage: React.FC = () => {
                   setIsDeleteOpen(false);
                   setUserToDelete(null);
                 }}
-                className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50"
+                className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors"
               >
                 Hủy
               </button>
 
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold"
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold outline-none transition-colors"
               >
                 Xóa
               </button>

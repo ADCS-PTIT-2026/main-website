@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import toast from 'react-hot-toast';
 import {
   getDocument,
-  getDocumentAIResult,
   uploadDocument,
   updateDocumentAIResult,
   type DocumentResponse,
-  type DocumentAIResultResponse,
 } from "../../../api/document";
+import { DocumentPreview } from "../components/DocumentPreview";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "—";
@@ -20,23 +20,24 @@ const DocumentPage: React.FC = () => {
 
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [documentDetail, setDocumentDetail] = useState<DocumentResponse | null>(null);
-  const [aiResult, setAiResult] = useState<DocumentAIResultResponse | null>(null);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
 
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
   const loadDocument = async (documentId: string) => {
     setLoading(true);
     setError("");
     try {
-      const [doc, ai] = await Promise.all([
-        getDocument(documentId),
-        getDocumentAIResult(documentId),
-      ]);
+      const doc = await Promise.resolve(getDocument(documentId));
       setDocumentDetail(doc);
-      setAiResult(ai);
       setActiveDocumentId(documentId);
     } catch (e: any) {
       setError(e?.message || "Không thể tải dữ liệu tài liệu");
@@ -49,23 +50,64 @@ const DocumentPage: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
-    setError("");
+    // Tạo preview ngay để người dùng thấy dưới nền
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    setFileType(extension);
 
-    try {
-      const res = await uploadDocument(file);
-      await loadDocument(res.document_id);
-    } catch (e: any) {
-      setError(e?.message || "Upload thất bại");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
+    // Lưu file vào state tạm và hiển thị modal
+    setPendingFile(file);
+    setShowSaveModal(true);
+
+    // Reset input để có thể chọn lại cùng 1 file nếu cần
+    e.target.value = "";
   };
+
+  const handleConfirmUpload = async (is_save_file: boolean) => {
+  if (!pendingFile) return;
+
+  setShowSaveModal(false);
+  setUploading(true);
+  setError("");
+  
+  const toastId = toast.loading("Đang đẩy file sang AI Service xử lý...");
+
+  try {
+    const res = await uploadDocument(pendingFile, is_save_file);
+    await loadDocument(res.document_id);
+    
+    toast.success("Đã xử lý thông tin xong!", { id: toastId });
+    
+  } catch (e: any) {
+    setError(e?.message || "Upload thất bại");
+    setPreviewUrl(null);
+    setFileType(null);
+    toast.error("Quá trình xử lý AI thất bại", { id: toastId });
+  } finally {
+    setUploading(false);
+    setPendingFile(null);
+  }
+};
+
+  const handleCancelUpload = () => {
+    setShowSaveModal(false);
+    setPendingFile(null);
+    setPreviewUrl(null);
+    setFileType(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleApprove = async () => {
     if (!activeDocumentId) return;
@@ -74,10 +116,10 @@ const DocumentPage: React.FC = () => {
     setError("");
     try {
       await updateDocumentAIResult(activeDocumentId, {
-        status: "approved", // đổi theo status mà backend của bạn đang dùng
-        assigned_department_id: aiResult?.assigned_department_id ?? documentDetail?.assigned_department_id ?? null,
-        confidence: documentDetail?.confidence ?? aiResult?.confidence ?? null,
-        summary: documentDetail?.summary ?? aiResult?.summary ?? null,
+        status: "approved",
+        assigned_department_id: documentDetail?.assigned_department_id ?? null,
+        confidence: documentDetail?.confidence ?? null,
+        summary: documentDetail?.summary ?? null,
       });
 
       await loadDocument(activeDocumentId);
@@ -88,46 +130,24 @@ const DocumentPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // Nếu muốn mở sẵn 1 document thì gọi loadDocument(id) ở đây
-  }, []);
-
   const extractedRows = useMemo(() => {
-    return [
-      {
-        label: "Số văn bản",
-        value: documentDetail?.document_number ?? aiResult?.so_ky_hieu ?? "—",
-      },
-      {
-        label: "Ngày ký / ban hành",
-        value: formatDate(documentDetail?.signed_date ?? aiResult?.ngay_van_ban),
-      },
-      {
-        label: "Loại văn bản",
-        value: aiResult?.loai_van_ban_text ?? documentDetail?.title ?? "—",
-      },
-      {
-        label: "Đơn vị ban hành",
-        value: aiResult?.don_vi_ban_hanh ?? "—",
-      },
-      {
-        label: "Trích yếu",
-        value: aiResult?.trich_yeu ?? "—",
-      },
-      {
-        label: "Phòng ban được gán",
-        value: aiResult?.assigned_department_id ?? documentDetail?.assigned_department_id ?? "—",
-      },
-      {
-        label: "Độ tin cậy",
-        value: `${Math.round(((documentDetail?.confidence ?? aiResult?.confidence ?? 0) * 100))}%`,
-      },
-      {
-        label: "Trạng thái",
-        value: documentDetail?.status ?? aiResult?.status ?? "—",
-      },
-    ];
-  }, [documentDetail, aiResult]);
+  return [
+    { label: "Số văn bản", value: documentDetail?.document_number ?? "—" },
+    { label: "Ngày ký / ban hành", value: formatDate(documentDetail?.signed_date) },
+    { label: "Loại văn bản", value: documentDetail?.title ?? "—" },
+    { label: "Đơn vị ban hành", value: documentDetail?.don_vi_ban_hanh ?? "—" },
+    { label: "Người ký", value: documentDetail?.nguoi_ky ?? "—" },
+    { label: "Chức vụ", value: documentDetail?.chuc_vu_nguoi_ky ?? "—" },
+    { label: "Độ khẩn", value: documentDetail?.do_khan ?? "—" },
+    { label: "Nơi nhận", value: (documentDetail?.noi_nhan)?.join(", ") ?? "—" },
+    { label: "Căn cứ pháp lý", value: (documentDetail?.can_cu_phap_ly)?.join(", ") ?? "—" },
+    { label: "Yêu cầu hành động", value: documentDetail?.yeu_cau_han_dong ?? "—" },
+    { label: "Phòng ban được gán", value: documentDetail?.assigned_department_id ?? "—" },
+    { label: "Mức tin cậy", value: documentDetail?.muc_tin_cay ?? "—" },
+    { label: "Độ tin cậy", value: `${Math.round(((documentDetail?.confidence ?? 0) * 100))}%` },
+    { label: "Trạng thái", value: documentDetail?.status ?? "—" },
+  ];
+}, [documentDetail]);
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
@@ -146,7 +166,7 @@ const DocumentPage: React.FC = () => {
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept=".pdf,.png,.jpg,.jpeg"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
             onChange={handleUpload}
           />
 
@@ -188,7 +208,7 @@ const DocumentPage: React.FC = () => {
                   <p className="text-sm font-medium">{documentDetail?.title ?? "Document"}</p>
                   <p className="text-xs text-slate-500">ID: {activeDocumentId}</p>
                   <p className="text-xs text-slate-500">
-                    Status: {documentDetail?.status ?? aiResult?.status ?? "—"}
+                    Status: {documentDetail?.status ?? "—"}
                   </p>
                 </div>
               ) : (
@@ -209,17 +229,21 @@ const DocumentPage: React.FC = () => {
             {loading && <span className="text-sm text-primary">Đang tải...</span>}
           </div>
 
-          <div className="aspect-[4/2] w-full rounded-xl border border-primary/10 bg-white dark:bg-slate-800 shadow-sm overflow-hidden flex items-center justify-center relative group">
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-800/80">
-              <span className="material-symbols-outlined text-6xl mb-2 opacity-50">
-                plagiarism
-              </span>
-              <p className="text-sm">
-                {activeDocumentId
-                  ? `Tài liệu đang xem: ${documentDetail?.title ?? activeDocumentId}`
-                  : "Bản xem trước tài liệu đang tải..."}
-              </p>
-            </div>
+          <div className="aspect-[4/5] md:aspect-[4/3] w-full rounded-xl border border-primary/10 bg-white dark:bg-slate-800 shadow-sm overflow-hidden flex items-center justify-center relative group">
+            {previewUrl && fileType ? (
+               <DocumentPreview url={previewUrl} type={fileType} />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-800/80">
+                <span className="material-symbols-outlined text-6xl mb-2 opacity-50">
+                  plagiarism
+                </span>
+                <p className="text-sm">
+                  {activeDocumentId
+                    ? "Đang tải bản xem trước..."
+                    : "Bản xem trước tài liệu..."}
+                </p>
+              </div>
+            )}
           </div>
 
           <aside className="w-full flex flex-col gap-4 overflow-y-auto">
@@ -235,7 +259,7 @@ const DocumentPage: React.FC = () => {
               </div>
 
               <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                {documentDetail?.summary ?? aiResult?.summary ?? "Chưa có summary từ backend."}
+                {documentDetail?.summary ?? "Chưa có summary từ backend."}
               </p>
             </div>
 
@@ -305,6 +329,43 @@ const DocumentPage: React.FC = () => {
           </aside>
         </div>
       </div>
+
+      {showSaveModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">save</span>
+              Xác nhận lưu trữ
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+              Bạn có muốn lưu trữ thông tin của tài liệu <strong className="text-slate-900 dark:text-slate-200">{pendingFile?.name}</strong> vào cơ sở dữ liệu (Vector Database) của hệ thống không?
+            </p>
+            
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={handleCancelUpload}
+                className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors text-sm font-semibold"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => handleConfirmUpload(false)}
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-semibold"
+              >
+                Không lưu
+              </button>
+              <button
+                onClick={() => handleConfirmUpload(true)}
+                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20 transition-colors text-sm font-semibold flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">check</span>
+                Có, lưu lại
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

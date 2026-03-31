@@ -5,7 +5,7 @@ import logo from '../../assets/ptit-logo.png';
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Bảng điều khiển', path: '/dashboard' },
   { icon: 'description', label: 'Xử lý tài liệu', path: '/documents' },
-  // { icon: 'archive', label: 'Kho tài liệu', path: '/archive' },
+  { icon: 'archive', label: 'Kho tài liệu', path: '/document-repository' },
   { icon: 'groups', label: 'Phòng ban', path: '/departments' },
   {
     icon: 'admin_panel_settings',
@@ -131,7 +131,7 @@ const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100 transition-colors">
+        {/* <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100 transition-colors">
           <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden">
             <span className="material-symbols-outlined">person</span>
           </div>
@@ -139,7 +139,7 @@ const Sidebar: React.FC = () => {
             <p className="text-xs font-bold truncate">Admin PTIT</p>
             <p className="text-[10px] text-slate-500 truncate">Quản trị viên</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
   );

@@ -30,33 +30,14 @@ export interface UserStatusPayload {
 }
 
 export const userApi = {
-  getAll: async (): Promise<ApiUser[]> => {
-    const res = await axiosClient.get<ApiUser[]>('/api/users');
-    return res.data;
-  },
+  getAll: (): Promise<ApiUser[]> => axiosClient.get('/users'),
 
-  create: async (payload: UserCreatePayload): Promise<ApiUser> => {
-    const res = await axiosClient.post<ApiUser>('/api/users', payload);
-    return res.data;
-  },
+  create: (payload: UserCreatePayload): Promise<ApiUser> => axiosClient.post('/users', payload),
+  updateInfo: (id: string, payload: UserUpdatePayload): Promise<ApiUser> => axiosClient.put(`/users/${id}`, payload),
 
-  updateInfo: async (id: string, payload: UserUpdatePayload): Promise<ApiUser> => {
-    const res = await axiosClient.put<ApiUser>(`/api/users/${id}`, payload);
-    return res.data;
-  },
+  assign: (id: string, payload: UserAssignPayload): Promise<ApiUser> => axiosClient.put(`/users/${id}/assign`, payload),
 
-  assign: async (id: string, payload: UserAssignPayload): Promise<ApiUser> => {
-    const res = await axiosClient.put<ApiUser>(`/api/users/${id}/assign`, payload);
-    return res.data;
-  },
+  changeStatus: (id: string, payload: UserStatusPayload): Promise<ApiUser> => axiosClient.put(`/users/${id}/status`, payload),
 
-  changeStatus: async (id: string, payload: UserStatusPayload): Promise<ApiUser> => {
-    const res = await axiosClient.put<ApiUser>(`/api/users/${id}/status`, payload);
-    return res.data;
-  },
-
-  remove: async (id: string): Promise<{ message: string }> => {
-    const res = await axiosClient.delete<{ message: string }>(`/api/users/${id}`);
-    return res.data;
-  },
+  remove: (id: string): Promise<{ message: string }> => axiosClient.delete(`/users/${id}`)
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
 
 const DashboardPage: React.FC = () => {
@@ -6,6 +7,8 @@ const DashboardPage: React.FC = () => {
   const [recentDocs, setRecentDocs] = useState<DocumentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -72,7 +75,10 @@ const DashboardPage: React.FC = () => {
           <h1 className="text-3xl font-extrabold tracking-tight">Xin chào, Admin</h1>
           <p className="text-slate-500 mt-1">Dưới đây là thống kê hoạt động của hệ thống AI trong 24h qua.</p>
         </div>
-        <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all">
+        <button 
+          onClick={() => navigate('/documents')}
+          className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all"
+        >
           <span className="material-symbols-outlined text-lg">upload_file</span>
           Tải tài liệu mới
         </button>
@@ -98,9 +104,6 @@ const DashboardPage: React.FC = () => {
 
       {/* Charts & List Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* ... (Giữ nguyên phần Performance Chart Mockup và Urgent Documents như code cũ của bạn) ... */}
-        {/* Để gọn code mình sẽ ẩn bớt đi, bạn copy phần này từ code cũ của bạn nhé */}
         
         {/* Recent Activity Table */}
         <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { userApi } from '../../../api/user';
+import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from '../../../api/department';
+import { rolePermissionApi, type Role } from '../../../api/rolePermission';
 
 interface UserFormData {
   display_name: string;
@@ -19,6 +21,31 @@ interface UserFormPageProps {
   onSaved?: () => void;
 }
 
+// Interface mở rộng để nhận diện Root và Leaf
+export interface FlatDepartment extends DepartmentResponse {
+  isRoot: boolean;
+  isLeaf: boolean;
+}
+
+// Hàm làm phẳng và gán cờ isRoot, isLeaf
+const flattenDepartments = (nodes: DepartmentTreeResponse[]): FlatDepartment[] => {
+  let list: FlatDepartment[] = [];
+  
+  nodes.forEach((node) => {
+    const { children, ...rest } = node;
+    const isRoot = !rest.parent_id; 
+    const isLeaf = !children || children.length === 0;
+
+    list.push({ ...rest, isRoot, isLeaf });
+
+    if (children && children.length > 0) {
+      list = list.concat(flattenDepartments(children));
+    }
+  });
+  
+  return list;
+};
+
 const UserFormPage: React.FC<UserFormPageProps> = ({
   isEditMode = false,
   initialData = null,
@@ -37,6 +64,34 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  // State lưu dữ liệu động
+  const [departments, setDepartments] = useState<FlatDepartment[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  // Fetch danh sách phòng ban và chức danh
+  useEffect(() => {
+    const fetchOptions = async () => {
+      setIsFetchingOptions(true);
+      try {
+        const [deptTreeData, rolesData] = await Promise.all([
+          departmentApi.getAll(),
+          rolePermissionApi.listRoles()
+        ]);
+        
+        setDepartments(flattenDepartments(deptTreeData));
+        setRoles(rolesData);
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách phòng ban/chức danh', error);
+      } finally {
+        setIsFetchingOptions(false);
+      }
+    };
+    
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     if (isEditMode && initialData) {
@@ -62,6 +117,10 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
   ) => {
     const { name, value, type } = e.target;
 
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({ ...prev, [name]: checked }));
@@ -70,8 +129,29 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
     }
   };
 
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!formData.email.trim().toLowerCase().endsWith('@ptit.edu.vn')) {
+      newErrors.email = 'Email phải thuộc tên miền @ptit.edu.vn';
+    }
+
+    if (!isEditMode) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(formData.password)) {
+        newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
+
+    if (!validateForm()) return;
+
     setIsLoading(true);
 
     try {
@@ -97,6 +177,10 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
           username: formData.display_name,
           password: formData.password,
         });
+        
+        // Nếu có chọn role hoặc department khi tạo mới, cần gọi API assign thêm
+        // Lưu ý: Việc lấy userId sau khi tạo tùy thuộc vào response của userApi.create
+        // Nếu backend trả về User sau khi tạo, bạn có thể gọi assign ngay tại đây.
       }
 
       alert(isEditMode ? 'Cập nhật thành công!' : 'Thêm người dùng thành công!');
@@ -141,7 +225,7 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
             <button
               type="submit"
               form="user-form"
-              disabled={isLoading}
+              disabled={isLoading || isFetchingOptions}
               className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-[0_4px_6px_-1px_rgba(213,68,68,0.2)] hover:opacity-90 transition-all active:scale-95 disabled:opacity-70 outline-none"
             >
               {isLoading && (
@@ -182,7 +266,7 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Email công việc <span className="text-primary">*</span>
+                    Email <span className="text-primary">*</span>
                   </label>
                   <input
                     name="email"
@@ -190,9 +274,16 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                    placeholder="anv@company.com"
+                    className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-sm focus:ring-2 transition-all outline-none ${
+                      errors.email 
+                        ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' 
+                        : 'border-slate-200 dark:border-slate-700 focus:ring-primary/20 focus:border-primary'
+                    }`}
+                    placeholder="anv@ptit.edu.vn"
                   />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs font-medium mt-1.5">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -219,9 +310,16 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                      className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-sm focus:ring-2 transition-all outline-none ${
+                        errors.password 
+                          ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' 
+                          : 'border-slate-200 dark:border-slate-700 focus:ring-primary/20 focus:border-primary'
+                      }`}
                       placeholder="Nhập mật khẩu cho tài khoản"
                     />
+                    {errors.password && (
+                      <p className="text-red-500 text-xs font-medium mt-1.5 leading-relaxed">{errors.password}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -245,13 +343,17 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
                       name="department_id"
                       value={formData.department_id}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none outline-none"
+                      disabled={isFetchingOptions}
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none outline-none disabled:opacity-50"
                     >
                       <option value="">-- Chọn phòng ban --</option>
-                      <option value="dept_1">Phòng Kế toán</option>
-                      <option value="dept_2">Khối Tài chính</option>
-                      <option value="dept_3">Phòng IT</option>
-                      <option value="dept_4">Ban Văn thư</option>
+                      {departments
+                        .filter(dept => dept.isRoot || dept.isLeaf)
+                        .map((dept) => (
+                          <option key={dept.department_id} value={dept.department_id}>
+                            {dept.name}
+                          </option>
+                        ))}
                     </select>
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                       expand_more
@@ -268,13 +370,15 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
                       name="role_id"
                       value={formData.role_id}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none outline-none"
+                      disabled={isFetchingOptions}
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none outline-none disabled:opacity-50"
                     >
                       <option value="">-- Chọn nhóm quyền --</option>
-                      <option value="role_admin">Admin</option>
-                      <option value="role_editor">Lãnh đạo học viện</option>
-                      <option value="role_viewer">Cán bộ học viện</option>
-                      <option value="role_clerk">Document Clerk</option>
+                      {roles.map((role) => (
+                        <option key={role.role_id} value={role.role_id}>
+                          {role.name}
+                        </option>
+                      ))}
                     </select>
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                       expand_more

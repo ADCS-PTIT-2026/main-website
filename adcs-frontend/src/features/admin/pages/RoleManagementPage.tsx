@@ -58,6 +58,10 @@ const RoleManagementPage: React.FC = () => {
         rolePermissionApi.getMatrix(),
       ]);
 
+      // console.log("Loaded Roles:", roleData);
+      // console.log("Loaded Permissions:", permData);
+      // console.log("Loaded Matrix:", matrixData);
+
       const mappedRoles: UiRole[] = roleData.map((r, idx) => ({
         role_id: r.role_id,
         name: r.name,
