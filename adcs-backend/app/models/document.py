@@ -11,10 +11,8 @@ class Document(Base):
     
     # --- Định danh hệ thống ---
     document_id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    source_id = Column(String, nullable=True)
-    document_type_id = Column(String, nullable=True)
     assigned_department_id = Column(String, nullable=True)
-    assigned_user_id = Column(String, nullable=True)
+    uploaded_by_user_id = Column(String, nullable=True)
 
     # --- Thông tin trích xuất chi tiết (từ extracted_fields) ---
     so_den = Column(String(255), nullable=True)
@@ -56,27 +54,3 @@ class Document(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    
-    files = relationship("DocumentFile", back_populates="document", cascade="all, delete-orphan")
-
-class DocumentFile(Base):
-    __tablename__ = "document_files"
-
-    file_id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    document_id = Column(String, ForeignKey("documents.document_id", ondelete="CASCADE"))
-    file_name = Column(String)
-    file_path = Column(String)
-    mime_type = Column(String)
-    size_bytes = Column(BigInteger)
-    page_count = Column(Integer)
-    checksum = Column(String)
-    
-    # Các trường OCR
-    ocr_status = Column(String(50), default="Pending")
-    ocr_text = Column(Text)
-    
-    uploaded_by = Column(String, ForeignKey("users.user_id", ondelete="SET NULL"))
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # Quan hệ ngược lại với Document
-    document = relationship("Document", back_populates="files")
