@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import {
   getDocument,
   uploadDocument,
-  updateDocumentAIResult,
+  approveAIResult,
   type DocumentResponse,
 } from "../../../api/document";
 import { DocumentPreview } from "../components/DocumentPreview";
@@ -32,6 +32,9 @@ const DocumentPage: React.FC = () => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState<Partial<DocumentResponse>>({});
+
   const loadDocument = async (documentId: string) => {
     setLoading(true);
     setError("");
@@ -54,17 +57,14 @@ const DocumentPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Tạo preview ngay để người dùng thấy dưới nền
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
     setFileType(extension);
 
-    // Lưu file vào state tạm và hiển thị modal
     setPendingFile(file);
     setShowSaveModal(true);
 
-    // Reset input để có thể chọn lại cùng 1 file nếu cần
     e.target.value = "";
   };
 
@@ -74,6 +74,11 @@ const DocumentPage: React.FC = () => {
   setShowSaveModal(false);
   setUploading(true);
   setError("");
+
+  const isImage = ['pdf', 'png', 'jpg', 'jpeg'].includes(fileType || '');
+    if (isImage) {
+      toast("Thời gian xử lý AI có thể hơi lâu do vấn đề về kích thước file...", { icon: "⏳", duration: 5000 });
+    }
   
   const toastId = toast.loading("Đang đẩy file sang AI Service xử lý...");
 
@@ -109,45 +114,62 @@ const DocumentPage: React.FC = () => {
     };
   }, [previewUrl]);
 
+  const handleFieldChange = (field: string, value: string, isArray?: boolean) => {
+    setEditedData((prev) => ({
+      ...prev,
+      [field]: isArray ? value.split(',').map(s => s.trim()) : value
+    }));
+  };
+
   const handleApprove = async () => {
     if (!activeDocumentId) return;
 
     setSaving(true);
     setError("");
+    const toastId = toast.loading("Đang phê duyệt tài liệu...");
+
     try {
-      await updateDocumentAIResult(activeDocumentId, {
+      await approveAIResult(activeDocumentId, {
+        ...editedData,
+        document_id: activeDocumentId,
         status: "approved",
-        assigned_department_id: documentDetail?.assigned_department_id ?? null,
-        confidence: documentDetail?.confidence ?? null,
-        summary: documentDetail?.summary ?? null,
       });
 
+      toast.success("Phê duyệt tài liệu thành công!", { id: toastId });
+      setIsEditing(false);
       await loadDocument(activeDocumentId);
     } catch (e: any) {
       setError(e?.message || "Không thể cập nhật tài liệu");
+      toast.error("Phê duyệt thất bại", { id: toastId });
     } finally {
       setSaving(false);
     }
   };
 
   const extractedRows = useMemo(() => {
+    const data = isEditing ? editedData : documentDetail;
+    
+    // Hàm xử lý hiển thị khoảng trắng nếu đang edit, hoặc dấu — nếu chỉ xem
+    const getValue = (val: any) => val ?? (isEditing ? "" : "—");
+    const getArrayValue = (arr: any) => arr ? arr.join(", ") : (isEditing ? "" : "—");
+
   return [
-    { label: "Số văn bản", value: documentDetail?.document_number ?? "—" },
-    { label: "Ngày ký / ban hành", value: formatDate(documentDetail?.signed_date) },
-    { label: "Loại văn bản", value: documentDetail?.title ?? "—" },
-    { label: "Đơn vị ban hành", value: documentDetail?.don_vi_ban_hanh ?? "—" },
-    { label: "Người ký", value: documentDetail?.nguoi_ky ?? "—" },
-    { label: "Chức vụ", value: documentDetail?.chuc_vu_nguoi_ky ?? "—" },
-    { label: "Độ khẩn", value: documentDetail?.do_khan ?? "—" },
-    { label: "Nơi nhận", value: (documentDetail?.noi_nhan)?.join(", ") ?? "—" },
-    { label: "Căn cứ pháp lý", value: (documentDetail?.can_cu_phap_ly)?.join(", ") ?? "—" },
-    { label: "Yêu cầu hành động", value: documentDetail?.yeu_cau_han_dong ?? "—" },
-    { label: "Phòng ban được gán", value: documentDetail?.assigned_department_id ?? "—" },
-    { label: "Mức tin cậy", value: documentDetail?.muc_tin_cay ?? "—" },
-    { label: "Độ tin cậy", value: `${Math.round(((documentDetail?.confidence ?? 0) * 100))}%` },
-    { label: "Trạng thái", value: documentDetail?.status ?? "—" },
-  ];
-}, [documentDetail]);
+      { label: "Số văn bản", value: getValue(data?.document_number), field: "document_number" },
+      { label: "Ngày ký / ban hành", value: isEditing ? (data?.signed_date || "") : formatDate(data?.signed_date), field: "signed_date", type: "date" },
+      { label: "Loại văn bản", value: getValue(data?.title), field: "title" },
+      { label: "Đơn vị ban hành", value: getValue(data?.don_vi_ban_hanh), field: "don_vi_ban_hanh" },
+      { label: "Người ký", value: getValue(data?.nguoi_ky), field: "nguoi_ky" },
+      { label: "Chức vụ", value: getValue(data?.chuc_vu_nguoi_ky), field: "chuc_vu_nguoi_ky" },
+      { label: "Độ khẩn", value: getValue(data?.do_khan), field: "do_khan" },
+      { label: "Nơi nhận", value: getArrayValue(data?.noi_nhan), field: "noi_nhan", isArray: true },
+      { label: "Căn cứ pháp lý", value: getArrayValue(data?.can_cu_phap_ly), field: "can_cu_phap_ly", isArray: true },
+      { label: "Yêu cầu hành động", value: getValue(data?.yeu_cau_han_dong), field: "yeu_cau_han_dong" },
+      { label: "Phòng ban được gán", value: getValue(data?.assigned_department_id), field: "assigned_department_id" },
+      { label: "Mức tin cậy", value: data?.muc_tin_cay ?? "—", readonly: true },
+      { label: "Độ tin cậy", value: `${Math.round(((data?.confidence ?? 0) * 100))}%`, readonly: true },
+      { label: "Trạng thái", value: data?.status ?? "—", readonly: true },
+    ];
+  }, [documentDetail, editedData, isEditing]);
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
@@ -258,9 +280,18 @@ const DocumentPage: React.FC = () => {
                 </span>
               </div>
 
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                {documentDetail?.summary ?? "Chưa có summary từ backend."}
-              </p>
+              {isEditing ? (
+                 <textarea
+                   className="w-full h-24 p-2 text-sm border rounded-lg focus:ring-1 focus:ring-primary outline-none text-slate-700 dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700"
+                   value={editedData?.summary || ""}
+                   onChange={(e) => handleFieldChange("summary", e.target.value)}
+                   placeholder="Nhập tóm tắt..."
+                 />
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {documentDetail?.summary ?? "Chưa có summary từ backend."}
+                </p>
+              )}
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm flex-1">
@@ -269,8 +300,11 @@ const DocumentPage: React.FC = () => {
                   <span className="material-symbols-outlined text-lg">database</span>
                   Dữ liệu trích xuất
                 </h3>
-                <button className="text-primary text-xs font-semibold hover:underline">
-                  Sửa tất cả
+                <button 
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="text-primary text-xs font-semibold hover:underline"
+                >
+                  {isEditing ? "Hủy sửa" : "Sửa tất cả"}
                 </button>
               </div>
 
@@ -278,7 +312,7 @@ const DocumentPage: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-slate-50 dark:bg-slate-800/60">
                     <tr>
-                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 w-1/3">
                         Trường
                       </th>
                       <th className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -293,7 +327,17 @@ const DocumentPage: React.FC = () => {
                           {row.label}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-900 dark:text-slate-100">
-                          {row.value}
+                          {isEditing && !row.readonly && row.field ? (
+                             <input
+                               type={row.type || "text"}
+                               value={row.value as string}
+                               onChange={(e) => handleFieldChange(row.field!, e.target.value, row.isArray)}
+                               placeholder={`Nhập ${row.label.toLowerCase()}...`}
+                               className="w-full bg-transparent border-b border-primary/30 focus:border-primary outline-none px-1 py-0.5 text-sm"
+                             />
+                          ) : (
+                             row.value
+                          )}
                         </td>
                       </tr>
                     ))}

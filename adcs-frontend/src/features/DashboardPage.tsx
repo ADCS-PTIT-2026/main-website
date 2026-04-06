@@ -1,20 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
+import axiosClient from '../api/axiosClient';
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
   const [recentDocs, setRecentDocs] = useState<DocumentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // State quản lý trạng thái nút Telegram
+  const [isConnectingTelegram, setIsConnectingTelegram] = useState(false);
 
+  const [userName, setUserName] = useState<string>('Người dùng');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Lấy thông tin user từ localStorage khi component được mount
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.name) {
+          setUserName(parsedUser.name);
+        }
+      } catch (error) {
+        console.error('Lỗi khi đọc thông tin người dùng:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Gọi song song 2 API để lấy thống kê và danh sách tài liệu
         const [statsData, docsData] = await Promise.all([
           getDashboardStats(),
           getRecentDocuments(5)
@@ -33,7 +53,24 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Hàm helper để map status từ DB sang UI (màu sắc, icon)
+  const handleConnectTelegram = async () => {
+    setIsConnectingTelegram(true);
+    try {
+      const response: any = await axiosClient.get('/users/connect_to_telegram');
+
+      if (response && response.link) {
+        window.open(response.link, '_blank');
+      } else {
+        alert('Không tìm thấy link kết nối. Vui lòng kiểm tra lại cấu hình Bot.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.detail || 'Không thể lấy thông tin kết nối Telegram lúc này.');
+    } finally {
+      setIsConnectingTelegram(false);
+    }
+  };
+
   const getStatusUI = (status: string | null | undefined) => {
     switch (status?.toLowerCase()) {
       case 'success':
@@ -51,7 +88,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Cấu hình mảng hiển thị dựa trên dữ liệu thật
   const displayStats = [
     { title: 'Tổng tài liệu', value: stats?.total_documents?.toLocaleString() || '0', icon: 'description', trend: 'Cập nhật', color: 'blue', trendColor: 'emerald' },
     { title: 'Đang xử lý', value: stats?.pending_documents?.toString() || '0', icon: 'pending_actions', trend: 'Cần xử lý', color: 'amber', trendColor: 'amber' },
@@ -72,16 +108,33 @@ const DashboardPage: React.FC = () => {
       {/* Welcome Message */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Xin chào, Admin</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Xin chào, {userName}</h1>
           <p className="text-slate-500 mt-1">Dưới đây là thống kê hoạt động của hệ thống AI trong 24h qua.</p>
         </div>
-        <button 
-          onClick={() => navigate('/documents')}
-          className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all"
-        >
-          <span className="material-symbols-outlined text-lg">upload_file</span>
-          Tải tài liệu mới
-        </button>
+        
+        {/* ACTION BUTTONS */}
+        <div className="flex items-center gap-3">
+          {/* Nút Kết nối Telegram */}
+          <button 
+            onClick={handleConnectTelegram}
+            disabled={isConnectingTelegram}
+            className="bg-[#2AABEE] hover:bg-[#229ED9] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#2AABEE]/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <span className={`material-symbols-outlined text-lg ${isConnectingTelegram ? 'animate-spin' : ''}`}>
+              {isConnectingTelegram ? 'progress_activity' : 'send'}
+            </span>
+            {isConnectingTelegram ? 'Đang lấy link...' : 'Kết nối Telegram'}
+          </button>
+
+          {/* Nút Tải tài liệu */}
+          <button 
+            onClick={() => navigate('/documents')}
+            className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all"
+          >
+            <span className="material-symbols-outlined text-lg">upload_file</span>
+            Tải tài liệu mới
+          </button>
+        </div>
       </div>
 
       {/* Statistics Grid */}
@@ -126,7 +179,6 @@ const DashboardPage: React.FC = () => {
                 ) : (
                   recentDocs.map((doc) => {
                     const uiConfig = getStatusUI(doc.status);
-                    // Dùng title nếu có, nếu không thì dùng document_id cắt ngắn
                     const displayName = doc.title || `Doc_${doc.document_id.substring(0,8)}`;
                     
                     return (

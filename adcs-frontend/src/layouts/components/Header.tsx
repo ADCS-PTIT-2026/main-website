@@ -1,6 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Header: React.FC = () => {
+  // Tạo state để lưu tên người dùng, mặc định là 'Người dùng'
+  const [userName, setUserName] = useState<string>('Người dùng');
+
+  useEffect(() => {
+    // Lấy thông tin user từ localStorage khi component được mount
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        // Nếu parse thành công và có trường name, cập nhật state
+        if (parsedUser && parsedUser.name) {
+          setUserName(parsedUser.name);
+        }
+      } catch (error) {
+        console.error('Lỗi khi đọc thông tin người dùng:', error);
+      }
+    }
+  }, []);
+
   return (
     <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-primary/5 px-8 py-4 flex items-center justify-between">
       
@@ -30,14 +50,17 @@ const Header: React.FC = () => {
           
           {/* Avatar */}
           <div className="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden">
-            {/* Nếu có ảnh thì dùng <img src=... /> */}
-            <span className="material-symbols-outlined">person</span>
+            {/* Lấy chữ cái đầu tiên của tên làm Avatar */}
+            <span className="font-bold uppercase">
+              {userName.charAt(0)}
+            </span>
           </div>
 
           {/* Name */}
           <div className="text-left">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Admin PTIT
+              {/* Đã thay 'Admin PTIT' bằng biến userName */}
+              {userName}
             </p>
           </div>
 

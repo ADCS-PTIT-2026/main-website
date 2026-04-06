@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { searchDocuments, getDocumentTypes, type DocumentResponse, type DocumentType } from '../../../api/document';
-import { departmentApi, type DepartmentResponse } from '../../../api/department';
-
-const flattenDepartments = (nodes: any[]): DepartmentResponse[] => {
-  let list: DepartmentResponse[] = [];
-  nodes.forEach((node) => {
-    const { children, ...rest } = node;
-    list.push(rest);
-    if (children && children.length > 0) {
-      list = list.concat(flattenDepartments(children));
-    }
-  });
-  return list;
-};
 
 const getFileIconUI = (document: DocumentResponse) => {
   const type = document.loai_van_ban_text?.toLowerCase() || '';
@@ -22,16 +9,16 @@ const getFileIconUI = (document: DocumentResponse) => {
 };
 
 const DocumentRepositoryPage: React.FC = () => {
-  const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
 
   // --- STATES QUẢN LÝ TÌM KIẾM & BỘ LỌC ---
   const [searchInput, setSearchInput] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
-  const [selectedDept, setSelectedDept] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'confidence' | 'newest'>('confidence');
   const [category, setCategory] = useState<'all' | 'promulgated' | 'recent'>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // --- STATES DỮ LIỆU & PHÂN TRANG ---
   const [documents, setDocuments] = useState<DocumentResponse[]>([]);
@@ -43,11 +30,9 @@ const DocumentRepositoryPage: React.FC = () => {
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const [deptTree, typesData] = await Promise.all([
-          departmentApi.getAll(),
+        const [typesData] = await Promise.all([
           getDocumentTypes().catch(() => [])
         ]);
-        setDepartments(flattenDepartments(deptTree));
         setDocTypes(typesData);
       } catch (error) {
         console.error("Lỗi tải bộ lọc:", error);
@@ -62,17 +47,23 @@ const DocumentRepositoryPage: React.FC = () => {
     try {
       const response = await searchDocuments({
         query: activeQuery,
-        department_id: selectedDept || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
         document_type_ids: selectedTypes.length > 0 ? selectedTypes : undefined,
         sort_by: sortBy,
         page: currentPage,
         limit: 10,
       });
-      setDocuments(response.data);
-      setTotalItems(response.total);
-      setTotalPages(response.total_pages);
+      
+      // Xử lý mapping dựa theo response trả về
+      const resultData = response.data || [];
+      setDocuments(resultData);
+      // Gán fallback nếu API mới ko có phân trang
+      setTotalItems(response.total ?? resultData.length);
+      setTotalPages(response.total_pages ?? 1);
     } catch (error) {
       console.error("Lỗi tìm kiếm tài liệu:", error);
+      setDocuments([]); // Reset list khi lỗi
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +71,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [activeQuery, selectedDept, selectedTypes, sortBy, currentPage, category]);
+  }, [activeQuery, selectedTypes, sortBy, currentPage, category, startDate, endDate]);
 
   const handleSearchSubmit = () => {
     setCurrentPage(1);
@@ -143,10 +134,21 @@ const DocumentRepositoryPage: React.FC = () => {
               {/* Ngày ban hành */}
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">NGÀY BAN HÀNH</label>
-                <button className="flex h-10 w-full items-center justify-between rounded-lg bg-slate-100 dark:bg-slate-800 px-3 text-sm outline-none">
-                  <span>Chọn khoảng ngày</span>
-                  <span className="material-symbols-outlined">calendar_today</span>
-                </button>
+                <div className="flex flex-col gap-2">
+                  <input 
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                    className="flex h-10 w-full items-center justify-between rounded-lg bg-slate-100 dark:bg-slate-800 px-3 text-sm outline-none border-transparent focus:border-primary focus:ring-0 text-slate-600 dark:text-slate-300"
+                  />
+                  <span className="text-center text-xs text-slate-400">Đến</span>
+                  <input 
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                    className="flex h-10 w-full items-center justify-between rounded-lg bg-slate-100 dark:bg-slate-800 px-3 text-sm outline-none border-transparent focus:border-primary focus:ring-0 text-slate-600 dark:text-slate-300"
+                  />
+                </div>
               </div>
 
               {/* Loại văn bản từ API */}
@@ -168,21 +170,6 @@ const DocumentRepositoryPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              {/* Phòng ban từ API */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Phòng ban xử lý</label>
-                <select 
-                  value={selectedDept}
-                  onChange={(e) => {setSelectedDept(e.target.value); setCurrentPage(1);}}
-                  className="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-sm focus:ring-primary outline-none"
-                >
-                  <option value="">Tất cả phòng ban</option>
-                  {departments.map(dept => (
-                    <option key={dept.department_id} value={dept.department_id}>{dept.name}</option>
-                  ))}
-                </select>
-              </div>
             </div>
           </div>
         </aside>
@@ -248,8 +235,6 @@ const DocumentRepositoryPage: React.FC = () => {
             ) : (
               documents.map(doc => {
                 const ui = getFileIconUI(doc);
-                // Tìm tên phòng ban hiển thị
-                const deptName = departments.find(d => d.department_id === doc.assigned_department_id)?.name || 'Chưa phân bổ';
 
                 return (
                   <div key={doc.document_id} className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-primary/5 hover:border-primary/20 hover:shadow-md transition-all group">
@@ -272,9 +257,6 @@ const DocumentRepositoryPage: React.FC = () => {
                             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                               <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <span className="material-symbols-outlined text-sm">event</span> {formatDate(doc.ngay_van_ban)}
-                              </span>
-                              <span className="text-xs text-slate-400 flex items-center gap-1 max-w-[200px] truncate">
-                                <span className="material-symbols-outlined text-sm">apartment</span> {deptName}
                               </span>
                               {doc.so_ky_hieu && (
                                 <span className="text-xs text-slate-400 flex items-center gap-1">
