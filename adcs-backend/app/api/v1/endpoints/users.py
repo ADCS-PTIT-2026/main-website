@@ -7,10 +7,12 @@ from app.schemas.user import (
     UserResponse, UserCreate, UserUpdate, 
     UserAssign, UserStatus, ActionResponse
 )
+from app.models.user import User
+from app.models.telegram_bot import Bot
 from app.crud import user as crud_user
 from app.services.user_service import create_new_user
 
-from app.core.dependency import RoleChecker
+from app.core.dependency import RoleChecker, get_current_user
 
 router = APIRouter(prefix="", tags=["Users"])
 require_admin = RoleChecker(['admin'])
@@ -62,3 +64,25 @@ def delete_user_account(id: str, db: Session = Depends(get_db)):
     
     crud_user.delete_user(db, user)
     return {"message": "Đã xóa tài khoản thành công"}
+
+@router.get("/connect_to_telegram")
+def get_telegram_link(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Tạo link Deep Linking đến Telegram Bot kèm theo user_id.
+    """
+    bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
+    
+    if not bot:
+        raise HTTPException(status_code=404, detail="Chưa cấu hình Telegram Bot trong hệ thống")
+
+    payload = str(current_user.user_id)
+
+    deep_link = f"https://t.me/{bot.name}?start={payload}"
+    
+    return {
+        "bot_name": bot.name,
+        "link": deep_link
+    }
