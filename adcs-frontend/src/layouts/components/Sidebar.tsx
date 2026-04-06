@@ -13,7 +13,7 @@ const NAV_ITEMS = [
     children: [
       { label: 'Tài khoản', path: '/admin/users' },
       { label: 'Nhóm quyền', path: '/admin/roles' },
-      // { label: 'AI Configuration', path: '/admin/ai-config' },
+      { label: 'AI Configuration', path: '/admin/ai-config' },
     ],
   },
 ];

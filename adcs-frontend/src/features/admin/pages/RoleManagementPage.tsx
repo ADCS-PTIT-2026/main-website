@@ -160,7 +160,7 @@ const RoleManagementPage: React.FC = () => {
       } else if (roleMode === "edit" && selectedRole) {
         const updated = await rolePermissionApi.updateRole(selectedRole.role_id, { name, description });
         setRoles((prev) =>
-          prev.map((r, idx) =>
+          prev.map((r) =>
             r.role_id === selectedRole.role_id
               ? { ...r, name: updated.name, description: updated.description ?? "", colorClass: r.colorClass }
               : r
