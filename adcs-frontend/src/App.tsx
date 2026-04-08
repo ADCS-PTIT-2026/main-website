@@ -8,7 +8,7 @@ import UserManagementPage from './features/admin/pages/UserManagementPage';
 import DepartmentTreePage from './features/departments/pages/DepartmentTreePage';
 import RegisterPage from './features/auth/pages/RegisterPage';
 import DocumentRepositoryPage from './features/documents/pages/DocumentRepositoryPage';
-
+import AIConfigurationPage from './features/ai_config/AIConfigurationPage';
 
 function App() {
   return (
@@ -24,6 +24,7 @@ function App() {
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/departments" element={<DepartmentTreePage />} />
           <Route path="/document-repository" element={<DocumentRepositoryPage />} />
+          <Route path="/admin/ai-config" element={<AIConfigurationPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

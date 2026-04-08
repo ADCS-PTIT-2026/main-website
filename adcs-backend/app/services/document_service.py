@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import UploadFile, HTTPException, status
 from datetime import datetime
 from app.utils.document_websocket import department_list
-from app.crud.document import get_document_by_id, create_document_entry, update_document_metadata, get_document_stats, get_recent_documents
+from app.crud.document import get_document_by_id, create_document_entry, update_document_metadata, get_document_stats, get_documents
 import httpx
 import json
 
@@ -12,13 +12,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
+DATA_SERVICE_SEARCH_URL = os.getenv("DATA_SERVICE_SEARCH_URL")
 
 
-async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool, document_id: str):
+async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
     """Gửi file và cờ lưu trữ sang AI Service"""
     files = {"file": (filename, file_content)}
     data = {"save_document": "true" if is_save_file else "false", 
-            "document_id": document_id, 
             "department_list": json.dumps(department_list, ensure_ascii=False)
     }
     
@@ -36,10 +36,10 @@ async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: b
 
 async def upload_document(db: Session, file: UploadFile, user_id: str, is_save_file: bool):
     try:
-        doc = create_document_entry(db)
+        doc = create_document_entry(db, user_id)
 
         file_content = await file.read()
-        ai_res = await send_to_ai_service(file_content, file.filename, is_save_file, str(doc.document_id))
+        ai_res = await send_to_ai_service(file_content, file.filename, is_save_file)
 
         if ai_res and ai_res.get("trang_thai") == "success":
             doc.status = "processed"
@@ -120,5 +120,31 @@ def update_ai_result(db: Session, document_id: str, payload: dict):
 def get_dashboard_stats_service(db: Session):
     return get_document_stats(db)
 
-def get_recent_documents_service(db: Session, limit: int):
-    return get_recent_documents(db, limit=limit)
+def get_recent_documents_service(db: Session, limit: int=5):
+    return get_documents(db, limit=limit)
+
+def get_all_documents(db: Session):
+    return get_documents(db)
+
+async def search_ai_service(query: str, start_date: str = None, end_date: str = None):
+    payload = {
+        "query": query,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                DATA_SERVICE_SEARCH_URL, 
+                json=payload, 
+                timeout=60
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            print(f"AI Service Error: {e.response.text}")
+            return {"error": "AI Service không phản hồi đúng cách"}
+        except Exception as e:
+            print(f"Connection Error: {str(e)}")
+            return {"error": "Không thể kết nối đến AI Service"}

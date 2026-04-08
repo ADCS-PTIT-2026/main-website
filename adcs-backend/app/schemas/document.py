@@ -10,10 +10,9 @@ class UploadResponse(BaseModel):
 
 class DocumentResponse(BaseModel):
     document_id: UUID
-    source_id: Optional[UUID] = None
     document_type_id: Optional[UUID] = None
     assigned_department_id: Optional[str] = None
-    assigned_user_id: Optional[UUID] = None
+    uploaded_by_user_id: Optional[UUID] = None
 
     so_den: Optional[str] = None
     so_ky_hieu: Optional[str] = None

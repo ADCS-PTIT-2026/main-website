@@ -1,14 +1,16 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query, Form, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from app.db.session import SessionLocal
 from app.db.session import get_db
 from app.schemas.document import UploadResponse, AIResultUpdateRequest, AIResultUpdateResponse, DocumentResponse, DashboardStatsResponse
-from app.services.document_service import upload_document, update_ai_result, get_dashboard_stats_service, get_recent_documents_service, get_document_by_id
+from app.services.document_service import update_ai_result, get_dashboard_stats_service, get_recent_documents_service, get_document_by_id, get_all_documents
+from app.services.telegram_service import send_telegram_ai_result
 from app.core.dependency import get_current_user
 from app.models.user import User
+from app.models.telegram_bot import Bot
 from app.models.document import Document
 from app.utils.document_websocket import manager
 from app.services.document_service import send_to_ai_service
@@ -31,7 +33,34 @@ def get_documents_api(
     """API lấy danh sách tài liệu gần đây"""
     return get_recent_documents_service(db, limit=limit)
 
-# 1. Lấy chi tiết tài liệu
+# Lấy tất cả tài liệu
+@router.get("/all", response_model=List[DocumentResponse])
+def get_all_documents_api(db: Session = Depends(get_db)):
+    return get_all_documents(db)
+
+# Tìm kiếm tài liệu
+@router.get("/search")
+async def search_document_api(
+    query: str = Query(..., description="Nội dung câu hỏi hoặc từ khóa tìm kiếm"),
+    start_date: Optional[str] = Query(None, description="Ngày bắt đầu (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Ngày kết thúc (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        from app.services.document_service import search_ai_service
+        
+        results = await search_ai_service(query, start_date, end_date)
+        
+        return {
+            "status": "success",
+            "query": query,
+            "data": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi tìm kiếm AI: {str(e)}")
+
+# Lấy chi tiết tài liệu
 @router.get("/{document_id}", response_model=DocumentResponse)
 def get_document_detail(document_id: str, db: Session = Depends(get_db)):
     doc = get_document_by_id(db, document_id)
@@ -40,34 +69,37 @@ def get_document_detail(document_id: str, db: Session = Depends(get_db)):
 
     return doc
 
-# # 2. upload tài liệu
-# @router.post("/upload", response_model=UploadResponse)
-# async def upload_file_api(
-#     file: UploadFile = File(...),
-#     is_save_file: bool = Form(False),
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     document = await upload_document(db, file, user_id=current_user.user_id, is_save_file=is_save_file)
-#     return document
-
-# 3. Cập nhật kết quả xử lý từ AI service
 @router.put("/{document_id}/ai-result", response_model=AIResultUpdateResponse)
 def update_ai_result_api(
     document_id: str,
     request: AIResultUpdateRequest,
-    db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) 
 ):
     update_data = request.model_dump(exclude_unset=True)
     
     updated_doc = update_ai_result(db, document_id, update_data)
+
+    bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
+    bot_token = bot.token if bot else None
+
+    if bot_token:
+        background_tasks.add_task(
+            send_telegram_ai_result, 
+            bot_token=bot_token,
+            user=current_user, 
+            document=updated_doc
+        )
+    else:
+        print("[Telegram Warning] Không tìm thấy cấu hình Bot trong cơ sở dữ liệu.")
 
     return {
         "message": "Cập nhật thông tin tài liệu thành công!",
         "document": updated_doc
     }
 
-# websocket
+# websocket upload tài liệu
 @router.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await manager.connect(websocket, client_id)
@@ -86,7 +118,7 @@ async def process_document_background(
     db: Session
 ):
     try:
-        ai_res = await send_to_ai_service(file_content, filename, is_save_file, document_id=str(document_id))
+        ai_res = await send_to_ai_service(file_content, filename, is_save_file)
         
         doc = db.query(Document).filter(Document.document_id == document_id).first()
         if doc and ai_res and ai_res.get("trang_thai") == "success":
@@ -161,7 +193,7 @@ async def upload_file_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    doc = create_document_entry(db)
+    doc = create_document_entry(db, user_id=str(current_user.user_id))
     db.commit()
     db.refresh(doc)
 
