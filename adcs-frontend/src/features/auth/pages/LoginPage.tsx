@@ -9,6 +9,13 @@ const LoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleAuthSubmit = async (formData: any) => {
     setIsLoading(true);
     setErrorMsg(null);

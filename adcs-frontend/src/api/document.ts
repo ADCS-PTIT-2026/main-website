@@ -36,17 +36,40 @@ export type DocumentResponse = {
   processing_time?: number | null;
 };
 
-export type AIResultUpdateRequest = {
+export type ApproveAIResultRequest = {
+  document_id: string;
   title?: string | null;
   document_number?: string | null;
   signed_date?: string | null;
-  document_type_id?: string | null;
   assigned_department_id?: string | null;
   assigned_user_id?: string | null;
   priority?: number | null;
   confidence?: number | null;
   summary?: string | null;
   status?: string | null;
+  updated_at?: string | null;
+  loai_van_ban_text?: string | null;
+  trich_yeu?: string | null;
+  so_ky_hieu?: string | null;
+  ngay_van_ban?: string | null;
+  ngay_het_han?: string | null;
+  
+  don_vi_ban_hanh?: string | null;
+  nguoi_ky?: string | null;
+  chuc_vu_nguoi_ky?: string | null;
+  do_khan?: string | null;
+  noi_nhan?: string[] | null;
+  can_cu_phap_ly?: string[] | null;
+  yeu_cau_han_dong?: string | null;
+  key_points?: string[] | null;
+  muc_tin_cay?: string | null;
+  tong_so_chunk?: number | null;
+  processing_time?: number | null;
+};
+
+export type ApproveAIResultResponse = {
+  document_id: string;
+  message: string;
 };
 
 export type DashboardStatsResponse = {
@@ -58,6 +81,8 @@ export type DashboardStatsResponse = {
 
 export interface SearchParams {
   query?: string;
+  start_date?: string; 
+  end_date?: string;
   department_id?: string;
   document_type_ids?: string[];
   sort_by?: 'confidence' | 'newest';
@@ -65,11 +90,12 @@ export interface SearchParams {
   limit?: number;
 }
 
-export interface PaginatedDocumentResponse {
+export interface SearchAIResponse {
+  status: string;
+  query: string;
   data: DocumentResponse[];
-  total: number;
-  page: number;
-  total_pages: number;
+  total?: number;
+  total_pages?: number;
 }
 
 export async function uploadDocument(file: File, is_save_file: boolean): Promise<UploadResponse> {
@@ -83,10 +109,10 @@ export async function getDocument(documentId: string): Promise<DocumentResponse>
   return axiosClient.get(`/documents/${documentId}`);
 }
 
-export async function updateDocumentAIResult(
+export async function approveAIResult(
   documentId: string,
-  payload: AIResultUpdateRequest
-): Promise<{ message: string; document: DocumentResponse }> {
+  payload: ApproveAIResultRequest
+): Promise<ApproveAIResultResponse> {
   return axiosClient.put(`/documents/${documentId}/ai-result`, payload);
 }
 
@@ -98,14 +124,17 @@ export async function getRecentDocuments(limit: number = 5): Promise<DocumentRes
   return axiosClient.get(`/documents?limit=${limit}`);
 }
 
+export async function getAllDocuments(): Promise<DocumentResponse[]> {
+  return axiosClient.get(`/documents/all`);
+}
+
 // Tìm kiếm tài liệu
-export async function searchDocuments(params: SearchParams): Promise<PaginatedDocumentResponse> {
+export async function searchDocuments(params: SearchParams): Promise<SearchAIResponse> {
   const query = new URLSearchParams();
-  if (params.query) query.append('q', params.query);
-  if (params.department_id) query.append('department_id', params.department_id);
-  if (params.sort_by) query.append('sort_by', params.sort_by);
-  if (params.page) query.append('page', params.page.toString());
-  if (params.limit) query.append('limit', params.limit.toString());
+  
+  if (params.query) query.append('query', params.query);
+  if (params.start_date) query.append('start_date', params.start_date);
+  if (params.end_date) query.append('end_date', params.end_date);
   
   if (params.document_type_ids && params.document_type_ids.length > 0) {
     params.document_type_ids.forEach(id => query.append('document_type_ids', id));

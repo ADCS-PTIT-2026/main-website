@@ -12,3 +12,4 @@ class User(Base):
     role_id = Column(String, nullable=True)
     department_id = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    telegram_chat_id = Column(String, nullable=True)
