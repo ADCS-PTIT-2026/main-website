@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import UploadFile, HTTPException, status
 from datetime import datetime
 from app.utils.document_websocket import department_list
-from app.crud.document import get_document_by_id, create_document_entry, update_document_metadata, get_document_stats, get_recent_documents
+from app.crud.document import get_document_by_id, create_document_entry, update_document_metadata, get_document_stats, get_documents
 import httpx
 import json
 
@@ -120,9 +120,11 @@ def update_ai_result(db: Session, document_id: str, payload: dict):
 def get_dashboard_stats_service(db: Session):
     return get_document_stats(db)
 
-def get_recent_documents_service(db: Session, limit: int):
-    return get_recent_documents(db, limit=limit)
+def get_recent_documents_service(db: Session, limit: int=5):
+    return get_documents(db, limit=limit)
 
+def get_all_documents(db: Session):
+    return get_documents(db)
 
 async def search_ai_service(query: str, start_date: str = None, end_date: str = None):
     payload = {

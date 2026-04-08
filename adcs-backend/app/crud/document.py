@@ -50,6 +50,9 @@ def get_document_stats(db: Session) -> dict:
         "new_users": new_users
     }
 
-def get_recent_documents(db: Session, limit: int = 5):
-    """Lấy danh sách các tài liệu được cập nhật/tạo gần đây nhất"""
-    return db.query(Document).order_by(Document.updated_at.desc()).limit(limit).all()
+def get_documents(db: Session, limit: int = None):
+    """Lấy danh sách các tài liệu"""
+    if limit:
+        return db.query(Document).order_by(Document.updated_at.desc()).limit(limit).all()
+    else:
+        return db.query(Document).order_by(Document.updated_at.desc()).all()
