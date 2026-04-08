@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
 const Header: React.FC = () => {
-  // Tạo state để lưu tên người dùng, mặc định là 'Người dùng'
   const [userName, setUserName] = useState<string>('Người dùng');
 
   useEffect(() => {
-    // Lấy thông tin user từ localStorage khi component được mount
     const storedUser = localStorage.getItem('user');
     
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        // Nếu parse thành công và có trường name, cập nhật state
+        console.log('Thông tin người dùng đã lưu:', parsedUser);
         if (parsedUser && parsedUser.name) {
           setUserName(parsedUser.name);
         }

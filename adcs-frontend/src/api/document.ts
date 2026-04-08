@@ -124,6 +124,10 @@ export async function getRecentDocuments(limit: number = 5): Promise<DocumentRes
   return axiosClient.get(`/documents?limit=${limit}`);
 }
 
+export async function getAllDocuments(): Promise<DocumentResponse[]> {
+  return axiosClient.get(`/documents/all`);
+}
+
 // Tìm kiếm tài liệu
 export async function searchDocuments(params: SearchParams): Promise<SearchAIResponse> {
   const query = new URLSearchParams();
@@ -131,11 +135,6 @@ export async function searchDocuments(params: SearchParams): Promise<SearchAIRes
   if (params.query) query.append('query', params.query);
   if (params.start_date) query.append('start_date', params.start_date);
   if (params.end_date) query.append('end_date', params.end_date);
-  
-  // if (params.department_id) query.append('department_id', params.department_id);
-  // if (params.sort_by) query.append('sort_by', params.sort_by);
-  // if (params.page) query.append('page', params.page.toString());
-  // if (params.limit) query.append('limit', params.limit.toString());
   
   if (params.document_type_ids && params.document_type_ids.length > 0) {
     params.document_type_ids.forEach(id => query.append('document_type_ids', id));

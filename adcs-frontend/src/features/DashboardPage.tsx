@@ -16,7 +16,13 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Lấy thông tin user từ localStorage khi component được mount
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    if (!token) {
+      alert('Vui lòng đăng nhập lại để tiếp tục!');
+      navigate('/login', { replace: true });
+      return;
+    }
     const storedUser = localStorage.getItem('user');
     
     if (storedUser) {
