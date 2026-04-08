@@ -6,7 +6,7 @@ from datetime import datetime
 from app.db.session import SessionLocal
 from app.db.session import get_db
 from app.schemas.document import UploadResponse, AIResultUpdateRequest, AIResultUpdateResponse, DocumentResponse, DashboardStatsResponse
-from app.services.document_service import update_ai_result, get_dashboard_stats_service, get_recent_documents_service, get_document_by_id
+from app.services.document_service import update_ai_result, get_dashboard_stats_service, get_recent_documents_service, get_document_by_id, get_all_documents
 from app.services.telegram_service import send_telegram_ai_result
 from app.core.dependency import get_current_user
 from app.models.user import User
@@ -32,6 +32,11 @@ def get_documents_api(
 ):
     """API lấy danh sách tài liệu gần đây"""
     return get_recent_documents_service(db, limit=limit)
+
+# Lấy tất cả tài liệu
+@router.get("/all", response_model=List[DocumentResponse])
+def get_all_documents_api(db: Session = Depends(get_db)):
+    return get_all_documents(db)
 
 # Tìm kiếm tài liệu
 @router.get("/search")
@@ -74,18 +79,15 @@ def update_ai_result_api(
 ):
     update_data = request.model_dump(exclude_unset=True)
     
-    # 1. Cập nhật DB
     updated_doc = update_ai_result(db, document_id, update_data)
 
-    # 2. Truy vấn Database để lấy Token của Bot có tên là 'ptit_adcs_bot'
     bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
     bot_token = bot.token if bot else None
 
-    # 3. Gắn tác vụ gửi Telegram vào chạy nền (Background)
     if bot_token:
         background_tasks.add_task(
             send_telegram_ai_result, 
-            bot_token=bot_token,   # Truyền token lấy được từ DB vào
+            bot_token=bot_token,
             user=current_user, 
             document=updated_doc
         )

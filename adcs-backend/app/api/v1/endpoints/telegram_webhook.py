@@ -3,48 +3,69 @@ from sqlalchemy.orm import Session
 import requests
 from app.db.session import get_db
 from app.models.user import User
-from app.models.telegram_bot import Bot
+from app.models.telegram_bot import Bot # Đổi lại cho đúng đường dẫn của bạn nếu cần
 
-router = APIRouter(prefix="/api/webhook", tags=["Webhook"])
+router = APIRouter()
 
-def send_telegram_message(bot_token: str, chat_id: str, text: str):
-    """Hàm phụ trợ để gửi tin nhắn chào mừng lại cho user"""
+def send_telegram_notification(bot_token: str, chat_id: str, text: str):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    requests.post(url, json={"chat_id": chat_id, "text": text})
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML"
+    }
+    try:
+        response = requests.post(url, json=payload)
 
-@router.post("/telegram")
+        if response.status_code != 200:
+            print(f"[Telegram Error] Lỗi từ API Telegram: {response.text}")
+        else:
+            print(f"[Telegram] Gửi tin nhắn thành công tới chat_id: {chat_id}")
+            
+    except Exception as e:
+        print(f"[Telegram Request Error] Lỗi khi kết nối đến Telegram: {e}")
+
+@router.post("/webhook")
 async def telegram_webhook(request: Request, db: Session = Depends(get_db)):
-    """
-    Endpoint này nhận dữ liệu từ Telegram đẩy về.
-    """
-    # Đọc dữ liệu JSON Telegram gửi sang
-    update = await request.json()
+    print("11111")
+    data = await request.json()
+    
+    print(f"\n[Webhook Received] Payload: {data}")
+    
+    if "message" in data and "text" in data["message"]:
+        msg = data["message"]
+        text = msg["text"]
+        chat_id = msg["chat"]["id"]
 
-    # Kiểm tra xem có tin nhắn không
-    if "message" in update and "text" in update["message"]:
-        message_text = update["message"]["text"]
-        chat_id = update["message"]["chat"]["id"]
-        
-        # Nếu người dùng bấm Start từ link Deep Linking, text sẽ có dạng: "/start uuid-cua-nguoi-dung"
-        if message_text.startswith("/start "):
-            # Cắt chuỗi để lấy user_id (payload)
-            user_id = message_text.split(" ")[1]
+        print(f"[Webhook] Nhận tin nhắn: '{text}' từ chat_id: {chat_id}")
+
+        if text.startswith("/start "):
+            user_id = text.split(" ")[1]
+            print(f"[Webhook] Bóc tách được user_id: {user_id}")
             
-            # Tìm người dùng trong CSDL
-            user = db.query(User).filter(User.user_id == user_id).first()
+            user = db.query(User).filter(User.user_id == str(user_id)).first()
+            if not user:
+                print(f"[Webhook Error] CSDL KHÔNG tìm thấy người dùng với user_id: {user_id}")
+                return {"status": "user_not_found"}
+
+            print(f"[Webhook] Đã tìm thấy User: {user.email}")
+            user.telegram_chat_id = str(chat_id)
+            db.commit()
+
+            bot = db.query(Bot).filter(Bot.name == "ptit_adcs_bot").first()
             
-            if user:
-                # Lưu chat_id vào CSDL
-                user.telegram_chat_id = str(chat_id)
-                db.commit()
+            if not bot:
+                print(f"[Webhook Error] CSDL KHÔNG tìm thấy bot có tên 'ptit_adcs_bot'. Vui lòng kiểm tra lại bảng bots.")
+                return {"status": "bot_not_found"}
 
-                # Lấy token bot từ DB để gửi tin nhắn chào mừng
-                bot = db.query(Bot).filter(Bot.name == 'ptit_adcs_bot').first()
-                if bot:
-                    welcome_msg = f"Xin chào {user.display_name or user.username}! Tài khoản Telegram của bạn đã được kết nối thành công với hệ thống PTIT ADCS. Bạn sẽ nhận được thông báo văn bản tại đây."
-                    send_telegram_message(bot.token, str(chat_id), welcome_msg)
-            else:
-                print(f"[Webhook] Không tìm thấy user với id: {user_id}")
+            welcome_text = (
+                f"🎉 <b>KẾT NỐI THÀNH CÔNG!</b>\n\n"
+                f"Chào <b>{user.username}</b>,\n"
+                f"Tài khoản của bạn đã được liên kết với hệ thống <b>PTIT ADCS</b>.\n\n"
+                f"Từ giờ, bạn sẽ nhận được thông báo kết quả xử lý văn bản từ AI ngay tại đây. 🤖🚀"
+            )
+            
+            print(f"[Webhook] Đang tiến hành gửi tin nhắn chào mừng...")
+            send_telegram_notification(bot.token, str(chat_id), welcome_text)
 
-    # Bắt buộc phải trả về HTTP 200 OK để Telegram biết bạn đã nhận được tin
     return {"status": "ok"}
