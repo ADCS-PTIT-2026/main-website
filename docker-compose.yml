@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  adcs-db-2:
+    image: postgres:16-alpine
+    container_name: adcs-db-2
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adcs2026
+      POSTGRES_DB: adcs_db_2
+    ports:
+      - "5433:5432"
+    volumes:
+      - adcs_db_2_data:/var/lib/postgresql/data
+    networks:
+      - adcs_web_network
+
+  adcs-backend:
+    build:
+      context: ./adcs-backend
+    container_name: adcs-backend
+    restart: always
+    env_file:
+      - ./adcs-backend/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:adcs2026@adcs-db-2:5432/adcs_db_2
+    ports:
+      - "12010:8000"
+    depends_on:
+      - adcs-db-2
+    networks:
+      - adcs_web_network
+      - document_ai_service_default
+
+  adcs-frontend:
+    build:
+      context: ./adcs-frontend
+    container_name: adcs-frontend
+    restart: always
+    env_file:
+      - ./adcs-frontend/.env
+    ports:
+      - "12001:5173"
+    depends_on:
+      - adcs-backend
+    networks:
+      - adcs_web_network
+
+networks:
+  adcs_web_network:
+    driver: bridge
+  document_ai_service_default:
+    external: true
+    name: document-ai-service_document-ai-network
+
+volumes:
+  adcs_db_2_data:
