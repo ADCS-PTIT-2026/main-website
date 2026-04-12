@@ -1,11 +1,27 @@
+import { ChevronDown, LogOut } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Header: React.FC = () => {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState<string>('Người dùng');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user');
+    
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    
+    console.log('Giá trị đã lưu:', storedUser);
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -43,29 +59,40 @@ const Header: React.FC = () => {
         {/* Divider */}
         <div className="w-px h-6 bg-slate-200 dark:bg-slate-700" />
 
-        {/* User Info */}
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 px-2 py-1 rounded-lg transition-colors">
-          
-          {/* Avatar */}
-          <div className="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden">
-            {/* Lấy chữ cái đầu tiên của tên làm Avatar */}
-            <span className="font-bold uppercase">
-              {userName.charAt(0)}
-            </span>
+        <div className="relative">
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors"
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          >
+            {/* Avatar */}
+            <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-700 overflow-hidden">
+              <span className="font-bold uppercase text-sm">
+                {userName.charAt(0)}
+              </span>
+            </div>
+
+            {/* Name */}
+            <div className="text-left">
+              <p className="text-sm font-semibold text-slate-800">
+                {userName}
+              </p>
+            </div>
+
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
           </div>
 
-          {/* Name */}
-          <div className="text-left">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              {/* Đã thay 'Admin PTIT' bằng biến userName */}
-              {userName}
-            </p>
-          </div>
-
-          {/* Dropdown icon */}
-          <span className="material-symbols-outlined text-slate-400 text-sm">
-            expand_more
-          </span>
+          {/* Màn hình Đăng xuất Dropdown */}
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 overflow-hidden">
+              <button
+                onClick={handleLogout}
+                className="w-full text-left flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Đăng xuất</span>
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

@@ -22,7 +22,6 @@ const LoginPage: React.FC = () => {
     try {
       const response = await authAPI.login(formData.email, formData.password);
       
-      // Xử lý ghi nhớ đăng nhập
       const storage = formData.remember ? localStorage : sessionStorage;
       
       storage.setItem('access_token', response.access_token);
