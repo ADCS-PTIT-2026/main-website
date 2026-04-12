@@ -9,6 +9,8 @@ import DepartmentTreePage from './features/departments/pages/DepartmentTreePage'
 import RegisterPage from './features/auth/pages/RegisterPage';
 import DocumentRepositoryPage from './features/documents/pages/DocumentRepositoryPage';
 import AIConfigurationPage from './features/ai_config/AIConfigurationPage';
+import HistoryPage from './features/history/HistoryPage';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
@@ -25,8 +27,20 @@ function App() {
           <Route path="/departments" element={<DepartmentTreePage />} />
           <Route path="/document-repository" element={<DocumentRepositoryPage />} />
           <Route path="/admin/ai-config" element={<AIConfigurationPage />} />
+          <Route path="/history" element={<HistoryPage />} />
         </Route>
       </Routes>
+      <Toaster 
+        position="top-right" 
+        reverseOrder={false} 
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

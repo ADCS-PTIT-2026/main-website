@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { icon: 'description', label: 'Xử lý tài liệu', path: '/documents' },
   { icon: 'archive', label: 'Kho tài liệu', path: '/document-repository' },
   { icon: 'groups', label: 'Phòng ban', path: '/departments' },
+  { icon: 'history', label: 'Lịch sử xử lý', path: '/history' },
   {
     icon: 'admin_panel_settings',
     label: 'Trang Quản lý',

@@ -17,59 +17,44 @@ export type DocumentResponse = {
   summary?: string | null;
   status?: string | null;
   updated_at?: string | null;
+
   loai_van_ban_text?: string | null;
   trich_yeu?: string | null;
   so_ky_hieu?: string | null;
   ngay_van_ban?: string | null;
   ngay_het_han?: string | null;
-  
   don_vi_ban_hanh?: string | null;
   nguoi_ky?: string | null;
   chuc_vu_nguoi_ky?: string | null;
   do_khan?: string | null;
   noi_nhan?: string[] | null;
   can_cu_phap_ly?: string[] | null;
-  yeu_cau_han_dong?: string | null;
+  yeu_cau_hanh_dong?: string | null;
+  
   key_points?: string[] | null;
   muc_tin_cay?: string | null;
   tong_so_chunk?: number | null;
   processing_time?: number | null;
+
+  de_xuat_xu_ly?: {
+    so_ngay_de_xuat?: number;
+    muc_uu_tien?: string;
+    ly_do?: string;
+  } | null;
+  goi_y_phong_ban?: {
+    phong_ban?: string;
+    ten_hien_thi?: string;
+    ly_do?: string;
+    diem_tin_cay?: number;
+  } | null;
 };
 
-export type ApproveAIResultRequest = {
-  document_id: string;
-  title?: string | null;
-  document_number?: string | null;
-  signed_date?: string | null;
-  assigned_department_id?: string | null;
-  assigned_user_id?: string | null;
-  priority?: number | null;
-  confidence?: number | null;
-  summary?: string | null;
-  status?: string | null;
-  updated_at?: string | null;
-  loai_van_ban_text?: string | null;
-  trich_yeu?: string | null;
-  so_ky_hieu?: string | null;
-  ngay_van_ban?: string | null;
-  ngay_het_han?: string | null;
-  
-  don_vi_ban_hanh?: string | null;
-  nguoi_ky?: string | null;
-  chuc_vu_nguoi_ky?: string | null;
-  do_khan?: string | null;
-  noi_nhan?: string[] | null;
-  can_cu_phap_ly?: string[] | null;
-  yeu_cau_han_dong?: string | null;
-  key_points?: string[] | null;
-  muc_tin_cay?: string | null;
-  tong_so_chunk?: number | null;
-  processing_time?: number | null;
-};
+export type ApproveAIResultRequest = Partial<DocumentResponse>;
 
 export type ApproveAIResultResponse = {
-  document_id: string;
   message: string;
+  document: DocumentResponse;
+  telegram_notification?: string;
 };
 
 export type DashboardStatsResponse = {
@@ -128,6 +113,10 @@ export async function getAllDocuments(): Promise<DocumentResponse[]> {
   return axiosClient.get(`/documents/all`);
 }
 
+export async function deleteDocument(documentId: string): Promise<{ message: string }> {
+  return axiosClient.delete(`/documents/${documentId}`);
+}
+
 // Tìm kiếm tài liệu
 export async function searchDocuments(params: SearchParams): Promise<SearchAIResponse> {
   const query = new URLSearchParams();
@@ -147,6 +136,7 @@ export interface DocumentType {
   id: string;
   name: string;
 }
+
 export async function getDocumentTypes(): Promise<DocumentType[]> {
   return axiosClient.get(`/document-types`);
 }
