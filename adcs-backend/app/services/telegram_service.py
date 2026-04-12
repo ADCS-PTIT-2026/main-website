@@ -1,13 +1,14 @@
 import requests
 from app.models.document import Document
 from app.models.user import User
+import html
 
 def send_telegram_ai_result(bot_token: str, user: User, document: Document):
     """
     Hàm này sẽ định dạng nội dung và gửi tin nhắn qua Telegram.
     Sẽ được gọi dưới dạng Background Task.
     """
-    # Lấy chat_id của user
+
     chat_id = getattr(user, 'telegram_chat_id', None)
     
     if not chat_id:
@@ -17,34 +18,37 @@ def send_telegram_ai_result(bot_token: str, user: User, document: Document):
     if not bot_token:
         print("[Telegram Warning] Không có Bot Token. Hủy gửi tin nhắn.")
         return
+    
+    def safe_html(text):
+        if text is None:
+            return "N/A"
+        return html.escape(str(text))
 
     # Định dạng tin nhắn gửi đi (Sử dụng Markdown)
     message = (
-        f"🤖 **HỆ THỐNG AI VỪA XỬ LÝ XONG VĂN BẢN**\n\n"
-        f"**ID Tài liệu:** `{document.document_id}`\n"
-        f"**Số đến:** {document.so_den or 'N/A'}\n"
-        f"**Số/Ký hiệu:** {document.so_ky_hieu or 'N/A'}\n"
-        f"**Loại văn bản:** {document.loai_van_ban_text or 'N/A'}\n"
-        f"**Cơ quan ban hành:** {document.don_vi_ban_hanh or 'N/A'}\n"
-        f"**Ngày văn bản:** {document.ngay_van_ban or 'N/A'}\n"
-        f"**Độ khẩn:** {document.do_khan or 'Bình thường'}\n\n"
-        f"**Trích yếu:**\n_{document.trich_yeu or 'Không có thông tin'}_\n\n"
-        f"**Tóm tắt AI:**\n{document.summary or 'Không có tóm tắt'}"
+        f"🤖 <b>HỆ THỐNG AI VỪA XỬ LÝ XONG VĂN BẢN</b>\n\n"
+        f"<b>ID Tài liệu:</b> <code>{safe_html(document.document_id)}</code>\n"
+        f"<b>Số đến:</b> {safe_html(document.so_den)}\n"
+        f"<b>Số/Ký hiệu:</b> {safe_html(document.so_ky_hieu)}\n"
+        f"<b>Loại văn bản:</b> {safe_html(document.loai_van_ban_text)}\n"
+        f"<b>Cơ quan ban hành:</b> {safe_html(document.don_vi_ban_hanh)}\n"
+        f"<b>Ngày văn bản:</b> {safe_html(document.ngay_van_ban)}\n"
+        f"<b>Độ khẩn:</b> {safe_html(document.do_khan)}\n\n"
+        f"<b>Trích yếu:</b>\n<i>{safe_html(document.trich_yeu)}</i>\n\n"
+        f"<b>Tóm tắt AI:</b>\n{safe_html(document.summary)}"
     )
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown"
+        "parse_mode": "HTML"
     }
 
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=10)
         response.raise_for_status()
-        print(f"[Telegram] Đã gửi thông báo thành công tới user {user.email}")
+        return {"status": "success", "detail": "Message sent"}
     except requests.exceptions.RequestException as e:
-        print(f"[Telegram Error] Lỗi khi gọi API Telegram: {e}")
-        # In ra chi tiết lỗi từ Telegram (VD: sai token, user chặn bot...)
-        if e.response is not None:
-            print(f"[Telegram Error Detail] {e.response.text}")
+        error_msg = e.response.text if e.response else str(e)
+        return {"status": "error", "detail": error_msg}

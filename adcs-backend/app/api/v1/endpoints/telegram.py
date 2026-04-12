@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 import requests
 from app.db.session import get_db
 from app.models.user import User
-from app.models.telegram_bot import Bot # Đổi lại cho đúng đường dẫn của bạn nếu cần
+from app.models.telegram_bot import Bot
+from app.models.role_permission import Role
+from app.schemas.telegram import RoleNotificationRequest
+import html
 
 router = APIRouter()
 
@@ -24,6 +27,62 @@ def send_telegram_notification(bot_token: str, chat_id: str, text: str):
             
     except Exception as e:
         print(f"[Telegram Request Error] Lỗi khi kết nối đến Telegram: {e}")
+
+@router.post("/notify_by_roles")
+async def notify_by_roles(request: RoleNotificationRequest, db: Session = Depends(get_db)):
+    """
+    API dành cho Data Service gọi để gửi thông báo đến các nhóm quyền cụ thể
+    """
+    try:
+        if "all" in request.roles:
+            users_to_notify = (
+            db.query(User)
+            .filter(
+                User.telegram_chat_id != None,
+                User.telegram_chat_id != ""
+            )
+            .all()
+            )
+        else:
+            users_to_notify = (
+            db.query(User)
+            .join(Role)
+            .filter(
+                Role.name.in_(request.roles),
+                User.telegram_chat_id != None,
+                User.telegram_chat_id != ""
+            )
+            .all()
+            )
+        
+
+        if not users_to_notify:
+            return {
+                "status": "success", 
+                "message": "Không tìm thấy người dùng nào thuộc các Role này đã liên kết Telegram."
+            }
+        print(request.text)
+        safe_text = html.escape(request.text)
+
+        success_count = 0
+        for user in users_to_notify:
+            print(f"[Role Notify] Đang gửi tới: {user.username} ({user.telegram_chat_id})")
+            
+            full_text = f"🔔 <b>THÔNG BÁO MỚI</b>\n\n{safe_text}"
+            
+            send_telegram_notification(request.bot_token, user.telegram_chat_id, full_text)
+            success_count += 1
+
+        return {
+            "status": "success",
+            "sent_count": success_count,
+            "target_roles": request.roles
+        }
+
+    except Exception as e:
+        print(f"[Notify Role Error] Lỗi hệ thống: {e}")
+        return {"status": "error", "message": str(e)}
+
 
 @router.post("/webhook")
 async def telegram_webhook(request: Request, db: Session = Depends(get_db)):

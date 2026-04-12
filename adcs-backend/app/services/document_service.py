@@ -1,9 +1,14 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from fastapi import UploadFile, HTTPException, status
+from fastapi import HTTPException, status
 from datetime import datetime
 from app.utils.document_websocket import department_list
-from app.crud.document import get_document_by_id, create_document_entry, update_document_metadata, get_document_stats, get_documents
+from app.crud.document import get_document_by_id, update_document_metadata, get_document_stats, get_documents
+from app.core.http_client import http_client
+from app.db.session import SessionLocal
+from app.models.document import Document
+from app.utils.document_websocket import manager
+from app.models.department import Department
 import httpx
 import json
 
@@ -13,33 +18,41 @@ from dotenv import load_dotenv
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
 DATA_SERVICE_SEARCH_URL = os.getenv("DATA_SERVICE_SEARCH_URL")
+DATA_SERVICE_DELETE_URL = os.getenv("DATA_SERVICE_DELETE_URL")
 
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
-    """Gửi file và cờ lưu trữ sang AI Service"""
+    """Gửi file sang AI Service"""
     files = {"file": (filename, file_content)}
-    data = {"save_document": "true" if is_save_file else "false", 
-            "department_list": json.dumps(department_list, ensure_ascii=False)
+    data = {
+        "save_document": "true" if is_save_file else "false", 
+        "department_list": json.dumps(department_list, ensure_ascii=False)
     }
     
-    async with httpx.AsyncClient(timeout=180.0) as client:
-        try:
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(AI_SERVICE_URL, files=files, data=data)
             response.raise_for_status()
             return response.json()
-        except httpx.HTTPStatusError as e:
-            print(f"AI Service trả về lỗi: {e.response.status_code}")
-            return None
-        except Exception as e:
-            print(f"Lỗi kết nối httpx: {e}")
-            return None
+    except Exception as e:
+        print(f"Lỗi gọi AI Service: {e}")
+        return None
 
-async def upload_document(db: Session, file: UploadFile, user_id: str, is_save_file: bool):
+async def process_document_background(
+    document_id: str, 
+    file_content: bytes, 
+    filename: str, 
+    is_save_file: bool, 
+    client_id: str
+):
+    """Hàm chạy nền: Gửi file cho AI, lưu toàn bộ kết quả vào Database, và gửi tin nhắn WebSocket"""
+    db = SessionLocal()
     try:
-        doc = create_document_entry(db, user_id)
-
-        file_content = await file.read()
-        ai_res = await send_to_ai_service(file_content, file.filename, is_save_file)
+        ai_res = await send_to_ai_service(file_content, filename, is_save_file)
+        
+        doc = db.query(Document).filter(Document.document_id == document_id).first()
+        if not doc:
+            return
 
         if ai_res and ai_res.get("trang_thai") == "success":
             doc.status = "processed"
@@ -47,6 +60,10 @@ async def upload_document(db: Session, file: UploadFile, user_id: str, is_save_f
             doc.key_points = ai_res.get("key_points")
             doc.confidence = ai_res.get("diem_tin_cay")
             doc.muc_tin_cay = ai_res.get("muc_tin_cay")
+            
+            doc.loai_van_ban = ai_res.get("loai_van_ban")
+            doc.de_xuat_xu_ly = ai_res.get("de_xuat_thoi_han_xu_ly")
+            doc.storage_info = ai_res.get("storage_info")
             
             ext = ai_res.get("extracted_fields", {})
             doc.so_ky_hieu = ext.get("so_hieu_van_ban")
@@ -57,46 +74,77 @@ async def upload_document(db: Session, file: UploadFile, user_id: str, is_save_f
             doc.chuc_vu_nguoi_ky = ext.get("chuc_vu_nguoi_ky")
             doc.noi_nhan = ext.get("noi_nhan")
             doc.can_cu_phap_ly = ext.get("can_cu_phap_ly")
-            doc.yeu_cau_han_dong = ext.get("yeu_cau_han_dong")
+            doc.yeu_cau_hanh_dong = ext.get("yeu_cau_hanh_dong") 
+
+            goi_y_pb = ai_res.get("goi_y_phong_ban", {})
+            doc.goi_y_phong_ban = goi_y_pb
+            ten_phong_ban_ai_de_xuat = goi_y_pb.get("ten_hien_thi")
+
+            if ten_phong_ban_ai_de_xuat:
+                department = db.query(Department).filter(
+                    Department.name.ilike(f"%{ten_phong_ban_ai_de_xuat}%")
+                ).first()
+                
+                if department:
+                    doc.assigned_department_id = str(department.department_id)
+                else:
+                    doc.assigned_department_id = None 
+            else:
+                doc.assigned_department_id = None
             
             if ext.get("ngay_ban_hanh"):
                 try:
                     doc.ngay_van_ban = datetime.strptime(ext["ngay_ban_hanh"], "%Y-%m-%d").date()
-                except (ValueError, TypeError): pass
+                except (ValueError, TypeError): 
+                    pass
 
-            loai_vb = ai_res.get("loai_van_ban", {})
-            doc.loai_van_ban_text = loai_vb.get("nhan")
+            if ai_res.get("loai_van_ban"):
+                doc.loai_van_ban_text = ai_res.get("loai_van_ban", {}).get("nhan")
+
+            doc.tong_so_chunk = ai_res.get("tong_so_chunk")
+            doc.total_chunks_processed = ai_res.get("total_chunks_processed")
+            doc.source_pages = ai_res.get("source_pages")
+            doc.processing_time = ai_res.get("processing_time")
             
             de_xuat = ai_res.get("de_xuat_thoi_han_xu_ly", {})
-            doc.de_xuat_xu_ly = de_xuat
             if de_xuat.get("ngay_het_han_du_kien"):
                 try:
                     doc.ngay_het_han = datetime.strptime(de_xuat["ngay_het_han_du_kien"], "%Y-%m-%d").date()
-                except (ValueError, TypeError): pass
+                except (ValueError, TypeError): 
+                    pass
             
-            goi_y_pb = ai_res.get("goi_y_phong_ban", {})
-            doc.goi_y_phong_ban = goi_y_pb
-            doc.assigned_department_id = goi_y_pb.get("phong_ban")
+            db.commit()
 
-            meta = ai_res.get("metadata", {})
-            doc.tong_so_chunk = meta.get("tong_so_chunk")
-            doc.processing_time = meta.get("thoi_gian_xu_ly_giay")
+            await manager.send_personal_message({
+                "type": "DOCUMENT_PROCESSED",
+                "document_id": str(document_id),
+                "status": "success",
+                "message": "AI đã xử lý xong tài liệu!"
+            }, client_id)
             
         else:
             doc.status = "failed"
-            print(f"AI Service trả về kết quả không thành công cho file {file.filename}")
-
-        db.commit()
-        db.refresh(doc)
-        return doc
-
+            db.commit()
+            await manager.send_personal_message({
+                "type": "DOCUMENT_FAILED",
+                "document_id": str(document_id),
+                "status": "failed",
+                "message": "AI Service gặp lỗi hoặc trả về kết quả không thành công."
+            }, client_id)
+            
     except Exception as e:
+        print(f"Lỗi background task process_document_background: {e}")
         db.rollback()
-        print(f"Lỗi trong quá trình xử lý tài liệu: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="Lỗi hệ thống khi xử lý AI và lưu dữ liệu"
-        )
+        # Cập nhật trạng thái lỗi vào DB nếu có lỗi crash
+        try:
+            doc = db.query(Document).filter(Document.document_id == document_id).first()
+            if doc:
+                doc.status = "failed"
+                db.commit()
+        except: 
+            pass
+    finally:
+        db.close()
 
 def update_ai_result(db: Session, document_id: str, payload: dict):
     document = get_document_by_id(db, document_id)
@@ -126,25 +174,52 @@ def get_recent_documents_service(db: Session, limit: int=5):
 def get_all_documents(db: Session):
     return get_documents(db)
 
-async def search_ai_service(query: str, start_date: str = None, end_date: str = None):
+async def search_ai_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
     payload = {
         "query": query,
-        "start_date": start_date,
-        "end_date": end_date
+        "from_date": start_date,
+        "to_date": end_date,
+        "muc": muc,
     }
     
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                DATA_SERVICE_SEARCH_URL, 
-                json=payload, 
-                timeout=60
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            print(f"AI Service Error: {e.response.text}")
-            return {"error": "AI Service không phản hồi đúng cách"}
-        except Exception as e:
-            print(f"Connection Error: {str(e)}")
-            return {"error": "Không thể kết nối đến AI Service"}
+    try:
+        response = await http_client.client.post(
+            DATA_SERVICE_SEARCH_URL, 
+            json=payload, 
+            timeout=60
+        )
+        response.raise_for_status()
+
+        print(response.json())
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        print(f"AI Service Error: {e.response.text}")
+        return {"error": "AI Service không phản hồi đúng cách"}
+    except Exception as e:
+        print(f"Connection Error: {str(e)}")
+        return {"error": "Không thể kết nối đến AI Service"}
+        
+async def delete_in_document_service(document_id: str):
+    try:
+        url = f"{DATA_SERVICE_DELETE_URL}/{document_id}"
+
+        response = await http_client.client.delete(
+            url, 
+            timeout=10.0
+        )
+        
+        response.raise_for_status()
+        
+        return response.json()
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Data Service error: {e.response.text}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi hệ thống xử lý dữ liệu: {str(e)}"
+        )
+     

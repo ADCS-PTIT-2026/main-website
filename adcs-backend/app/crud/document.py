@@ -56,3 +56,7 @@ def get_documents(db: Session, limit: int = None):
         return db.query(Document).order_by(Document.updated_at.desc()).limit(limit).all()
     else:
         return db.query(Document).order_by(Document.updated_at.desc()).all()
+    
+def delete_document(db: Session, document: Document):
+    db.delete(document)
+    db.commit()
