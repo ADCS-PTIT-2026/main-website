@@ -1,22 +1,27 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Dict
+
 from app.db.session import get_db
-from app.crud import system_parameter as crud_sysparam
 from app.core.dependency import RoleChecker
 
-router = APIRouter(prefix="/api/system-parameters", tags=["System Parameters"])
+from app.services.system_parameter import (
+    get_system_parameters_service,
+    update_system_parameters_service
+)
+
+router = APIRouter()
 require_admin = RoleChecker(['admin'])
 
 @router.get("", response_model=Dict[str, str])
 def get_system_parameters(db: Session = Depends(get_db)):
     """Lấy toàn bộ cấu hình hệ thống"""
-    return crud_sysparam.get_all_parameters(db)
+    return get_system_parameters_service(db)
 
-@router.put("", response_model=Dict[str, str])
+@router.put("", response_model=Dict[str, str], dependencies=[Depends(require_admin)])
 def update_system_parameters(
     payload: Dict[str, str], 
-    db: Session = Depends(get_db),
-    dependencies=[Depends(require_admin)]
+    db: Session = Depends(get_db)
 ):
-    return crud_sysparam.upsert_parameters(db, payload)
+    """Cập nhật cấu hình hệ thống (Yêu cầu quyền Admin)"""
+    return update_system_parameters_service(db, payload)

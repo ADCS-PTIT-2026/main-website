@@ -1,10 +1,42 @@
 from fastapi import FastAPI
 import httpx
-from app.api.v1.endpoints import auth, system_parameter, telegram, users, documents, role_permission, department, history
-from app.core.http_client import http_client
+import time
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history
+from app.core.http_client import http_client
+from app.core.logger import request_id_var, generate_request_id, logger
+
+class RequestTrackingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path in ["/health", "/docs", "/openapi.json"]:
+            return await call_next(request)
+
+        req_id = generate_request_id()
+        token = request_id_var.set(req_id)
+
+        start_time = time.time()
+        logger.info(f"📥 BẮT ĐẦU: {request.method} {request.url.path}")
+
+        try:
+            response = await call_next(request)
+            
+            response.headers["X-Request-ID"] = req_id
+            
+            process_time = (time.time() - start_time) * 1000
+            logger.info(f"📤 HOÀN THÀNH: {response.status_code} (Mất {process_time:.2f}ms)")
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"❌ LỖI HỆ THỐNG: {str(e)}")
+            raise e
+        finally:
+            request_id_var.reset(token)
 
 app = FastAPI()
 
@@ -19,10 +51,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestContextMiddleware)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-app.include_router(users.router, prefix="/api/users", tags=["Users"])
-app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
+app.include_router(user.router, prefix="/api/users", tags=["Users"])
+app.include_router(document.router, prefix="/api/documents", tags=["Documents"])
 app.include_router(role_permission.router, prefix="/api/role-permissions", tags=["Role-Permissions"])
 app.include_router(department.router, prefix="/api/departments", tags=["Departments"])
 app.include_router(system_parameter.router, prefix="/api/system-parameters", tags="AI_Config")
