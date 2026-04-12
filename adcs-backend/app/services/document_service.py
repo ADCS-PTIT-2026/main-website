@@ -17,8 +17,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
-DATA_SERVICE_SEARCH_URL = os.getenv("DATA_SERVICE_SEARCH_URL")
-DATA_SERVICE_DELETE_URL = os.getenv("DATA_SERVICE_DELETE_URL")
+DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
+DATA_SERVICE_SEARCH_URL = f"{DATA_SERVICE_URL}/api/v1/search/documents"
+DATA_SERVICE_DELETE_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
 
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
