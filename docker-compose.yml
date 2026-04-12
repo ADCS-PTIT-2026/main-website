@@ -26,12 +26,15 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:adcs2026@adcs-db-2:5432/adcs_db_2
     ports:
-      - "12010:8000"
+      - "12007:8000"
     depends_on:
       - adcs-db-2
     networks:
-      - adcs_web_network
-      - document_ai_service_default
+      adcs_web_network:
+        aliases:
+          - backend
+      document_ai_service_default:
+      adcs_data_service_default:
 
   adcs-frontend:
     build:
@@ -41,7 +44,7 @@ services:
     env_file:
       - ./adcs-frontend/.env
     ports:
-      - "12001:5173"
+      - "12001:80"
     depends_on:
       - adcs-backend
     networks:
@@ -52,7 +55,9 @@ networks:
     driver: bridge
   document_ai_service_default:
     external: true
-    name: document-ai-service_document-ai-network
+    name: document_ai_service_document-ai-network
+  adcs_data_service_default:
+    external: true
 
 volumes:
   adcs_db_2_data:

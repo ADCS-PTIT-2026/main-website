@@ -128,3 +128,32 @@ async def telegram_webhook(request: Request, db: Session = Depends(get_db)):
             send_telegram_notification(bot.token, str(chat_id), welcome_text)
 
     return {"status": "ok"}
+
+@router.get("/bot-token")
+async def get_bot_token(name: str = "ptit_adcs_bot", db: Session = Depends(get_db)):
+    """
+    API lấy thông tin và Token của Bot.
+    Có thể truyền query param ?name=... (Mặc định là ptit_adcs_bot)
+    """
+    try:
+        bot = db.query(Bot).filter(Bot.name == name).first()
+        
+        if not bot:
+            return {
+                "status": "error", 
+                "message": f"Không tìm thấy cấu hình cho bot có tên '{name}' trong cơ sở dữ liệu."
+            }
+
+        return {
+            "status": "success",
+            "data": {
+                "bot_id": bot.bot_id,
+                "name": bot.name,
+                "token": bot.token,
+                "channel_type": bot.channel_type
+            }
+        }
+        
+    except Exception as e:
+        print(f"[Get Bot Token Error] Lỗi hệ thống: {e}")
+        return {"status": "error", "message": str(e)}
