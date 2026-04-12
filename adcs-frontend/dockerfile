@@ -1,23 +1,28 @@
+# Stage 1: Build stage
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Copy package files và cài đặt dependencies
 COPY package*.json ./
 RUN npm install
 
+# Copy toàn bộ mã nguồn
 COPY . .
 
+# Chạy lệnh BUILD để tạo ra thư mục /dist
 RUN npm run build
 
-
+# Stage 2: Production stage (Nginx)
 FROM nginx:alpine
 
-# xóa config mặc định
+# Xóa config mặc định
 RUN rm -rf /etc/nginx/conf.d/default.conf
 
-# copy config nginx custom
+# Copy config nginx custom của bạn
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy các file tĩnh từ stage builder vào thư mục của Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
