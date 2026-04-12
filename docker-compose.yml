@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   adcs-db-2:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: adcs-db-2
     restart: always
     environment:
@@ -21,9 +21,10 @@ services:
       context: ./adcs-backend
     container_name: adcs-backend
     restart: always
+    env_file:
+      - ./adcs-backend/.env
     environment:
       - DATABASE_URL=postgresql://postgres:adcs2026@adcs-db-2:5432/adcs_db_2
-      - AI_SERVICE_URL=http://document-ai-service:8005
     ports:
       - "12010:8000"
     depends_on:
@@ -37,8 +38,8 @@ services:
       context: ./adcs-frontend
     container_name: adcs-frontend
     restart: always
-    environment:
-      - VITE_API_BASE_URL=http://203.162.88.102:12002/api/v1
+    env_file:
+      - ./adcs-frontend/.env
     ports:
       - "12001:5173"
     depends_on:
@@ -51,6 +52,7 @@ networks:
     driver: bridge
   document_ai_service_default:
     external: true
+    name: document-ai-service_document-ai-network
 
 volumes:
   adcs_db_2_data:
