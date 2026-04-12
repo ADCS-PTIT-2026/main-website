@@ -11,7 +11,7 @@ class UploadResponse(BaseModel):
 class DocumentResponse(BaseModel):
     document_id: UUID
     document_type_id: Optional[UUID] = None
-    assigned_department_id: Optional[str] = None
+    assigned_department_id: Optional[UUID] = None
     uploaded_by_user_id: Optional[UUID] = None
 
     so_den: Optional[str] = None
@@ -53,13 +53,10 @@ class DocumentResponse(BaseModel):
 
 
 class AIResultUpdateRequest(BaseModel):
-    document_id: UUID
-    source_id: Optional[UUID] = None
-    document_type_id: Optional[UUID] = None
     assigned_department_id: Optional[str] = None
     assigned_user_id: Optional[UUID] = None
 
-    so_den: Optional[str] = None
+    so_den: Optional[str] = None    
     so_ky_hieu: Optional[str] = None
     trich_yeu: Optional[str] = None
     hinh_thuc: Optional[str] = None
@@ -84,7 +81,7 @@ class AIResultUpdateRequest(BaseModel):
     de_xuat_xu_ly: Optional[Dict[str, Any]] = None
     goi_y_phong_ban: Optional[Dict[str, Any]] = None
 
-    updated_at: datetime
+    updated_at: datetime = None
 
 class DocumentAIResultResponse(BaseModel):
     document_id: UUID
@@ -125,3 +122,6 @@ class DashboardStatsResponse(BaseModel):
     pending_documents: int
     ai_accuracy: float
     new_users: int
+
+class ActionResponse(BaseModel):
+    message: str

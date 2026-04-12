@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest
 from app.services.auth_service import login, register, refresh_access_token
-from app.db.session import SessionLocal
 
 router = APIRouter()
 
