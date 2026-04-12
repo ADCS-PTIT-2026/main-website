@@ -1,6 +1,7 @@
 import os
 import requests
 from fastapi import HTTPException
+from app.core.logger import logger
 
 DATA_SERVICE_API = os.getenv("DATA_SERVICE_API")
 
@@ -28,14 +29,17 @@ def fetch_processing_history(
     if time_filter and time_filter != "Tùy chọn...":
         params["time_filter"] = time_filter
 
+    logger.info(f"Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {params}")
+
     try:
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         
+        logger.info("Đã lấy thành công dữ liệu lịch sử từ Data Service.")
         return response.json()
         
     except requests.exceptions.RequestException as e:
-        print(f"[History Service Error] Lỗi khi kết nối Data Service: {e}")
+        logger.error(f"Lỗi khi kết nối Data Service (History API): {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500, 
             detail="Không thể lấy dữ liệu lịch sử từ máy chủ dữ liệu lúc này."

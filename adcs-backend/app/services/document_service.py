@@ -1,19 +1,20 @@
+import os
+import json
+import httpx
+from datetime import datetime
+from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
-from datetime import datetime
-from app.utils.document_websocket import department_list
+
+from app.core.logger import logger
+from app.core.document_websocket import department_list
 from app.crud.document import get_document_by_id, update_document_metadata, get_document_stats, get_documents
 from app.core.http_client import http_client
 from app.db.session import SessionLocal
 from app.models.document import Document
-from app.utils.document_websocket import manager
+from app.core.document_websocket import manager
 from app.models.department import Department
-import httpx
-import json
-
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
@@ -24,6 +25,8 @@ DATA_SERVICE_DELETE_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
     """Gửi file sang AI Service"""
+    logger.info(f"Bắt đầu gửi file '{filename}' tới AI Service (save_document={is_save_file})")
+    
     files = {"file": (filename, file_content)}
     data = {
         "save_document": "true" if is_save_file else "false", 
@@ -34,9 +37,13 @@ async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: b
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(AI_SERVICE_URL, files=files, data=data)
             response.raise_for_status()
+            logger.info(f"AI Service phản hồi thành công cho file '{filename}'")
             return response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Lỗi HTTP từ AI Service ({e.response.status_code}): {e.response.text}")
+        return None
     except Exception as e:
-        print(f"Lỗi gọi AI Service: {e}")
+        logger.error(f"Lỗi kết nối httpx tới AI Service: {str(e)}", exc_info=True)
         return None
 
 async def process_document_background(
@@ -47,15 +54,18 @@ async def process_document_background(
     client_id: str
 ):
     """Hàm chạy nền: Gửi file cho AI, lưu toàn bộ kết quả vào Database, và gửi tin nhắn WebSocket"""
+    logger.info(f"Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id={document_id}")
     db = SessionLocal()
     try:
         ai_res = await send_to_ai_service(file_content, filename, is_save_file)
         
         doc = db.query(Document).filter(Document.document_id == document_id).first()
         if not doc:
+            logger.warning(f"Không tìm thấy tài liệu trong DB để cập nhật. document_id={document_id}")
             return
 
         if ai_res and ai_res.get("trang_thai") == "success":
+            logger.info(f"Tiến hành parse kết quả AI và lưu DB cho document_id={document_id}")
             doc.status = "processed"
             doc.summary = ai_res.get("tom_tat")
             doc.key_points = ai_res.get("key_points")
@@ -115,6 +125,7 @@ async def process_document_background(
                     pass
             
             db.commit()
+            logger.info(f"Đã lưu thành công dữ liệu phân tích AI vào DB. document_id={document_id}")
 
             await manager.send_personal_message({
                 "type": "DOCUMENT_PROCESSED",
@@ -124,6 +135,7 @@ async def process_document_background(
             }, client_id)
             
         else:
+            logger.warning(f"AI Service xử lý thất bại hoặc không trả về kết quả hợp lệ. document_id={document_id}")
             doc.status = "failed"
             db.commit()
             await manager.send_personal_message({
@@ -134,22 +146,26 @@ async def process_document_background(
             }, client_id)
             
     except Exception as e:
-        print(f"Lỗi background task process_document_background: {e}")
+        logger.error(f"Crash hệ thống trong background task xử lý tài liệu (id={document_id}): {str(e)}", exc_info=True)
         db.rollback()
-        # Cập nhật trạng thái lỗi vào DB nếu có lỗi crash
         try:
             doc = db.query(Document).filter(Document.document_id == document_id).first()
             if doc:
                 doc.status = "failed"
                 db.commit()
-        except: 
-            pass
+                logger.info(f"Đã fallback cập nhật trạng thái 'failed' cho document_id={document_id}")
+        except Exception as rollback_err: 
+            logger.error(f"Lỗi khi cố gắng rollback status tài liệu: {str(rollback_err)}")
     finally:
         db.close()
+        logger.info(f"Đã đóng phiên Session DB cho tiến trình ngầm document_id={document_id}")
+
 
 def update_ai_result(db: Session, document_id: str, payload: dict):
+    logger.info(f"Người dùng yêu cầu cập nhật (Approve) kết quả AI cho document_id={document_id}")
     document = get_document_by_id(db, document_id)
     if not document:
+        logger.warning(f"Cập nhật thất bại. Không tìm thấy document_id={document_id}")
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu (Document not found)")
 
     payload["updated_at"] = datetime.utcnow()
@@ -158,9 +174,11 @@ def update_ai_result(db: Session, document_id: str, payload: dict):
 
     try:
         updated_document = update_document_metadata(db, document, payload)
+        logger.info(f"Đã cập nhật thủ công thành công document_id={document_id}")
         return updated_document
     except SQLAlchemyError as e:
         db.rollback()
+        logger.error(f"Lỗi Database khi cập nhật thủ công document_id={document_id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Lỗi cơ sở dữ liệu khi cập nhật thông tin từ AI!"
@@ -175,7 +193,9 @@ def get_recent_documents_service(db: Session, limit: int=5):
 def get_all_documents(db: Session):
     return get_documents(db)
 
+
 async def search_ai_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
+    logger.info(f"Gửi yêu cầu tìm kiếm (Semantic Search) tới Data Service. query='{query}'")
     payload = {
         "query": query,
         "from_date": start_date,
@@ -191,16 +211,18 @@ async def search_ai_service(query: str, start_date: str = None, end_date: str = 
         )
         response.raise_for_status()
 
-        print(response.json())
+        logger.info(f"Tìm kiếm AI thành công. Lấy được dữ liệu.")
         return response.json()
     except httpx.HTTPStatusError as e:
-        print(f"AI Service Error: {e.response.text}")
+        logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
         return {"error": "AI Service không phản hồi đúng cách"}
     except Exception as e:
-        print(f"Connection Error: {str(e)}")
+        logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
         return {"error": "Không thể kết nối đến AI Service"}
         
+
 async def delete_in_document_service(document_id: str):
+    logger.info(f"Yêu cầu xóa tài liệu khỏi Vector DB. document_id={document_id}")
     try:
         url = f"{DATA_SERVICE_DELETE_URL}/{document_id}"
 
@@ -208,19 +230,20 @@ async def delete_in_document_service(document_id: str):
             url, 
             timeout=10.0
         )
-        
         response.raise_for_status()
         
+        logger.info(f"Xóa tài liệu thành công trên Data Service. document_id={document_id}")
         return response.json()
 
     except httpx.HTTPStatusError as e:
+        logger.error(f"Data Service từ chối xóa tài liệu {document_id}. Lỗi: {e.response.text}")
         raise HTTPException(
             status_code=e.response.status_code,
             detail=f"Data Service error: {e.response.text}"
         )
     except Exception as e:
+        logger.error(f"Lỗi hệ thống khi cố gắng gọi API xóa tài liệu {document_id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Lỗi hệ thống xử lý dữ liệu: {str(e)}"
         )
-     

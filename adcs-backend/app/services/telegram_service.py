@@ -1,7 +1,8 @@
 import requests
+import html
 from app.models.document import Document
 from app.models.user import User
-import html
+from app.core.logger import logger
 
 def send_telegram_ai_result(bot_token: str, user: User, document: Document):
     """
@@ -12,19 +13,18 @@ def send_telegram_ai_result(bot_token: str, user: User, document: Document):
     chat_id = getattr(user, 'telegram_chat_id', None)
     
     if not chat_id:
-        print(f"[Telegram] Người dùng {user.email} chưa cấu hình Telegram Chat ID.")
-        return
+        logger.warning(f"Người dùng {user.email} chưa cấu hình Telegram Chat ID. Bỏ qua tác vụ gửi tin nhắn.")
+        return {"status": "not_configured", "detail": "No Chat ID"}
 
     if not bot_token:
-        print("[Telegram Warning] Không có Bot Token. Hủy gửi tin nhắn.")
-        return
+        logger.error(f"Không có Bot Token trong hệ thống. Hủy gửi tin nhắn Telegram cho {user.email}.")
+        return {"status": "bot_not_found", "detail": "No Bot Token"}
     
     def safe_html(text):
         if text is None:
             return "N/A"
         return html.escape(str(text))
 
-    # Định dạng tin nhắn gửi đi (Sử dụng Markdown)
     message = (
         f"🤖 <b>HỆ THỐNG AI VỪA XỬ LÝ XONG VĂN BẢN</b>\n\n"
         f"<b>ID Tài liệu:</b> <code>{safe_html(document.document_id)}</code>\n"
@@ -46,9 +46,15 @@ def send_telegram_ai_result(bot_token: str, user: User, document: Document):
     }
 
     try:
+        logger.info(f"Đang tiến hành gửi thông báo Telegram cho user {user.email} (chat_id: {chat_id})")
+        
         response = requests.post(url, json=payload, timeout=10)
         response.raise_for_status()
+        
+        logger.info(f"Gửi thông báo Telegram THÀNH CÔNG cho user {user.email}")
         return {"status": "success", "detail": "Message sent"}
+        
     except requests.exceptions.RequestException as e:
-        error_msg = e.response.text if e.response else str(e)
+        error_msg = e.response.text if getattr(e, 'response', None) is not None else str(e)
+        logger.error(f"Gửi thông báo Telegram THẤT BẠI cho user {user.email}. Chi tiết lỗi: {error_msg}", exc_info=True)
         return {"status": "error", "detail": error_msg}

@@ -9,7 +9,7 @@ from app.services.telegram_service import send_telegram_ai_result
 from app.core.dependency import get_current_user
 from app.models.user import User
 from app.models.telegram_bot import Bot
-from app.utils.document_websocket import manager
+from app.core.document_websocket import manager
 from app.crud.document import create_document_entry, delete_document
 from app.core.dependency import RoleChecker, get_current_user
 
