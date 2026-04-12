@@ -12,6 +12,7 @@ from app.models.telegram_bot import Bot
 from app.core.document_websocket import manager
 from app.crud.document import create_document_entry, delete_document
 from app.core.dependency import RoleChecker, get_current_user
+from app.core.logger import request_id_var
 
 router = APIRouter()
 
@@ -137,10 +138,10 @@ async def upload_file_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    current_req_id = request_id_var.get()
+
     user_id = str(current_user.user_id) if 'current_user' in locals() else "system_user"
-
     doc = create_document_entry(db, user_id=user_id)
-
     file_content = await file.read()
 
     background_tasks.add_task(
@@ -149,7 +150,8 @@ async def upload_file_api(
         file_content=file_content,
         filename=file.filename,
         is_save_file=is_save_file,
-        client_id=user_id
+        client_id=user_id,
+        request_id=current_req_id
     )
 
     return {

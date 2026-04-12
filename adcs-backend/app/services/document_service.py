@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
-from app.core.logger import logger
+from app.core.logger import logger, request_id_var
 from app.core.document_websocket import department_list
 from app.crud.document import get_document_by_id, update_document_metadata, get_document_stats, get_documents
 from app.core.http_client import http_client
@@ -25,6 +25,7 @@ DATA_SERVICE_DELETE_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
     """Gửi file sang AI Service"""
+    req_id = request_id_var.get()
     logger.info(f"Bắt đầu gửi file '{filename}' tới AI Service (save_document={is_save_file})")
     
     files = {"file": (filename, file_content)}
@@ -32,10 +33,11 @@ async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: b
         "save_document": "true" if is_save_file else "false", 
         "department_list": json.dumps(department_list, ensure_ascii=False)
     }
+    headers = {"X-Request-ID": req_id}
     
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(AI_SERVICE_URL, files=files, data=data)
+            response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
             response.raise_for_status()
             logger.info(f"AI Service phản hồi thành công cho file '{filename}'")
             return response.json()
@@ -51,9 +53,12 @@ async def process_document_background(
     file_content: bytes, 
     filename: str, 
     is_save_file: bool, 
-    client_id: str
+    client_id: str,
+    request_id: str
 ):
     """Hàm chạy nền: Gửi file cho AI, lưu toàn bộ kết quả vào Database, và gửi tin nhắn WebSocket"""
+
+    token = request_id_var.set(request_id)
     logger.info(f"Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id={document_id}")
     db = SessionLocal()
     try:
@@ -158,6 +163,7 @@ async def process_document_background(
             logger.error(f"Lỗi khi cố gắng rollback status tài liệu: {str(rollback_err)}")
     finally:
         db.close()
+        request_id_var.reset(token)
         logger.info(f"Đã đóng phiên Session DB cho tiến trình ngầm document_id={document_id}")
 
 
@@ -195,23 +201,21 @@ def get_all_documents(db: Session):
 
 
 async def search_ai_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
-    logger.info(f"Gửi yêu cầu tìm kiếm (Semantic Search) tới Data Service. query='{query}'")
-    payload = {
-        "query": query,
-        "from_date": start_date,
-        "to_date": end_date,
-        "muc": muc,
-    }
+    req_id = request_id_var.get()
+    logger.info(f"Gửi yêu cầu tìm kiếm tới Data Service. query='{query}'")
+    
+    payload = {"query": query, "from_date": start_date, "to_date": end_date, "muc": muc}
+    headers = {"X-Request-ID": req_id}
     
     try:
         response = await http_client.client.post(
             DATA_SERVICE_SEARCH_URL, 
             json=payload, 
-            timeout=60
+            timeout=60,
+            headers=headers
         )
         response.raise_for_status()
-
-        logger.info(f"Tìm kiếm AI thành công. Lấy được dữ liệu.")
+        logger.info(f"Tìm kiếm AI thành công.")
         return response.json()
     except httpx.HTTPStatusError as e:
         logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
@@ -222,13 +226,17 @@ async def search_ai_service(query: str, start_date: str = None, end_date: str = 
         
 
 async def delete_in_document_service(document_id: str):
+    req_id = request_id_var.get()
     logger.info(f"Yêu cầu xóa tài liệu khỏi Vector DB. document_id={document_id}")
+    
+    headers = {"X-Request-ID": req_id}
     try:
         url = f"{DATA_SERVICE_DELETE_URL}/{document_id}"
 
         response = await http_client.client.delete(
             url, 
-            timeout=10.0
+            timeout=10.0,
+            headers=headers
         )
         response.raise_for_status()
         
