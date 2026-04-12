@@ -5,6 +5,8 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
+-- Started on 2026-04-12 09:47:03
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -18,6 +20,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- TOC entry 2 (class 3079 OID 36511)
 -- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -25,6 +28,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
+-- TOC entry 5248 (class 0 OID 0)
+-- Dependencies: 2
 -- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
 
@@ -32,6 +37,7 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
+-- TOC entry 3 (class 3079 OID 36522)
 -- Name: vector; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -39,6 +45,8 @@ CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
 
 
 --
+-- TOC entry 5249 (class 0 OID 0)
+-- Dependencies: 3
 -- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: 
 --
 
@@ -50,6 +58,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- TOC entry 225 (class 1259 OID 37097)
 -- Name: bots; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -65,22 +74,7 @@ CREATE TABLE public.bots (
 ALTER TABLE public.bots OWNER TO postgres;
 
 --
--- Name: classification_results; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.classification_results (
-    classification_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    document_id uuid,
-    predicted_label_id uuid,
-    score real,
-    model_version text,
-    classified_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.classification_results OWNER TO postgres;
-
---
+-- TOC entry 219 (class 1259 OID 36850)
 -- Name: departments; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -98,79 +92,12 @@ CREATE TABLE public.departments (
 ALTER TABLE public.departments OWNER TO postgres;
 
 --
--- Name: document_files; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.document_files (
-    file_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    document_id uuid,
-    file_name text,
-    file_path text,
-    mime_type text,
-    size_bytes bigint,
-    page_count integer,
-    checksum text,
-    ocr_status character varying(50),
-    ocr_text text,
-    uploaded_by uuid,
-    uploaded_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.document_files OWNER TO postgres;
-
---
--- Name: document_routing_history; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.document_routing_history (
-    history_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    document_id uuid,
-    from_department_id uuid,
-    to_department_id uuid,
-    from_user_id uuid,
-    to_user_id uuid,
-    action text,
-    comment text,
-    action_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.document_routing_history OWNER TO postgres;
-
---
--- Name: document_tags; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.document_tags (
-    document_id uuid NOT NULL,
-    tag_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.document_tags OWNER TO postgres;
-
---
--- Name: document_types; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.document_types (
-    document_type_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    description text
-);
-
-
-ALTER TABLE public.document_types OWNER TO postgres;
-
---
+-- TOC entry 227 (class 1259 OID 45427)
 -- Name: documents; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.documents (
     document_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    source_id uuid,
-    document_type_id uuid,
     assigned_department_id uuid,
     assigned_user_id uuid,
     so_den character varying(255),
@@ -178,40 +105,42 @@ CREATE TABLE public.documents (
     trich_yeu text,
     hinh_thuc character varying(100),
     loai_van_ban_text character varying(100),
-    muc character varying(100),
-    do_khan character varying(50),
-    do_mat character varying(50),
     don_vi_ban_hanh text,
+    nguoi_ky character varying(255),
+    chuc_vu_nguoi_ky character varying(255),
     ngay_van_ban date,
     ngay_den timestamp with time zone,
     ngay_het_han date,
-    vai_tro character varying(100),
+    do_khan character varying(50),
+    noi_nhan jsonb,
+    can_cu_phap_ly jsonb,
+    yeu_cau_hanh_dong text,
     status text,
-    priority smallint DEFAULT 0,
-    confidence real,
     summary text,
+    key_points jsonb,
+    confidence real,
+    muc_tin_cay character varying(50),
+    loai_van_ban jsonb,
+    de_xuat_xu_ly jsonb,
+    goi_y_phong_ban jsonb,
+    tong_so_chunk integer,
+    total_chunks_processed integer,
+    source_pages integer,
+    storage_info jsonb,
+    processing_time real,
     is_chua_doc boolean DEFAULT true,
     thong_tin_ky_so jsonb,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    nguoi_ky text,
-    chuc_vu_nguoi_ky text,
-    noi_nhan text[],
-    can_cu_phap_ly text[],
-    yeu_cau_han_dong text,
-    key_points text[],
-    muc_tin_cay text,
-    de_xuat_xu_ly jsonb,
-    goi_y_phong_ban jsonb,
-    tong_so_chunk integer,
-    processing_time real
+    uploaded_by_user_id uuid NOT NULL
 );
 
 
 ALTER TABLE public.documents OWNER TO postgres;
 
 --
+-- TOC entry 228 (class 1259 OID 45448)
 -- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -229,6 +158,7 @@ CREATE TABLE public.notifications (
 ALTER TABLE public.notifications OWNER TO postgres;
 
 --
+-- TOC entry 221 (class 1259 OID 36876)
 -- Name: permissions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -242,6 +172,7 @@ CREATE TABLE public.permissions (
 ALTER TABLE public.permissions OWNER TO postgres;
 
 --
+-- TOC entry 222 (class 1259 OID 36886)
 -- Name: role_permissions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -254,6 +185,7 @@ CREATE TABLE public.role_permissions (
 ALTER TABLE public.role_permissions OWNER TO postgres;
 
 --
+-- TOC entry 220 (class 1259 OID 36865)
 -- Name: roles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -268,21 +200,7 @@ CREATE TABLE public.roles (
 ALTER TABLE public.roles OWNER TO postgres;
 
 --
--- Name: sources; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.sources (
-    source_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    type text NOT NULL,
-    config jsonb,
-    created_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.sources OWNER TO postgres;
-
---
+-- TOC entry 226 (class 1259 OID 37129)
 -- Name: system_parameters; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -297,6 +215,7 @@ CREATE TABLE public.system_parameters (
 ALTER TABLE public.system_parameters OWNER TO postgres;
 
 --
+-- TOC entry 224 (class 1259 OID 37047)
 -- Name: tags; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -311,6 +230,7 @@ CREATE TABLE public.tags (
 ALTER TABLE public.tags OWNER TO postgres;
 
 --
+-- TOC entry 223 (class 1259 OID 36910)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -326,29 +246,27 @@ CREATE TABLE public.users (
     phone text,
     is_active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now(),
-    last_login_at timestamp with time zone
+    last_login_at timestamp with time zone,
+    telegram_chat_id text
 );
 
 
 ALTER TABLE public.users OWNER TO postgres;
 
 --
+-- TOC entry 5239 (class 0 OID 37097)
+-- Dependencies: 225
 -- Data for Name: bots; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.bots (bot_id, name, token, channel_type, created_at) FROM stdin;
+5b313ece-9380-4f82-a33f-4a873d4b6cf7	ptit_adcs_bot	8712790689:AAE-cSEzuC4U2saVtExjCaSk2yKYnk9kmvA	telegram	2026-04-06 13:45:04.060849+07
 \.
 
 
 --
--- Data for Name: classification_results; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.classification_results (classification_id, document_id, predicted_label_id, score, model_version, classified_at) FROM stdin;
-\.
-
-
---
+-- TOC entry 5233 (class 0 OID 36850)
+-- Dependencies: 219
 -- Data for Name: departments; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -405,59 +323,19 @@ b910c7ee-47b6-4f2e-aa82-239bced301b1	Trung tâm Đào tạo Bưu chính Viễn t
 
 
 --
--- Data for Name: document_files; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.document_files (file_id, document_id, file_name, file_path, mime_type, size_bytes, page_count, checksum, ocr_status, ocr_text, uploaded_by, uploaded_at) FROM stdin;
-4760b9b2-1a02-4f0c-8ffc-74acb5b9522c	0534e39f-04a4-4d05-964f-6fd66efb20c8	441e4d29-58fb-4ee8-81e8-caa54183787c.pdf	uploads\\441e4d29-58fb-4ee8-81e8-caa54183787c.pdf	\N	2671960	\N	\N	Processing	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1	2026-03-27 18:16:58.706862+07
-ef073f0f-2a74-4b37-89fe-1d4d960bb00b	ebab0a1f-160d-4975-ba7f-58f927f15b58	d61d2e6f-d657-4278-94cb-bf3bbd978b06.pdf	uploads\\d61d2e6f-d657-4278-94cb-bf3bbd978b06.pdf	\N	2671960	\N	\N	Processing	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1	2026-03-27 22:35:31.083713+07
-72fed1b9-e7ae-446f-a8cc-91f45a0b6b3d	c7196511-96ed-4055-945a-5a29dc21dab8	9c8d7cf4-3209-4889-8aaf-6fe78a0eb224.pdf	uploads\\9c8d7cf4-3209-4889-8aaf-6fe78a0eb224.pdf	\N	2671960	\N	\N	Processing	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1	2026-03-28 08:07:59.883256+07
-0224b3c0-2c65-44ed-92b7-fea553781d4f	681a18ee-766b-4d34-a333-37162d07963b	76db38fd-5e47-40c4-9826-bebcc58cfa87.pdf	uploads\\76db38fd-5e47-40c4-9826-bebcc58cfa87.pdf	\N	2671960	\N	\N	Processing	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1	2026-03-28 09:40:43.891473+07
-\.
-
-
---
--- Data for Name: document_routing_history; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.document_routing_history (history_id, document_id, from_department_id, to_department_id, from_user_id, to_user_id, action, comment, action_at) FROM stdin;
-\.
-
-
---
--- Data for Name: document_tags; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.document_tags (document_id, tag_id) FROM stdin;
-\.
-
-
---
--- Data for Name: document_types; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.document_types (document_type_id, name, description) FROM stdin;
-\.
-
-
---
+-- TOC entry 5241 (class 0 OID 45427)
+-- Dependencies: 227
 -- Data for Name: documents; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.documents (document_id, source_id, document_type_id, assigned_department_id, assigned_user_id, so_den, so_ky_hieu, trich_yeu, hinh_thuc, loai_van_ban_text, muc, do_khan, do_mat, don_vi_ban_hanh, ngay_van_ban, ngay_den, ngay_het_han, vai_tro, status, priority, confidence, summary, is_chua_doc, thong_tin_ky_so, created_at, updated_at, deleted_at, nguoi_ky, chuc_vu_nguoi_ky, noi_nhan, can_cu_phap_ly, yeu_cau_han_dong, key_points, muc_tin_cay, de_xuat_xu_ly, goi_y_phong_ban, tong_so_chunk, processing_time) FROM stdin;
-56d01d22-803b-4525-86a5-4e941d7a859a	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-24 16:48:49.270994+07	2026-03-24 16:48:49.270994+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-7424aec2-9cd7-4609-af7e-3f007c1569ff	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-24 16:49:39.243759+07	2026-03-24 16:49:39.243759+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-0534e39f-04a4-4d05-964f-6fd66efb20c8	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-27 18:16:58.682052+07	2026-03-27 18:16:58.682052+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-ebab0a1f-160d-4975-ba7f-58f927f15b58	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-27 22:35:31.063952+07	2026-03-27 22:35:31.063952+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-c7196511-96ed-4055-945a-5a29dc21dab8	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-28 08:07:59.853282+07	2026-03-28 08:07:59.853282+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-681a18ee-766b-4d34-a333-37162d07963b	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-28 09:40:43.863275+07	2026-03-28 09:40:43.863275+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-121a1f6f-845f-464c-ba2b-15ec3cc25210	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	pending	0	\N	\N	t	\N	2026-03-31 14:12:54.049307+07	2026-03-31 14:12:54.049307+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-bff5fc80-ed86-4b64-8f94-0582233743fa	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	failed	0	\N	\N	t	\N	2026-03-31 14:14:30.007051+07	2026-03-31 14:14:30.03233+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-ce99fd1e-72bc-4ea4-bd0b-d7e916b4c890	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	failed	0	\N	\N	t	\N	2026-03-31 14:15:08.188476+07	2026-03-31 14:15:08.215198+07	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+COPY public.documents (document_id, assigned_department_id, assigned_user_id, so_den, so_ky_hieu, trich_yeu, hinh_thuc, loai_van_ban_text, don_vi_ban_hanh, nguoi_ky, chuc_vu_nguoi_ky, ngay_van_ban, ngay_den, ngay_het_han, do_khan, noi_nhan, can_cu_phap_ly, yeu_cau_hanh_dong, status, summary, key_points, confidence, muc_tin_cay, loai_van_ban, de_xuat_xu_ly, goi_y_phong_ban, tong_so_chunk, total_chunks_processed, source_pages, storage_info, processing_time, is_chua_doc, thong_tin_ky_so, created_at, updated_at, deleted_at, uploaded_by_user_id) FROM stdin;
+c1b197aa-2767-4b69-8891-3405ecf4359b	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	failed	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	2026-04-11 17:11:46.659761+07	2026-04-11 17:13:48.151441+07	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1
 \.
 
 
 --
+-- TOC entry 5242 (class 0 OID 45448)
+-- Dependencies: 228
 -- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -466,6 +344,8 @@ COPY public.notifications (notification_id, document_id, bot_id, to_user_id, sta
 
 
 --
+-- TOC entry 5235 (class 0 OID 36876)
+-- Dependencies: 221
 -- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -486,6 +366,8 @@ a05572c2-b7c5-4927-83fe-377608579732	file.create	Tạo file
 
 
 --
+-- TOC entry 5236 (class 0 OID 36886)
+-- Dependencies: 222
 -- Data for Name: role_permissions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -508,6 +390,8 @@ COPY public.role_permissions (role_id, permission_id) FROM stdin;
 
 
 --
+-- TOC entry 5234 (class 0 OID 36865)
+-- Dependencies: 220
 -- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -518,14 +402,8 @@ COPY public.roles (role_id, name, description, created_at) FROM stdin;
 
 
 --
--- Data for Name: sources; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.sources (source_id, name, type, config, created_at) FROM stdin;
-\.
-
-
---
+-- TOC entry 5240 (class 0 OID 37129)
+-- Dependencies: 226
 -- Data for Name: system_parameters; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -534,6 +412,8 @@ COPY public.system_parameters (param_key, param_value, description, updated_at) 
 
 
 --
+-- TOC entry 5238 (class 0 OID 37047)
+-- Dependencies: 224
 -- Data for Name: tags; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -542,16 +422,18 @@ COPY public.tags (tag_id, name, created_by, created_at) FROM stdin;
 
 
 --
+-- TOC entry 5237 (class 0 OID 36910)
+-- Dependencies: 223
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (user_id, username, email, display_name, password_hash, auth_provider, department_id, role_id, phone, is_active, created_at, last_login_at) FROM stdin;
-05657dbd-ceb8-4979-8cd5-d152e76c3db1	Nguyễn Vinh Hiển	hiennv@ptit.edu.vn	\N	$bcrypt-sha256$v=2,t=2b,r=12$BNuoaU5C1iEI6frcJ8wUc.$Rt.6UTQrrVZZc6d9ErnYl7oGE.5sdxK	local	a403a4b1-0bb5-41cb-9dab-ada7e217f038	4d72e024-9343-4474-bd07-6ac5cebf3243	\N	t	2026-03-27 15:00:11.575929+07	\N
-38a15d56-8856-4cd2-a40b-f1729360929b	Trần Vũ Nhật Mai	mai@ptit.edu.vn	\N	$bcrypt-sha256$v=2,t=2b,r=12$8rRDnScs09yN5kTBHOZpL.$TNHAEIg3Jh7Ro.OmfvHN7BepoqvZBvi	local	\N	\N	\N	t	2026-03-27 18:20:54.566581+07	\N
+COPY public.users (user_id, username, email, display_name, password_hash, auth_provider, department_id, role_id, phone, is_active, created_at, last_login_at, telegram_chat_id) FROM stdin;
+05657dbd-ceb8-4979-8cd5-d152e76c3db1	Nguyễn Vinh Hiển	hiennv@ptit.edu.vn	\N	$bcrypt-sha256$v=2,t=2b,r=12$BNuoaU5C1iEI6frcJ8wUc.$Rt.6UTQrrVZZc6d9ErnYl7oGE.5sdxK	local	a403a4b1-0bb5-41cb-9dab-ada7e217f038	4d72e024-9343-4474-bd07-6ac5cebf3243	\N	t	2026-03-27 15:00:11.575929+07	\N	6733536444
 \.
 
 
 --
+-- TOC entry 5069 (class 2606 OID 37105)
 -- Name: bots bots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -560,14 +442,7 @@ ALTER TABLE ONLY public.bots
 
 
 --
--- Name: classification_results classification_results_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.classification_results
-    ADD CONSTRAINT classification_results_pkey PRIMARY KEY (classification_id);
-
-
---
+-- TOC entry 5047 (class 2606 OID 36859)
 -- Name: departments departments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -576,38 +451,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- Name: document_files document_files_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_files
-    ADD CONSTRAINT document_files_pkey PRIMARY KEY (file_id);
-
-
---
--- Name: document_routing_history document_routing_history_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_pkey PRIMARY KEY (history_id);
-
-
---
--- Name: document_tags document_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_tags
-    ADD CONSTRAINT document_tags_pkey PRIMARY KEY (document_id, tag_id);
-
-
---
--- Name: document_types document_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_types
-    ADD CONSTRAINT document_types_pkey PRIMARY KEY (document_type_id);
-
-
---
+-- TOC entry 5073 (class 2606 OID 45437)
 -- Name: documents documents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -616,6 +460,7 @@ ALTER TABLE ONLY public.documents
 
 
 --
+-- TOC entry 5075 (class 2606 OID 45455)
 -- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -624,6 +469,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- TOC entry 5053 (class 2606 OID 36885)
 -- Name: permissions permissions_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -632,6 +478,7 @@ ALTER TABLE ONLY public.permissions
 
 
 --
+-- TOC entry 5055 (class 2606 OID 36883)
 -- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -640,6 +487,7 @@ ALTER TABLE ONLY public.permissions
 
 
 --
+-- TOC entry 5057 (class 2606 OID 36890)
 -- Name: role_permissions role_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -648,6 +496,7 @@ ALTER TABLE ONLY public.role_permissions
 
 
 --
+-- TOC entry 5049 (class 2606 OID 36875)
 -- Name: roles roles_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -656,6 +505,7 @@ ALTER TABLE ONLY public.roles
 
 
 --
+-- TOC entry 5051 (class 2606 OID 36873)
 -- Name: roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -664,14 +514,7 @@ ALTER TABLE ONLY public.roles
 
 
 --
--- Name: sources sources_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.sources
-    ADD CONSTRAINT sources_pkey PRIMARY KEY (source_id);
-
-
---
+-- TOC entry 5071 (class 2606 OID 37136)
 -- Name: system_parameters system_parameters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -680,6 +523,7 @@ ALTER TABLE ONLY public.system_parameters
 
 
 --
+-- TOC entry 5065 (class 2606 OID 37057)
 -- Name: tags tags_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -688,6 +532,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
+-- TOC entry 5067 (class 2606 OID 37055)
 -- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -696,6 +541,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
+-- TOC entry 5059 (class 2606 OID 36924)
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -704,6 +550,7 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- TOC entry 5061 (class 2606 OID 36920)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -712,6 +559,7 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- TOC entry 5063 (class 2606 OID 36922)
 -- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -720,36 +568,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: idx_documents_search; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_documents_search ON public.documents USING btree (so_den, so_ky_hieu);
-
-
---
--- Name: idx_routing_doc; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_routing_doc ON public.document_routing_history USING btree (document_id);
-
-
---
--- Name: classification_results classification_results_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.classification_results
-    ADD CONSTRAINT classification_results_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE;
-
-
---
--- Name: classification_results classification_results_predicted_label_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.classification_results
-    ADD CONSTRAINT classification_results_predicted_label_id_fkey FOREIGN KEY (predicted_label_id) REFERENCES public.document_types(document_type_id);
-
-
---
+-- TOC entry 5076 (class 2606 OID 36860)
 -- Name: departments departments_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -758,78 +577,7 @@ ALTER TABLE ONLY public.departments
 
 
 --
--- Name: document_files document_files_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_files
-    ADD CONSTRAINT document_files_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE;
-
-
---
--- Name: document_files document_files_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_files
-    ADD CONSTRAINT document_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- Name: document_routing_history document_routing_history_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE;
-
-
---
--- Name: document_routing_history document_routing_history_from_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_from_department_id_fkey FOREIGN KEY (from_department_id) REFERENCES public.departments(department_id);
-
-
---
--- Name: document_routing_history document_routing_history_from_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_from_user_id_fkey FOREIGN KEY (from_user_id) REFERENCES public.users(user_id);
-
-
---
--- Name: document_routing_history document_routing_history_to_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_to_department_id_fkey FOREIGN KEY (to_department_id) REFERENCES public.departments(department_id);
-
-
---
--- Name: document_routing_history document_routing_history_to_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_routing_history
-    ADD CONSTRAINT document_routing_history_to_user_id_fkey FOREIGN KEY (to_user_id) REFERENCES public.users(user_id);
-
-
---
--- Name: document_tags document_tags_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_tags
-    ADD CONSTRAINT document_tags_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE CASCADE;
-
-
---
--- Name: document_tags document_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.document_tags
-    ADD CONSTRAINT document_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id) ON DELETE CASCADE;
-
-
---
+-- TOC entry 5082 (class 2606 OID 45438)
 -- Name: documents documents_assigned_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -838,6 +586,7 @@ ALTER TABLE ONLY public.documents
 
 
 --
+-- TOC entry 5083 (class 2606 OID 45443)
 -- Name: documents documents_assigned_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -846,22 +595,16 @@ ALTER TABLE ONLY public.documents
 
 
 --
--- Name: documents documents_document_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 5084 (class 2606 OID 45471)
+-- Name: documents documents_uploaded_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.documents
-    ADD CONSTRAINT documents_document_type_id_fkey FOREIGN KEY (document_type_id) REFERENCES public.document_types(document_type_id) ON DELETE SET NULL;
+    ADD CONSTRAINT documents_uploaded_by_user_id_fkey FOREIGN KEY (uploaded_by_user_id) REFERENCES public.users(user_id) NOT VALID;
 
 
 --
--- Name: documents documents_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.documents
-    ADD CONSTRAINT documents_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.sources(source_id) ON DELETE SET NULL;
-
-
---
+-- TOC entry 5085 (class 2606 OID 45461)
 -- Name: notifications notifications_bot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -870,6 +613,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- TOC entry 5086 (class 2606 OID 45456)
 -- Name: notifications notifications_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -878,6 +622,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- TOC entry 5087 (class 2606 OID 45466)
 -- Name: notifications notifications_to_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -886,6 +631,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- TOC entry 5077 (class 2606 OID 36896)
 -- Name: role_permissions role_permissions_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -894,6 +640,7 @@ ALTER TABLE ONLY public.role_permissions
 
 
 --
+-- TOC entry 5078 (class 2606 OID 36891)
 -- Name: role_permissions role_permissions_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -902,6 +649,7 @@ ALTER TABLE ONLY public.role_permissions
 
 
 --
+-- TOC entry 5081 (class 2606 OID 37058)
 -- Name: tags tags_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -910,6 +658,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
+-- TOC entry 5079 (class 2606 OID 36925)
 -- Name: users users_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -918,12 +667,15 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- TOC entry 5080 (class 2606 OID 36930)
 -- Name: users users_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(role_id) ON DELETE SET NULL;
 
+
+-- Completed on 2026-04-12 09:47:03
 
 --
 -- PostgreSQL database dump complete
