@@ -51,7 +51,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(RequestContextMiddleware)
+app.add_middleware(RequestTrackingMiddleware)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user.router, prefix="/api/users", tags=["Users"])
