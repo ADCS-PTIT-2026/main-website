@@ -134,12 +134,3 @@ export async function searchDocuments(params: SearchParams): Promise<SearchAIRes
 
   return axiosClient.get(`/documents/search?${query.toString()}`);
 }
-
-export interface DocumentType {
-  id: string;
-  name: string;
-}
-
-export async function getDocumentTypes(): Promise<DocumentType[]> {
-  return axiosClient.get(`/document-types`);
-}
