@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// 1. Thêm deleteDocument vào import
 import { searchDocuments, getDocumentTypes, getAllDocuments, deleteDocument, type DocumentResponse, type DocumentType } from '../../../api/document';
+import axiosClient from '../../../api/axiosClient';
 
 const getFileIconUI = (document: DocumentResponse) => {
   const type = document.loai_van_ban_text?.toLowerCase() || '';
@@ -41,6 +41,11 @@ const DocumentRepositoryPage: React.FC = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // --- STATE CHO FILE RAW VIEWER ---
+  const [rawFileUrl, setRawFileUrl] = useState<string | null>(null);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
@@ -75,8 +80,6 @@ const DocumentRepositoryPage: React.FC = () => {
           page: currentPage,
           limit: ITEMS_PER_PAGE
         });
-
-        console.log("Search response:", response);
       } else {
         response = await getAllDocuments();
       }
@@ -125,16 +128,36 @@ const DocumentRepositoryPage: React.FC = () => {
     fetchDocuments();
   }, [activeQuery, selectedType, currentPage, category, startDate, endDate, sortBy]);
 
+  // --- LOGIC FETCH RAW FILE KHI MỞ MODAL ---
+  useEffect(() => {
+    if (selectedDocument) {
+      setIsLoadingFile(true);
+      setFileError(null);
+      axiosClient.get(`/documents/${selectedDocument.document_id}/file`, { responseType: 'blob' })
+        .then((response: any) => {
+          const url = URL.createObjectURL(response);
+          setRawFileUrl(url);
+          setIsLoadingFile(false);
+        })
+        .catch(err => {
+          console.error("Lỗi tải file raw:", err);
+          setFileError("Không thể tải file hiển thị. File có thể không tồn tại hoặc lỗi máy chủ.");
+          setIsLoadingFile(false);
+        });
+    } else {
+      if (rawFileUrl) {
+        URL.revokeObjectURL(rawFileUrl);
+      }
+      setRawFileUrl(null);
+    }
+  }, [selectedDocument]);
+
   const handleSearchSubmit = () => {
     const isSearching = searchInput.trim() !== '' || startDate !== '' || endDate !== '';
-
-    if (isSearching) {
-      if (!searchInput.trim() || !startDate || !endDate) {
+    if (isSearching && (!searchInput.trim() || !startDate || !endDate)) {
         alert("Vui lòng nhập tối thiểu 3 thông tin: Từ khóa, Ngày bắt đầu và Ngày kết thúc để thực hiện tìm kiếm!");
         return; 
-      }
     }
-
     setCurrentPage(1);
     setActiveQuery(searchInput);
   };
@@ -185,9 +208,9 @@ const DocumentRepositoryPage: React.FC = () => {
   };
 
   useEffect(() => {
-      if (isDeleteOpen) document.body.style.overflow = 'hidden';
-      else document.body.style.overflow = '';
-    }, [isDeleteOpen]);
+    if (isDeleteOpen || selectedDocument) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+  }, [isDeleteOpen, selectedDocument]);
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col relative">
@@ -217,8 +240,6 @@ const DocumentRepositoryPage: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                  {/* <button onClick={() => {setCategory('all'); setCurrentPage(1);}} className={`px-4 py-1.5 rounded-md text-sm outline-none ${category === 'all' ? 'bg-white shadow-sm font-bold text-primary' : 'text-slate-600 hover:text-slate-900'}`}>Tất cả</button>
-                  <button onClick={() => {setCategory('promulgated'); setCurrentPage(1);}} className={`px-4 py-1.5 rounded-md text-sm outline-none ${category === 'promulgated' ? 'bg-white shadow-sm font-bold text-primary' : 'text-slate-600 hover:text-slate-900'}`}>Đã ban hành</button> */}
                   <button onClick={() => {setCategory('recent'); setCurrentPage(1);}} className={`px-4 py-1.5 rounded-md text-sm outline-none ${category === 'recent' ? 'bg-white shadow-sm font-bold text-primary' : 'text-slate-600 hover:text-slate-900'}`}>Gần đây</button>
                 </div>
                 
@@ -340,14 +361,13 @@ const DocumentRepositoryPage: React.FC = () => {
         </section>
       </main>
 
-      {/* --- MODAL CHI TIẾT TÀI LIỆU --- */}
+      {/* --- MODAL CHI TIẾT TÀI LIỆU VỚI RAW VIEWER --- */}
       {selectedDocument && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 md:p-8 animate-fade-in">
-          {/* Modal Container */}
-          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-[95vw] lg:max-w-7xl h-full max-h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
             
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="size-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
                   <span className="material-symbols-outlined">description</span>
@@ -368,109 +388,131 @@ const DocumentRepositoryPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Body (Scrollable) */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-900 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                {/* Cột trái: Tóm tắt & Nội dung chính */}
-                <div className="md:col-span-2 space-y-6">
-                  {/* Trích yếu */}
-                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[16px]">short_text</span>
-                      Trích yếu nội dung
-                    </h3>
-                    <p className="text-slate-800 dark:text-slate-200 text-lg font-medium leading-relaxed">
-                      {selectedDocument.trich_yeu || 'Không có thông tin trích yếu.'}
-                    </p>
+            {/* Modal Body: Chia làm 2 cột hiển thị ngang trên màn hình lớn */}
+            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row bg-slate-50/50 dark:bg-slate-900 p-6 gap-6">
+              
+              {/* CỘT TRÁI: HIỂN THỊ FILE GỐC (RAW FILE VIEWER) */}
+              <div className="flex-[2] bg-slate-200 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 relative flex flex-col shadow-inner">
+                {isLoadingFile ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
+                    <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-2">sync</span>
+                    <p className="text-sm font-medium">Đang tải tài liệu...</p>
                   </div>
+                ) : fileError ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-rose-500 p-8 text-center">
+                    <span className="material-symbols-outlined text-5xl mb-3">broken_image</span>
+                    <p className="font-semibold">{fileError}</p>
+                  </div>
+                ) : rawFileUrl ? (
+                  <iframe 
+                    src={rawFileUrl} 
+                    className="w-full h-full flex-1 border-none bg-white" 
+                    title="Trình xem tài liệu"
+                  />
+                ) : (
+                   <div className="flex-1 flex items-center justify-center text-slate-400">
+                      Không có file để hiển thị
+                   </div>
+                )}
+              </div>
 
-                  {/* AI Summary */}
-                    <div className="flex items-center justify-between mb-3">
-                      {selectedDocument.confidence && (
-                        <span className="text-[15px] font-bold px-2 py-0.5 bg-white dark:bg-slate-800 text-primary rounded-full shadow-sm">
-                          Độ tương đồng: {Math.round(selectedDocument.confidence * 100)}%
-                        </span>
-                      )}
-                    </div>
-
-                  {/* Key Points (Nếu có) */}
-                  {selectedDocument.key_points && selectedDocument.key_points.length > 0 && (
-                    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">format_list_bulleted</span>
-                        Điểm chính
-                      </h3>
-                      <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                        {selectedDocument.key_points.map((point, idx) => (
-                          <li key={idx}>{point}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              {/* CỘT PHẢI: METADATA VÀ AI SUMMARY */}
+              <div className="flex-1 lg:max-w-[400px] overflow-y-auto space-y-6 custom-scrollbar pr-2">
+                
+                {/* AI Summary */}
+                <div className="bg-primary/5 dark:bg-primary/10 p-5 rounded-xl border border-primary/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">smart_toy</span>
+                      AI Tóm tắt
+                    </h3>
+                    {selectedDocument.confidence && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-white dark:bg-slate-800 text-primary rounded-full shadow-sm">
+                        Độ tương đồng: {Math.round(selectedDocument.confidence * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap text-sm">
+                    {selectedDocument.summary || 'AI chưa tạo tóm tắt cho tài liệu này.'}
+                  </p>
                 </div>
 
-                {/* Cột phải: Thuộc tính Metadata */}
-                <div className="space-y-6">
-                  {/* Card Metadata */}
+                {/* Trích yếu */}
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">short_text</span>
+                    Trích yếu nội dung
+                  </h3>
+                  <p className="text-slate-800 dark:text-slate-200 text-[15px] font-medium leading-relaxed">
+                    {selectedDocument.trich_yeu || 'Không có thông tin trích yếu.'}
+                  </p>
+                </div>
+
+                {/* Key Points */}
+                {selectedDocument.key_points && selectedDocument.key_points.length > 0 && (
                   <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
-                      Thuộc tính văn bản
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+                      Điểm chính
                     </h3>
-                    
-                    <div className="space-y-4">
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                      {selectedDocument.key_points.map((point, idx) => (
+                        <li key={idx}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Thuộc tính Metadata */}
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
+                    Thuộc tính văn bản
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Loại văn bản</p>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
                           {selectedDocument.loai_van_ban_text || 'Chưa phân loại'}
                         </p>
                       </div>
-                      
                       <div>
-                        <p className="text-[10px] font-semibold text-slate-500 uppercase">Cơ quan ban hành</p>
+                        <p className="text-[10px] font-semibold text-slate-500 uppercase">Ngày ban hành</p>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                          {selectedDocument.don_vi_ban_hanh || 'Không rõ'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Ngày ban hành</p>
-                          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                            {formatDate(selectedDocument.ngay_van_ban)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Độ khẩn</p>
-                          <span className="inline-block mt-0.5 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded">
-                            {selectedDocument.do_khan || 'Bình thường'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-[10px] font-semibold text-slate-500 uppercase">Người ký</p>
-                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                          {selectedDocument.nguoi_ky ? `${selectedDocument.nguoi_ky} (${selectedDocument.chuc_vu_nguoi_ky || 'Không rõ chức vụ'})` : 'Không có thông tin'}
+                          {formatDate(selectedDocument.ngay_van_ban)}
                         </p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Card System */}
-                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
-                      Hệ thống
-                    </h3>
                     
-                    <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase">Cơ quan ban hành</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
+                        {selectedDocument.don_vi_ban_hanh || 'Không rõ'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase">Người ký</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
+                        {selectedDocument.nguoi_ky ? `${selectedDocument.nguoi_ky} (${selectedDocument.chuc_vu_nguoi_ky || 'Không rõ chức vụ'})` : 'Không có thông tin'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card System */}
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
+                    Hệ thống
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Trạng thái xử lý</p>
                         <span className={`inline-block mt-1 px-2 py-1 text-xs font-bold rounded-md ${getStatusBadge(selectedDocument.status)}`}>
                           {selectedDocument.status?.toUpperCase() || 'UNKNOWN'}
                         </span>
                       </div>
-
                       <div>
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Phân bổ phòng ban</p>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
@@ -479,12 +521,13 @@ const DocumentRepositoryPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
                 </div>
+
               </div>
             </div>
             
-            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end gap-3">
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end gap-3 flex-shrink-0">
               <button 
                 onClick={() => setSelectedDocument(null)}
                 className="px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded-lg transition-colors outline-none"
@@ -493,10 +536,7 @@ const DocumentRepositoryPage: React.FC = () => {
               </button>
               
               <button 
-                onClick={ () => {
-                  setSelectedDocument(selectedDocument);
-                  setIsDeleteOpen(true);
-                }}
+                onClick={ () => { setIsDeleteOpen(true); }}
                 disabled={isDeleting}
                 className="px-5 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-lg shadow-lg shadow-rose-600/20 flex items-center gap-2 outline-none disabled:opacity-70 disabled:cursor-not-allowed transition-all"
               >
@@ -518,46 +558,20 @@ const DocumentRepositoryPage: React.FC = () => {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {isDeleteOpen && (
-        <div
-          onClick={() => setIsDeleteOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6 animate-fade-in"
-          >
+        <div onClick={() => setIsDeleteOpen(false)} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
               <span className="material-symbols-outlined text-red-600">warning</span>
             </div>
-
             <h2 className="text-lg font-bold text-center mb-2">Xóa tài liệu?</h2>
-
             <p className="text-sm text-slate-500 text-center mb-6">
-              Bạn có chắc muốn xóa{' '}
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                {selectedDocument?.document_number}
-              </span>
-              ? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDocument?.document_number || 'tài liệu này'}</span>? Hành động này không thể hoàn tác.
             </p>
-
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setIsDeleteOpen(false);
-                  setSelectedDocument(null);
-                }}
-                className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors"
-              >
-                Hủy
-              </button>
-
-              <button
-                onClick={handleDeleteDocument}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold outline-none transition-colors"
-              >
-                Xóa
-              </button>
+              <button onClick={() => setIsDeleteOpen(false)} className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors">Hủy</button>
+              <button onClick={handleDeleteDocument} className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold outline-none transition-colors">Xóa</button>
             </div>
           </div>
         </div>

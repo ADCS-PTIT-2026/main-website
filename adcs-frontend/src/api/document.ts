@@ -47,6 +47,9 @@ export type DocumentResponse = {
     ly_do?: string;
     diem_tin_cay?: number;
   } | null;
+
+  attachment?: string[] | null;
+  local_path?: string | null;
 };
 
 export type ApproveAIResultRequest = Partial<DocumentResponse>;
