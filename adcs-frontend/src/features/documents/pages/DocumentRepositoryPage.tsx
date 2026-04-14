@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { searchDocuments, getDocumentTypes, getAllDocuments, deleteDocument, type DocumentResponse, type DocumentType } from '../../../api/document';
+import { searchDocuments, getAllDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
 import axiosClient from '../../../api/axiosClient';
 
 const getFileIconUI = (document: DocumentResponse) => {
@@ -21,11 +21,9 @@ const getStatusBadge = (status?: string | null) => {
 };
 
 const DocumentRepositoryPage: React.FC = () => {
-  const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
 
   const [searchInput, setSearchInput] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<string>(''); 
   const [sortBy, setSortBy] = useState<'confidence' | 'newest'>('newest');
   const [category, setCategory] = useState<'all' | 'promulgated' | 'recent'>('all');
   const [startDate, setStartDate] = useState<string>('');
@@ -48,25 +46,11 @@ const DocumentRepositoryPage: React.FC = () => {
 
   const ITEMS_PER_PAGE = 20;
 
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const [typesData] = await Promise.all([
-          getDocumentTypes().catch(() => [])
-        ]);
-        setDocTypes(typesData);
-      } catch (error) {
-        console.error("Lỗi tải bộ lọc:", error);
-      }
-    };
-    fetchFilters();
-  }, []);
-
   const fetchDocuments = async () => {
     setIsLoading(true);
     try {
-      const hasFullSearchCondition = activeQuery.trim() !== '' && startDate !== '' && endDate !== '';
-      const isFiltering = hasFullSearchCondition || selectedType !== '' || category !== 'all';
+      const hasFullSearchCondition = activeQuery.trim() !== '';
+      const isFiltering = hasFullSearchCondition || startDate || endDate || category !== 'all';
 
       let response: any;
 
@@ -75,10 +59,6 @@ const DocumentRepositoryPage: React.FC = () => {
           query: hasFullSearchCondition ? activeQuery : undefined,
           start_date: hasFullSearchCondition ? startDate : undefined,
           end_date: hasFullSearchCondition ? endDate : undefined,
-          document_type_ids: selectedType ? [selectedType] : undefined,
-          sort_by: sortBy,
-          page: currentPage,
-          limit: ITEMS_PER_PAGE
         });
       } else {
         response = await getAllDocuments();
@@ -126,7 +106,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [activeQuery, selectedType, currentPage, category, startDate, endDate, sortBy]);
+  }, [activeQuery, currentPage, category, startDate, endDate, sortBy]);
 
   // --- LOGIC FETCH RAW FILE KHI MỞ MODAL ---
   useEffect(() => {
@@ -154,7 +134,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   const handleSearchSubmit = () => {
     const isSearching = searchInput.trim() !== '' || startDate !== '' || endDate !== '';
-    if (isSearching && (!searchInput.trim() || !startDate || !endDate)) {
+    if (isSearching && (!searchInput.trim())) {
         alert("Vui lòng nhập tối thiểu 3 thông tin: Từ khóa, Ngày bắt đầu và Ngày kết thúc để thực hiện tìm kiếm!");
         return; 
     }
@@ -262,13 +242,6 @@ const DocumentRepositoryPage: React.FC = () => {
                   />
                 </div>
                 
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg px-3 h-9 flex-1 min-w-[200px] max-w-xs">
-                  <span className="text-slate-500 material-symbols-outlined text-[16px]">filter_list</span>
-                  <select value={selectedType} onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }} className="bg-transparent border-none text-sm focus:ring-0 p-0 outline-none text-slate-700 w-full cursor-pointer truncate">
-                    <option value="">Tất cả loại văn bản</option>
-                    {docTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
-                  </select>
-                </div>
               </div>
             </div>
           </div>
