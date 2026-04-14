@@ -10,7 +10,6 @@ class UploadResponse(BaseModel):
 
 class DocumentResponse(BaseModel):
     document_id: UUID
-    document_type_id: Optional[UUID] = None
     assigned_department_id: Optional[UUID] = None
     uploaded_by_user_id: Optional[UUID] = None
 
@@ -48,6 +47,9 @@ class DocumentResponse(BaseModel):
     
     created_at: datetime
     updated_at: datetime
+
+    attachments: Optional[List[Dict]] = None
+    local_path: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

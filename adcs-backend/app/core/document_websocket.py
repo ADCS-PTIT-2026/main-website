@@ -1,4 +1,5 @@
 from fastapi import WebSocket
+import uuid
 
 class ConnectionManager:
     def __init__(self):
@@ -18,6 +19,13 @@ class ConnectionManager:
             await websocket.send_json(message)
 
 manager = ConnectionManager()
+
+def is_uuid(val: str) -> bool:
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
 
 department_list = [
   "Hội đồng Học viện",

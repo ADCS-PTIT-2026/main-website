@@ -20,7 +20,7 @@ load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
 DATA_SERVICE_SEARCH_URL = f"{DATA_SERVICE_URL}/api/v1/search/documents"
-DATA_SERVICE_DELETE_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
+DATA_SERVICE_DOCUMENT_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
 
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
@@ -200,7 +200,7 @@ def get_all_documents(db: Session):
     return get_documents(db)
 
 
-async def search_ai_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
+async def search_in_data_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
     req_id = request_id_var.get()
     logger.info(f"Gửi yêu cầu tìm kiếm tới Data Service. query='{query}'")
     
@@ -219,19 +219,19 @@ async def search_ai_service(query: str, start_date: str = None, end_date: str = 
         return response.json()
     except httpx.HTTPStatusError as e:
         logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
-        return {"error": "AI Service không phản hồi đúng cách"}
+        return {"error": "Data Service không phản hồi đúng cách"}
     except Exception as e:
         logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
-        return {"error": "Không thể kết nối đến AI Service"}
+        return {"error": "Không thể kết nối đến Data Service"}
         
 
-async def delete_in_document_service(document_id: str):
+async def delete_in_data_service(document_id: str):
     req_id = request_id_var.get()
     logger.info(f"Yêu cầu xóa tài liệu khỏi Vector DB. document_id={document_id}")
     
     headers = {"X-Request-ID": req_id}
     try:
-        url = f"{DATA_SERVICE_DELETE_URL}/{document_id}"
+        url = f"{DATA_SERVICE_DOCUMENT_URL}/{document_id}"
 
         response = await http_client.client.delete(
             url, 
@@ -255,3 +255,27 @@ async def delete_in_document_service(document_id: str):
             status_code=500,
             detail=f"Lỗi hệ thống xử lý dữ liệu: {str(e)}"
         )
+    
+async def get_detail_document_in_data_service(document_id: str):
+    req_id = request_id_var.get()
+    logger.info(f"Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id={document_id}")
+
+    headers = {"X-Request-ID": req_id}
+    
+    try:
+        url = f"{DATA_SERVICE_DOCUMENT_URL}/{document_id}/detail"
+        response = await http_client.client.get(
+            url, 
+            timeout=10,
+            headers=headers
+        )
+        response.raise_for_status()
+
+        logger.info(f"Lấy chi tiết tài liệu thành công trên Data Service. document_id={document_id}")
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
+        return {"error": "Data Service không phản hồi đúng cách"}
+    except Exception as e:
+        logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
+        return {"error": "Không thể kết nối đến Data Service"}

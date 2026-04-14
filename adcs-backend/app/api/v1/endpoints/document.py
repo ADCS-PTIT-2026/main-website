@@ -1,15 +1,16 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query, Form, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from fastapi.responses import FileResponse
 
 from app.db.session import get_db
-from app.schemas.document import UploadResponse, AIResultUpdateRequest, AIResultUpdateResponse, DocumentResponse, DashboardStatsResponse, ActionResponse
+from app.schemas.document import UploadResponse, AIResultUpdateRequest, DocumentResponse, DashboardStatsResponse, ActionResponse
 from app.services.document_service import *
 from app.services.telegram_service import send_telegram_ai_result
 from app.core.dependency import get_current_user
 from app.models.user import User
 from app.models.telegram_bot import Bot
-from app.core.document_websocket import manager
+from app.core.document_websocket import manager, is_uuid
 from app.crud.document import create_document_entry, delete_document
 from app.core.dependency import RoleChecker, get_current_user
 from app.core.logger import request_id_var
@@ -48,7 +49,7 @@ async def search_document_api(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        results = await search_ai_service(query, start_date, end_date)
+        results = await search_in_data_service(query, start_date, end_date)
         
         return results
     except Exception as e:
@@ -56,12 +57,32 @@ async def search_document_api(
 
 # Lấy chi tiết tài liệu
 @router.get("/{document_id}", response_model=DocumentResponse)
-def get_document_detail(document_id: str, db: Session = Depends(get_db)):
-    doc = get_document_by_id(db, document_id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+async def get_document_detail(document_id: str, db: Session = Depends(get_db)):
+    if not is_uuid(document_id):
+        results = await get_detail_document_in_data_service(document_id)
 
-    return doc
+        return results
+    else:
+        doc = get_document_by_id(db, document_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        return doc
+    
+# Lấy file raw
+@router.get("/{document_id}/file")
+async def get_document_raw_file(document_id: str):
+    detail = await get_detail_document_in_data_service(document_id)
+    
+    if "error" in detail:
+        raise HTTPException(status_code=400, detail=detail["error"])
+
+    local_path = detail.get("local_path")
+
+    if not local_path or not os.path.exists(local_path):
+        raise HTTPException(status_code=404, detail="Không tìm thấy file vật lý trên máy chủ.")
+
+    return FileResponse(local_path)
 
 # xóa tài liệu
 @router.delete("/{document_id}", response_model=ActionResponse, dependencies=[Depends(require_role)])
@@ -70,14 +91,14 @@ async def delete_document_api(
     db: Session = Depends(get_db)
 ):
     try: 
-        if len(document_id) > 20:
+        if is_uuid(document_id):
             doc = get_document_by_id(db, document_id)
             if not doc:
                 raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
             delete_document(db, doc)
             return {"message": "success"}
         else:
-            results = await delete_in_document_service(document_id)
+            results = await delete_in_data_service(document_id)
         
             return results
 
