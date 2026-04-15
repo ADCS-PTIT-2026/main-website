@@ -8,7 +8,7 @@ from app.models.user import User
 router = APIRouter()
 
 @router.get("")
-def get_history_api(
+async def get_history_api(
     limit: int = Query(10, ge=1, le=100, description="Số lượng bản ghi trên một trang"),
     search: str = Query(None, description="Từ khóa tìm kiếm tài liệu"),
     action: str = Query(None, description="Lọc theo hành động (Tải lên, Xử lý AI, Xóa)"),
@@ -20,7 +20,7 @@ def get_history_api(
     """
 
     
-    data = fetch_processing_history(
+    data = await fetch_processing_history(
         limit=limit,
         search=search,
         action=action,

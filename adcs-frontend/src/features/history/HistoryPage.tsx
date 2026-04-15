@@ -22,17 +22,18 @@ const ProcessingHistoryPage: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await getProcessingHistory({
-        limit: 100,
+        limit: 100, // Lấy 100 dòng mới nhất
         search: search.trim() !== '' ? search : undefined,
         action: actionFilter,
         time_filter: timeFilter
       });
 
+      // Lấy data từ response.results theo đúng cấu trúc JSON trả về
       let rawData: HistoryRecord[] = [];
-      if (Array.isArray(response)) {
+      if (response && response.results) {
+        rawData = response.results;
+      } else if (Array.isArray(response)) {
         rawData = response;
-      } else if (response && (response.data || response.items || response.results)) {
-        rawData = response.data || response.items || response.results;
       }
 
       setAllHistoryData(rawData);
@@ -66,36 +67,51 @@ const ProcessingHistoryPage: React.FC = () => {
     });
   };
 
+  // Hàm chuyển action_type sang tiếng Việt
+  const getActionLabel = (actionType: string) => {
+    switch (actionType?.toLowerCase()) {
+      case 'upload': return 'Tải lên';
+      case 'delete': return 'Xóa';
+      case 'process': return 'Xử lý AI';
+      default: return actionType || 'Khác';
+    }
+  };
+
   const getActionStyles = (action: string) => {
     switch(action?.toLowerCase()) {
-      case 'xử lý ai': return 'bg-blue-50 text-blue-700';
-      case 'tải lên': return 'bg-primary/10 text-primary';
-      case 'xóa': return 'bg-red-50 text-red-600';
+      case 'upload': return 'bg-primary/10 text-primary';
+      case 'process': return 'bg-blue-50 text-blue-700';
+      case 'delete': return 'bg-red-50 text-red-600';
       default: return 'bg-slate-100 text-slate-600';
     }
+  };
+
+  // Hàm gộp trạng thái từ 3 cột status
+  const getOverallStatus = (record: HistoryRecord) => {
+    const statuses = [record.status_llm, record.status_save_file, record.status_save_vector];
+    
+    if (statuses.includes('failed') || statuses.includes('error')) return 'Lỗi';
+    if (statuses.includes('pending') || statuses.includes('processing')) return 'Đang xử lý';
+    return 'Hoàn tất'; // Nếu không có lỗi và không pending thì mặc định là thành công
   };
 
   const getStatusStyles = (status: string) => {
     switch(status?.toLowerCase()) {
       case 'hoàn tất':
-      case 'thành công': 
-      case 'success':
         return { wrapper: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500', pulse: false };
       case 'đang xử lý': 
-      case 'pending':
         return { wrapper: 'bg-amber-50 text-amber-700', dot: 'bg-amber-500', pulse: true };
       case 'lỗi': 
-      case 'failed':
         return { wrapper: 'bg-red-50 text-red-700', dot: 'bg-red-500', pulse: false };
       default: 
         return { wrapper: 'bg-slate-50 text-slate-700', dot: 'bg-slate-500', pulse: false };
     }
   };
 
-  const getFileIcon = (type: string) => {
-    const t = type?.toLowerCase() || '';
+  const getFileIcon = (type: string, filename: string) => {
+    const t = (type || filename || '').toLowerCase();
     if (t.includes('pdf')) return { icon: 'picture_as_pdf', color: 'text-red-500' };
-    if (t.includes('doc')) return { icon: 'article', color: 'text-blue-500' };
+    if (t.includes('doc') || t.includes('docx')) return { icon: 'article', color: 'text-blue-500' };
     if (t.includes('csv') || t.includes('xls')) return { icon: 'table_chart', color: 'text-emerald-500' };
     if (t.includes('png') || t.includes('jpg')) return { icon: 'image', color: 'text-amber-500' };
     return { icon: 'description', color: 'text-slate-400' };
@@ -111,6 +127,7 @@ const ProcessingHistoryPage: React.FC = () => {
           {/* Page Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Hệ thống giám sát</span>
               <h2 className="text-2xl font-bold text-slate-900">Lịch sử xử lý tài liệu</h2>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
@@ -141,9 +158,9 @@ const ProcessingHistoryPage: React.FC = () => {
                 className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               >
                 <option>Tất cả hành động</option>
-                <option>Tải lên</option>
-                <option>Xử lý AI</option>
-                <option>Xóa</option>
+                <option value="upload">Tải lên</option>
+                <option value="process">Xử lý AI</option>
+                <option value="delete">Xóa</option>
               </select>
             </div>
             
@@ -179,7 +196,6 @@ const ProcessingHistoryPage: React.FC = () => {
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Người thực hiện</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tên tài liệu</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hành động</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái</th>
@@ -190,7 +206,7 @@ const ProcessingHistoryPage: React.FC = () => {
                   
                   {isLoading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                         <div className="flex justify-center items-center gap-2">
                           <span className="material-symbols-outlined animate-spin">sync</span>
                           Đang tải dữ liệu...
@@ -199,49 +215,43 @@ const ProcessingHistoryPage: React.FC = () => {
                     </tr>
                   ) : currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                         Không tìm thấy lịch sử nào phù hợp.
                       </td>
                     </tr>
                   ) : (
-                    currentData.map((record, index) => {
-                      const statusUi = getStatusStyles(record.status);
-                      const fileUi = getFileIcon(record.document?.type);
+                    currentData.map((record) => {
+                      const statusLabel = getOverallStatus(record);
+                      const statusUi = getStatusStyles(statusLabel);
+                      const fileUi = getFileIcon(record.file_type, record.filename);
+                      const actionLabel = getActionLabel(record.action_type);
                       
                       return (
-                        <tr key={record.history_id || index} className="hover:bg-slate-50 transition-colors">
+                        <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium">
-                            {formatDate(record.timestamp)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] ${record.user?.initials === 'AD' ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-600'}`}>
-                                {record.user?.initials || 'U'}
-                              </div>
-                              <span className="text-slate-900 font-semibold">{record.user?.name || 'Unknown'}</span>
-                            </div>
+                            {formatDate(record.created_at)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <span className={`material-symbols-outlined text-lg ${fileUi.color}`}>
                                 {fileUi.icon}
                               </span>
-                              <span className="text-slate-700">{record.document?.name || 'Tài liệu không tên'}</span>
+                              <span className="text-slate-700 font-semibold">{record.filename || 'Tài liệu không tên'}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-sm text-[10px] font-bold uppercase ${getActionStyles(record.action)}`}>
-                              {record.action || 'Khác'}
+                            <span className={`inline-flex items-center px-2 py-1 rounded-sm text-[10px] font-bold uppercase ${getActionStyles(record.action_type)}`}>
+                              {actionLabel}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${statusUi.wrapper}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${statusUi.dot} ${statusUi.pulse ? 'animate-pulse' : ''}`}></span>
-                              {record.status || 'Chờ xử lý'}
+                              {statusLabel}
                             </span>
                           </td>
-                          <td className={`px-6 py-4 italic max-w-xs truncate ${record.status?.toLowerCase() === 'lỗi' ? 'text-red-500 font-medium' : 'text-slate-500'}`}>
-                            {record.notes || 'Không có ghi chú'}
+                          <td className={`px-6 py-4 italic max-w-xs truncate ${statusLabel === 'Lỗi' ? 'text-red-500 font-medium' : 'text-slate-500'}`}>
+                            {record.error_message || record.suggested_department || 'Không có ghi chú'}
                           </td>
                         </tr>
                       );

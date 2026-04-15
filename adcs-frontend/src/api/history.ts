@@ -1,28 +1,24 @@
 import axiosClient from './axiosClient';
 
-export interface HistoryUser {
-  id: string;
-  name: string;
-  initials: string;
-}
-
-export interface HistoryDocument {
-  name: string;
-  type: string;
-}
-
 export interface HistoryRecord {
-  history_id: string;
-  timestamp: string;
-  user: HistoryUser;
-  document: HistoryDocument;
-  action: string;
-  status: string;
-  notes: string;
+  id: number;
+  request_id: string;
+  action_type: string;
+  filename: string;
+  file_type: string;
+  status_llm: string | null;
+  status_save_file: string | null;
+  status_save_vector: string | null;
+  document_type: string;
+  suggested_department: string | null;
+  document_id: number | null;
+  attachment_id: number | null;
+  error_message: string | null;
+  created_at: string;
 }
 
 export interface HistoryQueryParams {
-  limit?: number; // Backend chỉ nhận limit
+  limit?: number; 
   search?: string;
   action?: string;
   time_filter?: string;
@@ -31,7 +27,6 @@ export interface HistoryQueryParams {
 export async function getProcessingHistory(params: HistoryQueryParams): Promise<any> {
   const query = new URLSearchParams();
   
-  // Truyền một limit đủ lớn để lấy hết data về phân trang trên Frontend (nếu backend bắt buộc cần limit)
   if (params.limit) query.append('limit', params.limit.toString());
   
   if (params.search) query.append('search', params.search);

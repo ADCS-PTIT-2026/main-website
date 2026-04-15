@@ -63,6 +63,7 @@ async def process_document_background(
     db = SessionLocal()
     try:
         ai_res = await send_to_ai_service(file_content, filename, is_save_file)
+        logger.info(f"AI results: {ai_res}")
         
         doc = db.query(Document).filter(Document.document_id == document_id).first()
         if not doc:
