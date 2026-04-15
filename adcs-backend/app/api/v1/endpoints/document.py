@@ -13,7 +13,7 @@ from app.models.telegram_bot import Bot
 from app.core.document_websocket import manager, is_uuid
 from app.crud.document import create_document_entry, delete_document
 from app.core.dependency import RoleChecker, get_current_user
-from app.core.logger import request_id_var
+from app.core.logger import request_id_var, logger
 
 router = APIRouter()
 
@@ -78,7 +78,7 @@ async def get_document_raw_file(document_id: str):
         raise HTTPException(status_code=400, detail=detail["error"])
 
     local_path = detail.get("local_path")
-
+    logger.info(f"get path: {local_path}")
     if not local_path or not os.path.exists(local_path):
         raise HTTPException(status_code=404, detail="Không tìm thấy file vật lý trên máy chủ.")
 

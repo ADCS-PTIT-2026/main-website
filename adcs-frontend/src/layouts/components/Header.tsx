@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     console.log('Giá trị đã lưu:', storedUser);
 
     if (storedUser) {

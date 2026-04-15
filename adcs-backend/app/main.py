@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.concurrency import iterate_in_threadpool
 
 from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history
 from app.core.http_client import http_client
@@ -24,10 +25,19 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
 
         try:
             response = await call_next(request)
-            
-            response.headers["X-Request-ID"] = req_id
-            
+
+            if response.status_code != 200:
+                response_body = [chunk async for chunk in response.body_iterator]
+                response.body_iterator = iterate_in_threadpool(iter(response_body))
+
+                try:
+                    body_content = b"".join(response_body).decode("utf-8")
+                    logger.warning(f"⚠️ CHI TIẾT LỖI ({response.status_code}): {body_content}")
+                except Exception:
+                    logger.warning(f"⚠️ CHI TIẾT LỖI ({response.status_code}): (Không thể decode body)")
+
             process_time = (time.time() - start_time) * 1000
+            response.headers["X-Request-ID"] = req_id
             logger.info(f"📤 HOÀN THÀNH: {response.status_code} (Mất {process_time:.2f}ms)")
             
             return response
