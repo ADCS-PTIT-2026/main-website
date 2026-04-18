@@ -127,8 +127,7 @@ const ProcessingHistoryPage: React.FC = () => {
           {/* Page Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Hệ thống giám sát</span>
-              <h2 className="text-2xl font-bold text-slate-900">Lịch sử xử lý tài liệu</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Lịch sử xử lý văn bản</h2>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
               <span className="material-symbols-outlined text-base">calendar_today</span>

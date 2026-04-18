@@ -10,6 +10,7 @@ import RegisterPage from './features/auth/pages/RegisterPage';
 import DocumentRepositoryPage from './features/documents/pages/DocumentRepositoryPage';
 import AIConfigurationPage from './features/ai_config/AIConfigurationPage';
 import HistoryPage from './features/history/HistoryPage';
+import TranslationPage from './features/translation/TranslationPage';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentPage />} />
+          <Route path="/translation" element={<TranslationPage />} />
           <Route path="/admin/roles" element={<RoleManagementPage />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/departments" element={<DepartmentTreePage />} />

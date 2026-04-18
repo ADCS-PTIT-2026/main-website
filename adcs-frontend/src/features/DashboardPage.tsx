@@ -23,7 +23,7 @@ const DashboardPage: React.FC = () => {
       navigate('/login', { replace: true });
       return;
     }
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     
     if (storedUser) {
       try {
@@ -97,7 +97,6 @@ const DashboardPage: React.FC = () => {
   const displayStats = [
     { title: 'Tổng tài liệu', value: stats?.total_documents?.toLocaleString() || '0', icon: 'description', trend: 'Cập nhật', color: 'blue', trendColor: 'emerald' },
     { title: 'Đang xử lý', value: stats?.pending_documents?.toString() || '0', icon: 'pending_actions', trend: 'Cần xử lý', color: 'amber', trendColor: 'amber' },
-    { title: 'Chính xác AI', value: `${stats?.ai_accuracy || 0}%`, icon: 'psychology', trend: 'PTIT Red', color: 'primary', trendColor: 'primary' },
     { title: 'Người dùng được phân quyền', value: stats?.new_users?.toString() || '0', icon: 'group', trend: 'Hệ thống', color: 'emerald', trendColor: 'slate' },
   ];
 
