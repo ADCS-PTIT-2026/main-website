@@ -4,8 +4,9 @@ import logo from '../../assets/ptit-logo.png';
 
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Bảng điều khiển', path: '/dashboard' },
-  { icon: 'description', label: 'Xử lý tài liệu', path: '/documents' },
-  { icon: 'archive', label: 'Kho tài liệu', path: '/document-repository' },
+  { icon: 'description', label: 'Xử lý văn bản', path: '/documents' },
+  { icon: 'translate', label: 'Dịch thuật văn bản', path: '/translation' },
+  { icon: 'archive', label: 'Kho văn bản', path: '/document-repository' },
   { icon: 'groups', label: 'Phòng ban', path: '/departments' },
   { icon: 'history', label: 'Lịch sử xử lý', path: '/history' },
   {

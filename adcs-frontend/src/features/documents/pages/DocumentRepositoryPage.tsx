@@ -9,17 +9,6 @@ const getFileIconUI = (document: DocumentResponse) => {
   return { icon: 'description', text: 'VĂN BẢN', bg: 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30', textCol: 'text-orange-600' };
 };
 
-const getStatusBadge = (status?: string | null) => {
-  switch (status?.toLowerCase()) {
-    case 'success':
-    case 'approved': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-    case 'pending':
-    case 'processing': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'failed': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
-    default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-  }
-};
-
 const DocumentRepositoryPage: React.FC = () => {
 
   const [searchInput, setSearchInput] = useState('');
@@ -96,7 +85,7 @@ const DocumentRepositoryPage: React.FC = () => {
       setTotalPages(pages);
       
     } catch (error) {
-      console.error("Lỗi tải tài liệu:", error);
+      console.error("Lỗi tải văn bản:", error);
       setDocuments([]); 
       setTotalItems(0);
       setTotalPages(1);
@@ -176,13 +165,13 @@ const DocumentRepositoryPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await deleteDocument(selectedDocument.document_id);
-      alert('Đã xóa tài liệu thành công!');
+      alert('Đã xóa văn bản thành công!');
       setSelectedDocument(null);
       setIsDeleteOpen(false);
       fetchDocuments();
     } catch (error: any) {
-      console.error("Lỗi khi xóa tài liệu:", error);
-      alert(error?.response?.data?.detail || 'Không thể xóa tài liệu lúc này. Vui lòng thử lại!');
+      console.error("Lỗi khi xóa văn bản:", error);
+      alert(error?.response?.data?.detail || 'Không thể xóa văn bản lúc này. Vui lòng thử lại!');
     } finally {
       setIsDeleting(false);
     }
@@ -210,7 +199,7 @@ const DocumentRepositoryPage: React.FC = () => {
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="flex-1 bg-transparent border-none focus:ring-0 text-lg px-4 placeholder:text-slate-400 outline-none" 
-                  placeholder="Nhập từ khóa tìm kiếm tài liệu..." 
+                  placeholder="Nhập từ khóa tìm kiếm văn bản..." 
                 />
                 <div className="flex items-center pr-2">
                   <button onClick={handleSearchSubmit} className="bg-primary text-white h-10 px-6 rounded-lg font-bold hover:bg-primary/90 transition-colors outline-none">
@@ -250,7 +239,7 @@ const DocumentRepositoryPage: React.FC = () => {
           <div className="p-6 max-w-5xl mx-auto w-full space-y-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-slate-500 text-sm font-medium">
-                {isLoading ? 'Đang tải dữ liệu...' : `Hiển thị ${documents.length} / ${totalItems} tài liệu`}
+                {isLoading ? 'Đang tải dữ liệu...' : `Hiển thị ${documents.length} / ${totalItems} văn bản`}
                 {activeQuery && !isLoading && ` cho "${activeQuery}"`}
               </h4>
               <div className="flex items-center gap-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg shadow-sm">
@@ -269,7 +258,7 @@ const DocumentRepositoryPage: React.FC = () => {
             ) : documents.length === 0 ? (
                <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                  <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">search_off</span>
-                 <p className="text-slate-500">Không tìm thấy tài liệu nào phù hợp.</p>
+                 <p className="text-slate-500">Không tìm thấy văn bản nào phù hợp.</p>
                </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -292,7 +281,7 @@ const DocumentRepositoryPage: React.FC = () => {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors truncate">
-                                {doc.trich_yeu || doc.so_ky_hieu || `Tài liệu chưa có tiêu đề (${doc.document_id.substring(0,8)})`}
+                                {doc.trich_yeu || doc.so_ky_hieu || `văn bản chưa có tiêu đề (${doc.document_id.substring(0,8)})`}
                               </h3>
                               
                               <div className="flex flex-wrap gap-x-5 gap-y-2 mt-2">
@@ -304,15 +293,25 @@ const DocumentRepositoryPage: React.FC = () => {
                                     <span className="material-symbols-outlined text-[16px]">pin</span> {doc.so_ky_hieu}
                                   </span>
                                 )}
-                                {/* <span className={`text-xs font-bold px-2 py-1 rounded-full ${getStatusBadge(doc.status)}`}>
-                                  {doc.status?.toUpperCase() || 'UNKNOWN'}
-                                </span> */}
+                                  <span
+                                    className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                      doc.confidence != null && doc.confidence >= 0.845
+                                        ? 'bg-green-100 text-green-800'
+                                        : doc.confidence != null
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-slate-100 text-slate-500'
+                                    }`}
+                                  >
+                                    {doc.confidence != null
+                                      ? `Độ tương đồng: ${Math.round(doc.confidence * 100)}%`
+                                      : 'Chưa có điểm AI'}
+                                  </span>
                               </div>
                             </div>
                           </div>
                           
                           <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                            {doc.summary || doc.trich_yeu || 'Không có tóm tắt cho tài liệu này.'}
+                            {doc.summary || doc.trich_yeu || 'Không có tóm tắt cho văn bản này.'}
                           </p>
                         </div>
                       </div>
@@ -335,7 +334,7 @@ const DocumentRepositoryPage: React.FC = () => {
         </section>
       </main>
 
-      {/* --- MODAL CHI TIẾT TÀI LIỆU VỚI RAW VIEWER --- */}
+      {/* --- MODAL CHI TIẾT văn bản VỚI RAW VIEWER --- */}
       {selectedDocument && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-[95vw] lg:max-w-7xl h-full max-h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
@@ -348,7 +347,7 @@ const DocumentRepositoryPage: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-1">
-                    {selectedDocument.so_ky_hieu || 'Tài liệu không có số hiệu'}
+                    {selectedDocument.so_ky_hieu || 'văn bản không có số hiệu'}
                   </h2>
                   <p className="text-xs text-slate-500">ID: {selectedDocument.document_id}</p>
                 </div>
@@ -370,7 +369,7 @@ const DocumentRepositoryPage: React.FC = () => {
                 {isLoadingFile ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
                     <span className="material-symbols-outlined animate-spin text-4xl text-primary mb-2">sync</span>
-                    <p className="text-sm font-medium">Đang tải tài liệu...</p>
+                    <p className="text-sm font-medium">Đang tải văn bản...</p>
                   </div>
                 ) : fileError ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-rose-500 p-8 text-center">
@@ -381,7 +380,7 @@ const DocumentRepositoryPage: React.FC = () => {
                   <iframe 
                     src={rawFileUrl} 
                     className="w-full h-full flex-1 border-none bg-white" 
-                    title="Trình xem tài liệu"
+                    title="Trình xem văn bản"
                   />
                 ) : (
                    <div className="flex-1 flex items-center justify-center text-slate-400">
@@ -407,7 +406,7 @@ const DocumentRepositoryPage: React.FC = () => {
                     )}
                   </div>
                   <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap text-sm">
-                    {selectedDocument.summary || 'AI chưa tạo tóm tắt cho tài liệu này.'}
+                    {selectedDocument.summary || 'AI chưa tạo tóm tắt cho văn bản này.'}
                   </p>
                 </div>
 
@@ -482,12 +481,6 @@ const DocumentRepositoryPage: React.FC = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[10px] font-semibold text-slate-500 uppercase">Trạng thái xử lý</p>
-                        <span className={`inline-block mt-1 px-2 py-1 text-xs font-bold rounded-md ${getStatusBadge(selectedDocument.status)}`}>
-                          {selectedDocument.status?.toUpperCase() || 'UNKNOWN'}
-                        </span>
-                      </div>
-                      <div>
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Phân bổ phòng ban</p>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
                           {selectedDocument.assigned_department_id || 'Chưa phân bổ'}
@@ -522,7 +515,7 @@ const DocumentRepositoryPage: React.FC = () => {
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[18px]">delete</span>
-                    Xóa tài liệu
+                    Xóa văn bản
                   </>
                 )}
               </button>
@@ -539,9 +532,9 @@ const DocumentRepositoryPage: React.FC = () => {
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
               <span className="material-symbols-outlined text-red-600">warning</span>
             </div>
-            <h2 className="text-lg font-bold text-center mb-2">Xóa tài liệu?</h2>
+            <h2 className="text-lg font-bold text-center mb-2">Xóa văn bản?</h2>
             <p className="text-sm text-slate-500 text-center mb-6">
-              Bạn có chắc muốn xóa <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDocument?.document_number || 'tài liệu này'}</span>? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDocument?.document_number || 'văn bản này'}</span>? Hành động này không thể hoàn tác.
             </p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setIsDeleteOpen(false)} className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors">Hủy</button>

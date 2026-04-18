@@ -48,6 +48,17 @@ export type DocumentResponse = {
     diem_tin_cay?: number;
   } | null;
 
+  related_documents?: {
+    document_id: string | number;
+    so_ky_hieu: string | null;
+    trich_yeu: string | null;
+    don_vi_ban_hanh: string | null;
+    ngay_van_ban: string | null;
+    similarity: number;
+    matched_chunk: string | null;
+    chunk_path: string | null;
+  }[] | null;
+
   attachment?: string[] | null;
   local_path?: string | null;
 };

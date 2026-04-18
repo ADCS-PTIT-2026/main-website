@@ -46,7 +46,7 @@ const DocumentPage: React.FC = () => {
           
           if (doc.status === 'processed' || doc.status === 'success') {
             clearInterval(interval);
-            toast.success("AI đã phân tích xong tài liệu!");
+            toast.success("AI đã phân tích xong văn bản!");
           } else if (doc.status === 'failed') {
             clearInterval(interval);
             toast.error("Xử lý AI thất bại.");
@@ -79,7 +79,7 @@ const DocumentPage: React.FC = () => {
       setDocumentDetail(doc);
       setActiveDocumentId(documentId);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải dữ liệu tài liệu");
+      setError(e?.message || "Không thể tải dữ liệu văn bản");
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ const DocumentPage: React.FC = () => {
     try {
       const res = await uploadDocument(file, is_save_file);
       await loadDocument(res.document_id); 
-      toast.success("Đã gửi tài liệu sang AI xử lý!");
+      toast.success("Đã gửi văn bản sang AI xử lý!");
     } catch (e: any) {
       setError(e?.message || "Upload thất bại");
       setPreviewUrl(null);
@@ -145,7 +145,7 @@ const DocumentPage: React.FC = () => {
     if (!activeDocumentId) return;
 
     setSaving(true);
-    const toastId = toast.loading("Đang phê duyệt tài liệu...");
+    const toastId = toast.loading("Đang Gửi thông báo văn bản...");
 
     try {
       const res = await approveAIResult(activeDocumentId, {
@@ -156,20 +156,20 @@ const DocumentPage: React.FC = () => {
       const teleStatus = res.telegram_notification;
 
       if (teleStatus === "success") {
-        toast.success("Phê duyệt và gửi thông báo Telegram thành công!", { id: toastId });
+        toast.success("Gửi thông báo Telegram thành công!", { id: toastId });
       } else if (teleStatus?.startsWith("error")) {
-        toast.success(`Phê duyệt thành công nhưng Telegram báo lỗi.`, { id: toastId, icon: '⚠️' });
+        toast.success(`Gửi thông báo thành công nhưng Telegram báo lỗi.`, { id: toastId, icon: '⚠️' });
       } else if (teleStatus === "bot_not_found" || teleStatus === "not_configured") {
-        toast.success("Phê duyệt thành công! (Chưa cấu hình nhận Telegram)", { id: toastId });
+        toast.success("Chưa cấu hình nhận Telegram! Vui lòng quay trở lại trang dashboard để cấu hình.", { id: toastId });
       } else {
-        toast.success(res.message || "Phê duyệt tài liệu thành công!", { id: toastId });
+        toast.success(res.message || "Gửi thông báo văn bản thành công!", { id: toastId });
       }
 
       setIsEditing(false);
       await loadDocument(activeDocumentId);
     } catch (e: any) {
-      setError(e?.message || "Không thể cập nhật tài liệu");
-      toast.error("Phê duyệt thất bại", { id: toastId });
+      setError(e?.message || "Không thể cập nhật văn bản");
+      toast.error("Gửi thông báo thất bại", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -222,11 +222,11 @@ const DocumentPage: React.FC = () => {
         }
       `}</style>
 
-      {/* CỘT TRÁI: UPLOAD VÀ TÀI LIỆU */}
+      {/* CỘT TRÁI: UPLOAD VÀ văn bản */}
       <div className="w-2/5 flex flex-col border-r border-primary/10 bg-white dark:bg-slate-900 overflow-y-auto">
         <div className="p-6 space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Tiếp nhận tài liệu</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Tiếp nhận văn bản</h1>
             <p className="text-slate-500 text-sm">Hỗ trợ PDF, JPG, PNG để trích xuất dữ liệu OCR.</p>
           </div>
 
@@ -262,11 +262,11 @@ const DocumentPage: React.FC = () => {
           {error && <div className="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-sm">{error}</div>}
 
           <div className="space-y-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Tài liệu hiện tại</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Văn bản hiện tại</h3>
             <div className={`border rounded-xl overflow-hidden p-4 relative transition-colors ${isPending ? 'border-amber-300 bg-amber-50/50 dark:bg-slate-900/50' : 'border-primary/10 bg-white dark:bg-slate-900/50'}`}>
               {activeDocumentId ? (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">{documentDetail?.loai_van_ban_text ?? "Tài liệu đang xử lý..."}</p>
+                  <p className="text-sm font-medium">{documentDetail?.loai_van_ban_text ?? "văn bản đang xử lý..."}</p>
                   <p className="text-xs text-slate-500">Mã file: {activeDocumentId}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
@@ -277,7 +277,7 @@ const DocumentPage: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">Chưa có tài liệu nào.</p>
+                <p className="text-sm text-slate-500">Chưa có văn bản nào.</p>
               )}
             </div>
           </div>
@@ -442,6 +442,60 @@ const DocumentPage: React.FC = () => {
               </div>
             </div>
 
+            {!isPending && documentDetail?.related_documents && documentDetail.related_documents.length > 0 && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-lg text-primary">link</span> 
+                    Văn bản liên quan (Semantic Search)
+                  </h3>
+                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-full">
+                    {documentDetail.related_documents.length} kết quả
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {documentDetail.related_documents.map((docItem, idx) => (
+                    <div key={idx} className="group p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 hover:bg-primary/5 dark:bg-slate-800/50 transition-colors">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2" title={docItem.trich_yeu || ""}>
+                            {docItem.trich_yeu || "Không có trích yếu"}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500">
+                            {docItem.so_ky_hieu && (
+                              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">tag</span> {docItem.so_ky_hieu}</span>
+                            )}
+                            {docItem.don_vi_ban_hanh && (
+                              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">apartment</span> {docItem.don_vi_ban_hanh}</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Hiển thị phần trăm độ chính xác (Similarity Score) */}
+                        <div className="shrink-0 flex flex-col items-end">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold
+                            ${docItem.similarity >= 0.85 ? 'bg-emerald-100 text-emerald-700' : 
+                              docItem.similarity >= 0.75 ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'}`}>
+                            <span className="material-symbols-outlined text-[12px] mr-1">target</span>
+                            {(docItem.similarity * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Trích đoạn nội dung khớp (Matched Chunk) */}
+                      {docItem.matched_chunk && (
+                        <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700">
+                          <p className="text-[11px] text-slate-500 italic line-clamp-2">
+                            "... {docItem.matched_chunk} ..."
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Khối Gợi ý và Đề xuất từ AI */}
             {!isPending && documentDetail && (documentDetail.de_xuat_xu_ly || documentDetail.goi_y_phong_ban) && (
               <div className="grid grid-cols-2 gap-4">
@@ -465,7 +519,6 @@ const DocumentPage: React.FC = () => {
                 )}
               </div>
             )}
-
             {/* Nút hành động */}
             <div className="grid grid-cols-1 gap-2 mt-4">
               <button
@@ -478,7 +531,7 @@ const DocumentPage: React.FC = () => {
                 <span className={`material-symbols-outlined text-xl ${isPending ? 'animate-spin' : ''}`}>
                   {isPending ? 'hourglass_top' : 'check_circle'}
                 </span>
-                {saving ? "Đang lưu..." : isPending ? "Đang chờ AI phân tích..." : "Phê duyệt tài liệu"}
+                {saving ? "Đang lưu..." : isPending ? "Đang chờ AI phân tích..." : "Gửi thông báo tới tài khoản telegram"}
               </button>
             </div>
           </aside>
@@ -490,7 +543,7 @@ const DocumentPage: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
             <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">Xác nhận lưu trữ Vector DB</h3>
-            <p className="text-slate-600 mb-6 text-sm">Bạn có muốn lưu trữ thông tin của tài liệu <strong>{pendingFile?.name}</strong> vào cơ sở dữ liệu để tìm kiếm (Semantic Search) sau này không?</p>
+            <p className="text-slate-600 mb-6 text-sm">Bạn có muốn lưu trữ thông tin của văn bản <strong>{pendingFile?.name}</strong> vào cơ sở dữ liệu để tìm kiếm (Semantic Search) sau này không?</p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={handleCancelUpload} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-semibold">Hủy</button>
               <button onClick={() => handleConfirmUpload(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold">Không lưu</button>
