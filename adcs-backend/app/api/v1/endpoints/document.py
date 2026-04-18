@@ -50,7 +50,6 @@ async def search_document_api(
 ):
     try:
         results = await search_in_data_service(query, start_date, end_date)
-        
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi tìm kiếm AI: {str(e)}")

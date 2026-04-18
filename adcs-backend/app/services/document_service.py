@@ -122,6 +122,8 @@ async def process_document_background(
             doc.total_chunks_processed = ai_res.get("total_chunks_processed")
             doc.source_pages = ai_res.get("source_pages")
             doc.processing_time = ai_res.get("processing_time")
+
+            doc.related_documents = ai_res.get("related_documents", [])
             
             de_xuat = ai_res.get("de_xuat_thoi_han_xu_ly", {})
             if de_xuat.get("ngay_het_han_du_kien"):

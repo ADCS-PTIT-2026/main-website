@@ -56,3 +56,5 @@ class Document(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+    
+    related_documents = Column(JSONB, nullable=True)
