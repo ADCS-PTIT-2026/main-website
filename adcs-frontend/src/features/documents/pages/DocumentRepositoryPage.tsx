@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { searchDocuments, getAllDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
+import { searchDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
 import axiosClient from '../../../api/axiosClient';
 
 const getFileIconUI = (document: DocumentResponse) => {
@@ -61,7 +61,8 @@ const DocumentRepositoryPage: React.FC = () => {
           end_date: hasFullSearchCondition ? endDate : undefined,
         });
       } else {
-        response = await getAllDocuments();
+        // response = await getAllDocuments();
+        response = null;
       }
       
       let resultData: DocumentResponse[] = [];
@@ -303,9 +304,9 @@ const DocumentRepositoryPage: React.FC = () => {
                                     <span className="material-symbols-outlined text-[16px]">pin</span> {doc.so_ky_hieu}
                                   </span>
                                 )}
-                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${getStatusBadge(doc.status)}`}>
+                                {/* <span className={`text-xs font-bold px-2 py-1 rounded-full ${getStatusBadge(doc.status)}`}>
                                   {doc.status?.toUpperCase() || 'UNKNOWN'}
-                                </span>
+                                </span> */}
                               </div>
                             </div>
                           </div>

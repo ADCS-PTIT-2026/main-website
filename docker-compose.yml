@@ -27,6 +27,9 @@ services:
       - DATABASE_URL=postgresql://postgres:adcs2026@adcs-db-2:5432/adcs_db_2
     ports:
       - "12007:8000"
+    volumes:
+      - ./adcs-backend:/app 
+      - /mnt/data2tb/adcs/uploads:/mnt/data2tb/adcs/uploads
     depends_on:
       - adcs-db-2
     networks:
