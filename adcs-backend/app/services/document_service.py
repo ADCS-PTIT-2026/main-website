@@ -36,7 +36,7 @@ async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: b
     headers = {"X-Request-ID": req_id}
     
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
             response.raise_for_status()
             logger.info(f"AI Service phản hồi thành công cho file '{filename}'")
