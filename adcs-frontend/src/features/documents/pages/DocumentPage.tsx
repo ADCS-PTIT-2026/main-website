@@ -7,6 +7,7 @@ import {
   type DocumentResponse,
 } from "../../../api/document";
 import { DocumentPreview } from "../components/DocumentPreview";
+import { useNavigate } from "react-router-dom";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "—";
@@ -34,6 +35,18 @@ const DocumentPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<Partial<DocumentResponse>>({});
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    if (!token) {
+      alert('Vui lòng đăng nhập lại để tiếp tục!');
+      navigate('/login', { replace: true });
+      return;
+    }
+  }, []);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
