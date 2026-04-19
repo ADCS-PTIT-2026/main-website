@@ -6,12 +6,25 @@ import {
   updateTranslationComment, 
   type TranslationFile 
 } from '../../api/translation';
+import { useNavigate } from 'react-router-dom';
 
 const TranslationPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<TranslationFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    if (!token) {
+      alert('Vui lòng đăng nhập lại để tiếp tục!');
+      navigate('/login', { replace: true });
+      return;
+    }
+  }, []);
 
   const fetchFiles = async () => {
     try {

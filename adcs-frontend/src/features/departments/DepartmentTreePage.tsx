@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { departmentApi, type DepartmentTreeResponse, type DepartmentPayload, type DepartmentResponse } from '../../api/department';
+import { useNavigate } from 'react-router-dom';
 
 const DepartmentManagementPage: React.FC = () => {
   const [treeData, setTreeData] = useState<DepartmentTreeResponse[]>([]);
@@ -16,6 +17,18 @@ const DepartmentManagementPage: React.FC = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    if (!token) {
+      alert('Vui lòng đăng nhập lại để tiếp tục!');
+      navigate('/login', { replace: true });
+      return;
+    }
+  }, []);
 
   // Tự động mở (Expand) node gốc khi tải dữ liệu xong
   useEffect(() => {
