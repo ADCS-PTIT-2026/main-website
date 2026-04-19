@@ -12,6 +12,7 @@ import AIConfigurationPage from './features/ai_config/AIConfigurationPage';
 import HistoryPage from './features/history/HistoryPage';
 import TranslationPage from './features/translation/TranslationPage';
 import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   return (
@@ -19,17 +20,19 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/documents" element={<DocumentPage />} />
-          <Route path="/translation" element={<TranslationPage />} />
-          <Route path="/admin/roles" element={<RoleManagementPage />} />
-          <Route path="/admin/users" element={<UserManagementPage />} />
-          <Route path="/departments" element={<DepartmentTreePage />} />
-          <Route path="/document-repository" element={<DocumentRepositoryPage />} />
-          <Route path="/admin/ai-config" element={<AIConfigurationPage />} />
-          <Route path="/history" element={<HistoryPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/documents" element={<DocumentPage />} />
+            <Route path="/translation" element={<TranslationPage />} />
+            <Route path="/admin/roles" element={<RoleManagementPage />} />
+            <Route path="/admin/users" element={<UserManagementPage />} />
+            <Route path="/departments" element={<DepartmentTreePage />} />
+            <Route path="/document-repository" element={<DocumentRepositoryPage />} />
+            <Route path="/admin/ai-config" element={<AIConfigurationPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster 

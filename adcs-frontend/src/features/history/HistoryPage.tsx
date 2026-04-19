@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getProcessingHistory, type HistoryRecord } from '../../api/history';
-import { useNavigate } from 'react-router-dom';
 
 const ProcessingHistoryPage: React.FC = () => {
   const [allHistoryData, setAllHistoryData] = useState<HistoryRecord[]>([]);
@@ -18,18 +17,6 @@ const ProcessingHistoryPage: React.FC = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
   const currentData = allHistoryData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-    
-    if (!token) {
-      alert('Vui lòng đăng nhập lại để tiếp tục!');
-      navigate('/login', { replace: true });
-      return;
-    }
-  }, []);
 
   const fetchHistory = async () => {
     setIsLoading(true);

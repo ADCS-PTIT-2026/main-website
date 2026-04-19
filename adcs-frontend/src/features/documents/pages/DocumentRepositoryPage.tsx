@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { searchDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
 import axiosClient from '../../../api/axiosClient';
-import { useNavigate } from 'react-router-dom';
 
 const getFileIconUI = (document: DocumentResponse) => {
   const type = document.loai_van_ban_text?.toLowerCase() || '';
@@ -35,18 +34,6 @@ const DocumentRepositoryPage: React.FC = () => {
   const [fileError, setFileError] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = 20;
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-    
-    if (!token) {
-      alert('Vui lòng đăng nhập lại để tiếp tục!');
-      navigate('/login', { replace: true });
-      return;
-    }
-  }, []);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
