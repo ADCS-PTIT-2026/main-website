@@ -5,7 +5,7 @@ import DashboardPage from './features/DashboardPage';
 import DocumentPage from './features/documents/pages/DocumentPage';
 import RoleManagementPage from './features/admin/pages/RoleManagementPage';
 import UserManagementPage from './features/admin/pages/UserManagementPage';
-import DepartmentTreePage from './features/departments/pages/DepartmentTreePage';
+import DepartmentTreePage from './features/departments/DepartmentTreePage';
 import RegisterPage from './features/auth/pages/RegisterPage';
 import DocumentRepositoryPage from './features/documents/pages/DocumentRepositoryPage';
 import AIConfigurationPage from './features/ai_config/AIConfigurationPage';

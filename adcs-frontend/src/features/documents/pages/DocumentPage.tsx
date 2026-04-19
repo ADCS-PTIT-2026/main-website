@@ -45,6 +45,7 @@ const DocumentPage: React.FC = () => {
           setDocumentDetail(doc);
           
           if (doc.status === 'processed' || doc.status === 'success') {
+            console.log("Văn bản đã được AI xử lý xong:", doc);
             clearInterval(interval);
             toast.success("AI đã phân tích xong văn bản!");
           } else if (doc.status === 'failed') {

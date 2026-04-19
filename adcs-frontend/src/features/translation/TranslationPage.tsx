@@ -1,99 +1,91 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
-
-type FileStatus = 'pending' | 'translating' | 'success' | 'error';
-
-interface TranslationFile {
-  id: string;
-  name: string;
-  type: string;
-  status: FileStatus;
-  comment: string;
-}
+import { 
+  uploadTranslationFiles, 
+  getTranslations, 
+  updateTranslationComment, 
+  type TranslationFile 
+} from '../../api/translation';
 
 const TranslationPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<TranslationFile[]>([]);
-  const [duplicateCount, setDuplicateCount] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // --- Handlers: Upload & Luồng Alternative (Lọc trùng lặp) ---
+  const fetchFiles = async () => {
+    try {
+      const data = await getTranslations();
+      setFiles(data);
+    } catch (error) {
+      console.error("Lỗi tải danh sách dịch:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  useEffect(() => {
+    const hasActiveTasks = files.some(f => f.status === 'pending' || f.status === 'translating');
+    let interval: ReturnType<typeof setInterval>;
+
+    if (hasActiveTasks) {
+      interval = setInterval(() => {
+        fetchFiles();
+      }, 3000);
+    }
+
+    return () => clearInterval(interval);
+  }, [files]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       processSelectedFiles(Array.from(e.target.files));
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const processSelectedFiles = (selectedFiles: File[]) => {
-    // Bước 1 & Alternative 1, 2: Giả lập Backend lọc tệp trùng lặp (Dựa trên tên file)
-    const newFiles: TranslationFile[] = [];
-    let duplicates = 0;
+  const processSelectedFiles = async (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
+    
+    setIsUploading(true);
+    const toastId = toast.loading("Đang tải tệp lên...");
 
-    selectedFiles.forEach((file) => {
-      const isDuplicate = files.some((f) => f.name === file.name);
-      if (isDuplicate) {
-        duplicates++;
-      } else {
-        newFiles.push({
-          id: Math.random().toString(36).substring(7),
-          name: file.name,
-          type: file.name.split('.').pop()?.toLowerCase() || 'unknown',
-          status: 'pending', // Bước 2: Chờ xử lý
-          comment: '',
-        });
+    try {
+      const response = await uploadTranslationFiles(selectedFiles);
+      
+      if (response.duplicate_count > 0) {
+        toast(`Phát hiện ${response.duplicate_count} tài liệu trùng lặp đã được loại bỏ.`, { icon: '⚠️', duration: 5000 });
       }
-    });
 
-    if (duplicates > 0) {
-      setDuplicateCount(duplicates);
-      // Alternative 3: Cảnh báo
-      toast(`Phát hiện ${duplicates} tài liệu trùng lặp đã được loại bỏ.`, { icon: '⚠️' });
-    }
+      toast.success("Đã đẩy tệp vào hàng đợi dịch!", { id: toastId });
 
-    if (newFiles.length > 0) {
-      setFiles((prev) => [...prev, ...newFiles]);
-      // Bắt đầu luồng xử lý (Bước 3 - 8)
-      simulateTranslationProcess(newFiles);
+      fetchFiles();
+    } catch (error) {
+      toast.error("Lỗi khi tải tệp lên. Vui lòng thử lại.", { id: toastId });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  // --- Handlers: Main Flow (Xử lý dịch thuật) ---
-  const simulateTranslationProcess = (newFiles: TranslationFile[]) => {
-    // Giả lập Bước 3 - Bước 8: Gửi qua Data Service -> AI Service -> Trả về kết quả
-    newFiles.forEach((file, index) => {
-      // 1. Chuyển sang trạng thái đang dịch (OCR & Translate)
-      setTimeout(() => {
-        setFiles((prev) =>
-          prev.map((f) => (f.id === file.id ? { ...f, status: 'translating' } : f))
-        );
-      }, 1000 + index * 500);
-
-      // 2. Chuyển sang trạng thái hoàn tất (Render Word & Hiển thị)
-      setTimeout(() => {
-        setFiles((prev) =>
-          prev.map((f) => (f.id === file.id ? { ...f, status: 'success' } : f))
-        );
-        toast.success(`Đã dịch xong: ${file.name}`);
-      }, 5000 + index * 1000);
-    });
-  };
-
-  // --- Handlers: Nhận xét (Bước 9 - 12) ---
   const handleCommentChange = (id: string, value: string) => {
     setFiles((prev) =>
       prev.map((f) => (f.id === id ? { ...f, comment: value } : f))
     );
   };
 
-  const handleSaveComment = (id: string, fileName: string) => {
-    // Bước 10 & 11: Gọi API lưu nhận xét vào Relational DB (Translation_history)
-    // api.saveComment(id, comment)...
-    
-    // Bước 12: Frontend hiển thị thông báo
-    toast.success(`Đã lưu nhận xét cho tệp ${fileName}`);
+  const handleSaveComment = async (id: string, fileName: string, comment: string) => {
+    if (!comment.trim()) return;
+
+    try {
+      await updateTranslationComment(id, comment);
+      toast.success(`Đã lưu nhận xét cho tệp ${fileName}`);
+    } catch (error) {
+      toast.error("Không thể lưu nhận xét");
+    }
   };
 
-  // --- Handlers: Giao diện ---
   const getIconForType = (type: string) => {
     switch (type) {
       case 'pdf': return <span className="material-symbols-outlined text-red-500">picture_as_pdf</span>;
@@ -110,6 +102,7 @@ const TranslationPage: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-900">Dịch văn bản</h2>
         </div>
       </div>
+      
       {/* Configuration Bar */}
       <section className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -127,7 +120,7 @@ const TranslationPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Upload Zone & Alert */}
+      {/* Upload Zone */}
       <section className="space-y-3">
         <input 
           type="file" 
@@ -138,15 +131,16 @@ const TranslationPage: React.FC = () => {
           onChange={handleFileSelect}
         />
         <div 
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => {
             e.preventDefault();
             setIsDragging(false);
-            if (e.dataTransfer.files) processSelectedFiles(Array.from(e.dataTransfer.files));
+            if (e.dataTransfer.files && !isUploading) processSelectedFiles(Array.from(e.dataTransfer.files));
           }}
-          className={`w-full h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-4 group transition-colors cursor-pointer 
+          className={`w-full h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-4 group transition-colors 
+            ${isUploading ? 'opacity-50 cursor-not-allowed border-slate-200' : 'cursor-pointer'}
             ${isDragging ? 'border-[#ed1d23] bg-[#ed1d23]/5' : 'border-slate-200 bg-white hover:border-[#ed1d23]/50'}`}
         >
           <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-[#ed1d23] group-hover:bg-[#ed1d23]/5 transition-all">
@@ -156,18 +150,10 @@ const TranslationPage: React.FC = () => {
             <p className="text-sm font-bold text-slate-800">Kéo thả file vào đây</p>
             <p className="text-xs text-slate-400 mt-1">(Hỗ trợ PDF, Word, PNG, JPG)</p>
           </div>
-          <button className="mt-2 px-6 py-2 bg-white border border-slate-200 text-xs font-bold uppercase rounded-lg hover:bg-slate-50 transition-colors">
-            Chọn tệp từ máy tính
+          <button disabled={isUploading} className="mt-2 px-6 py-2 bg-white border border-slate-200 text-xs font-bold uppercase rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50">
+            {isUploading ? "Đang xử lý tải lên..." : "Chọn tệp từ máy tính"}
           </button>
         </div>
-
-        {/* System Alert (Alternative Flow) */}
-        {duplicateCount > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg text-slate-600 border-l-4 border-amber-400 animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined text-lg text-amber-500">info</span>
-            <p className="text-xs font-medium">Phát hiện {duplicateCount} file trùng lặp đã được loại bỏ để tránh xử lý thừa.</p>
-          </div>
-        )}
       </section>
 
       {/* Processing List Table */}
@@ -175,7 +161,7 @@ const TranslationPage: React.FC = () => {
         <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Danh sách xử lý</h2>
           <button 
-            disabled={files.length === 0 || files.some(f => f.status !== 'success')}
+            disabled={files.length === 0 || !files.some(f => f.status === 'success')}
             className="flex items-center gap-2 px-4 py-2 bg-[#ed1d23]/10 text-[#ed1d23] rounded-lg text-xs font-bold hover:bg-[#ed1d23]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-sm">download_for_offline</span>
@@ -205,14 +191,17 @@ const TranslationPage: React.FC = () => {
                   <tr key={file.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {getIconForType(file.type)}
-                        <span className="text-xs font-bold text-slate-800">{file.name}</span>
+                        {getIconForType(file.file_type)}
+                        <span className="text-xs font-bold text-slate-800">{file.filename}</span>
                       </div>
                     </td>
                     
                     <td className="px-6 py-4">
                       {file.status === 'success' && (
                         <span className="px-2.5 py-1 bg-green-50 text-green-600 text-[10px] font-black rounded uppercase">Hoàn tất</span>
+                      )}
+                      {file.status === 'failed' && (
+                        <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded uppercase">Lỗi xử lý</span>
                       )}
                       {file.status === 'translating' && (
                         <div className="flex items-center gap-2">
@@ -228,31 +217,34 @@ const TranslationPage: React.FC = () => {
                     <td className="px-6 py-4 relative group">
                       <input 
                         type="text"
-                        value={file.comment}
+                        value={file.comment || ''}
                         onChange={(e) => handleCommentChange(file.id, e.target.value)}
-                        onBlur={() => {
-                          if (file.comment.trim()) handleSaveComment(file.id, file.name);
-                        }}
+                        onBlur={() => handleSaveComment(file.id, file.filename, file.comment)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && file.comment.trim()) {
-                            e.currentTarget.blur(); // Trigger save
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur();
                           }
                         }}
                         placeholder="Thêm nhận xét và nhấn Enter..." 
-                        className="bg-transparent border-b border-transparent focus:border-slate-300 p-1 text-xs text-slate-600 focus:ring-0 w-full placeholder:italic transition-colors"
+                        className="bg-transparent border-b border-transparent focus:border-slate-300 p-1 text-xs text-slate-600 focus:ring-0 w-full placeholder:italic transition-colors outline-none"
                       />
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      {file.status === 'success' ? (
-                        <button className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline">
+                      {file.status === 'success' && file.result_file_url ? (
+                        <a 
+                          href={file.result_file_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline cursor-pointer"
+                        >
                           Tải về (.docx)
-                        </button>
+                        </a>
                       ) : (
                         <button 
-                          onClick={() => setFiles(prev => prev.filter(f => f.id !== file.id))}
-                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors"
-                          title="Hủy/Xóa"
+                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors disabled:opacity-30"
+                          title="Chức năng xóa tạm thời ẩn"
+                          disabled
                         >
                           <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
