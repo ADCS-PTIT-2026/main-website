@@ -34,6 +34,20 @@ const DocumentPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<Partial<DocumentResponse>>({});
+  
+  // Khôi phục lại document_id từ sessionStorage khi vừa vào trang
+  useEffect(() => {
+    const savedDocId = sessionStorage.getItem('lastActiveDocumentId');
+    if (savedDocId) {
+      loadDocument(savedDocId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeDocumentId) {
+      sessionStorage.setItem('lastActiveDocumentId', activeDocumentId);
+    }
+  }, [activeDocumentId]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -79,8 +93,33 @@ const DocumentPage: React.FC = () => {
       const doc = await getDocument(documentId);
       setDocumentDetail(doc);
       setActiveDocumentId(documentId);
+
+      if (doc.local_path) {
+        const backendBaseUrl = "http://localhost:8000"; 
+        const fileUrl = doc.local_path.startsWith('http') ? doc.local_path : `${backendBaseUrl}${doc.local_path}`;
+        
+        setPreviewUrl(fileUrl);
+        const ext = doc.local_path.split('.').pop()?.toLowerCase() || 'pdf';
+        setFileType(ext);
+      } else {
+        setPreviewUrl((currentUrl) => {
+          if (currentUrl && currentUrl.startsWith('blob:')) {
+            return currentUrl;
+          }
+          return null;
+        });
+        
+        setFileType((currentType) => {
+          if (previewUrl && previewUrl.startsWith('blob:')) {
+            return currentType;
+          }
+          return null;
+        });
+      }
+
     } catch (e: any) {
       setError(e?.message || "Không thể tải dữ liệu văn bản");
+      sessionStorage.removeItem('lastActiveDocumentId'); 
     } finally {
       setLoading(false);
     }
@@ -99,9 +138,7 @@ const DocumentPage: React.FC = () => {
     setFileType(ext);
     setPendingFile(file);
 
-    // setShowSaveModal(true);
     handleConfirmUpload(true, file, ext);
-
     e.target.value = "";
   };
 
@@ -146,7 +183,7 @@ const DocumentPage: React.FC = () => {
     if (!activeDocumentId) return;
 
     setSaving(true);
-    const toastId = toast.loading("Đang Gửi thông báo văn bản...");
+    const toastId = toast.loading("Đang gửi thông báo văn bản...");
 
     try {
       const res = await approveAIResult(activeDocumentId, {
@@ -154,23 +191,27 @@ const DocumentPage: React.FC = () => {
         status: "approved",
       });
 
+      console.log("Phản hồi sau khi duyệt:", res);
       const teleStatus = res.telegram_notification;
-
       if (teleStatus === "success") {
         toast.success("Gửi thông báo Telegram thành công!", { id: toastId });
       } else if (teleStatus?.startsWith("error")) {
         toast.success(`Gửi thông báo thành công nhưng Telegram báo lỗi.`, { id: toastId, icon: '⚠️' });
+        
       } else if (teleStatus === "bot_not_found" || teleStatus === "not_configured") {
-        toast.success("Chưa cấu hình nhận Telegram! Vui lòng quay trở lại trang dashboard để cấu hình.", { id: toastId });
+        toast.error(
+          "Chưa kết nối Telegram!\n\nVui lòng sang trang Cấu hình để kết nối. Bạn có thể rời trang này, văn bản của bạn đã được lưu tự động.", 
+          { id: toastId, duration: 6000 }
+        );
       } else {
-        toast.success(res.message || "Gửi thông báo văn bản thành công!", { id: toastId });
+        toast.success(res.message || "Gửi thông tin văn bản thành công!", { id: toastId });
       }
 
       setIsEditing(false);
       await loadDocument(activeDocumentId);
     } catch (e: any) {
       setError(e?.message || "Không thể cập nhật văn bản");
-      toast.error("Gửi thông báo thất bại", { id: toastId });
+      toast.error("Thao tác thất bại", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -187,7 +228,6 @@ const DocumentPage: React.FC = () => {
       [field]: isArray ? value.split(',').map(s => s.trim()) : value
     }));
   };
-
   const extractedRows = useMemo(() => {
     const data = isEditing ? editedData : documentDetail;
     const getValue = (val: any) => val ?? (isEditing ? "" : "—");
@@ -267,7 +307,7 @@ const DocumentPage: React.FC = () => {
             <div className={`border rounded-xl overflow-hidden p-4 relative transition-colors ${isPending ? 'border-amber-300 bg-amber-50/50 dark:bg-slate-900/50' : 'border-primary/10 bg-white dark:bg-slate-900/50'}`}>
               {activeDocumentId ? (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">{documentDetail?.loai_van_ban_text ?? "văn bản đang xử lý..."}</p>
+                  <p className="text-sm font-medium">{documentDetail?.loai_van_ban_text ?? "Văn bản đang xử lý..."}</p>
                   <p className="text-xs text-slate-500">Mã file: {activeDocumentId}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
@@ -335,9 +375,20 @@ const DocumentPage: React.FC = () => {
                  )}
                </>
             ) : (
-              <div className="text-center text-slate-400">
-                <span className="material-symbols-outlined text-6xl opacity-50 mb-2">plagiarism</span>
-                <p className="text-sm">Chưa có bản xem trước.</p>
+              <div className="text-center text-slate-400 p-6">
+                {activeDocumentId ? (
+                  <>
+                    <span className="material-symbols-outlined text-6xl opacity-40 mb-3 text-slate-300">hide_image</span>
+                    <p className="text-sm font-medium text-slate-500">Bản xem trước không khả dụng</p>
+                    <p className="text-xs text-slate-400 mt-1">Dữ liệu gốc đã được mã hóa hoặc chưa được lưu trữ tĩnh trên máy chủ.</p>
+                    <p className="text-xs text-primary font-medium mt-3 bg-primary/5 p-2 rounded-lg border border-primary/10">Vui lòng xem kết quả trích xuất AI ở bên dưới ↓</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-6xl opacity-50 mb-2">plagiarism</span>
+                    <p className="text-sm">Chưa có bản xem trước.</p>
+                  </>
+                )}
               </div>
             )}
           </div>
