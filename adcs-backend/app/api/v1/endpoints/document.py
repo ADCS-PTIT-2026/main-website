@@ -130,7 +130,7 @@ def update_ai_result_api(
             user=current_user, 
             document=updated_doc
         )
-        telegram_status = tele_res.get("message")
+        telegram_status = tele_res.get("status")
     else:
         telegram_status = "bot_not_found"
 
