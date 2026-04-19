@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { departmentApi, type DepartmentTreeResponse, type DepartmentPayload, type DepartmentResponse } from '../../../api/department';
+import { departmentApi, type DepartmentTreeResponse, type DepartmentPayload, type DepartmentResponse } from '../../api/department';
 
 const DepartmentManagementPage: React.FC = () => {
   const [treeData, setTreeData] = useState<DepartmentTreeResponse[]>([]);
