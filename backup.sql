@@ -5,7 +5,7 @@
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.4
 
--- Started on 2026-04-20 09:32:08
+-- Started on 2026-04-12 09:47:03
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -133,9 +133,7 @@ CREATE TABLE public.documents (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    uploaded_by_user_id uuid NOT NULL,
-    related_documents jsonb,
-    title text
+    uploaded_by_user_id uuid NOT NULL
 );
 
 
@@ -330,7 +328,8 @@ b910c7ee-47b6-4f2e-aa82-239bced301b1	Trung tâm Đào tạo Bưu chính Viễn t
 -- Data for Name: documents; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.documents (document_id, assigned_department_id, assigned_user_id, so_den, so_ky_hieu, trich_yeu, hinh_thuc, loai_van_ban_text, don_vi_ban_hanh, nguoi_ky, chuc_vu_nguoi_ky, ngay_van_ban, ngay_den, ngay_het_han, do_khan, noi_nhan, can_cu_phap_ly, yeu_cau_hanh_dong, status, summary, key_points, confidence, muc_tin_cay, loai_van_ban, de_xuat_xu_ly, goi_y_phong_ban, tong_so_chunk, total_chunks_processed, source_pages, storage_info, processing_time, is_chua_doc, thong_tin_ky_so, created_at, updated_at, deleted_at, uploaded_by_user_id, related_documents, title) FROM stdin;
+COPY public.documents (document_id, assigned_department_id, assigned_user_id, so_den, so_ky_hieu, trich_yeu, hinh_thuc, loai_van_ban_text, don_vi_ban_hanh, nguoi_ky, chuc_vu_nguoi_ky, ngay_van_ban, ngay_den, ngay_het_han, do_khan, noi_nhan, can_cu_phap_ly, yeu_cau_hanh_dong, status, summary, key_points, confidence, muc_tin_cay, loai_van_ban, de_xuat_xu_ly, goi_y_phong_ban, tong_so_chunk, total_chunks_processed, source_pages, storage_info, processing_time, is_chua_doc, thong_tin_ky_so, created_at, updated_at, deleted_at, uploaded_by_user_id) FROM stdin;
+c1b197aa-2767-4b69-8891-3405ecf4359b	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	failed	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	2026-04-11 17:11:46.659761+07	2026-04-11 17:13:48.151441+07	\N	05657dbd-ceb8-4979-8cd5-d152e76c3db1
 \.
 
 
@@ -676,7 +675,7 @@ ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(role_id) ON DELETE SET NULL;
 
 
--- Completed on 2026-04-20 09:32:08
+-- Completed on 2026-04-12 09:47:03
 
 --
 -- PostgreSQL database dump complete

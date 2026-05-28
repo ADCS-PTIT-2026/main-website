@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './features/auth/pages/LoginPage';
+import SSOCallbackPage from './features/auth/pages/SSOCallbackPage';
 import MainLayout from './layouts/MainLayout';
 import DashboardPage from './features/DashboardPage';
 import DocumentPage from './features/documents/pages/DocumentPage';
@@ -20,6 +21,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<SSOCallbackPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

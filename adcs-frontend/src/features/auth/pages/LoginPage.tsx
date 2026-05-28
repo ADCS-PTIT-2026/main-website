@@ -43,7 +43,13 @@ const LoginPage: React.FC = () => {
   };
 
   const handleSSOLogin = () => {
-    console.log('Redirecting to Outlook SSO...');
+    const tenantId = "";
+    const clientId = "";
+    const redirectUri = encodeURIComponent("https://adcs.ptitai.org/auth/callback");
+
+    const microsoftAuthUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&response_mode=query&scope=openid%20profile%20email%20User.Read&prompt=select_account`;
+    
+    window.location.href = microsoftAuthUrl;
   };
 
   return (
