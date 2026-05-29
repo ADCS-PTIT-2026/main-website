@@ -12,6 +12,7 @@ import DocumentRepositoryPage from './features/documents/pages/DocumentRepositor
 import AIConfigurationPage from './features/ai_config/AIConfigurationPage';
 import HistoryPage from './features/history/HistoryPage';
 import TranslationPage from './features/translation/TranslationPage';
+
 import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './ProtectedRoute';
 

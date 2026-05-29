@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest
-from app.services.auth_service import login, register, refresh_access_token, login_with_ptit_sso
+from app.services.auth_service import login, register, refresh_access_token, ptit_sso_login
 
 router = APIRouter()
 
@@ -24,10 +24,10 @@ def refresh_token_api(request: RefreshTokenRequest, db: Session = Depends(get_db
     """
     return refresh_access_token(db, request.refresh_token)
 
-# 4. Đăng nhập qua PTIT SSO (THÊM MỚI)
+# 4. Đăng nhập qua PTIT SSO
 @router.get("/sso/callback", response_model=LoginResponse)
 async def sso_callback_api(code: str = Query(...), db: Session = Depends(get_db)):
     """
-    Endpoint nhận Authorization Code từ Frontend gửi lên sau khi đăng nhập thành công từ Microsoft
+    Endpoint nhận Authorization Code từ Frontend gửi lên sau khi đăng nhập thành công từ PTIT
     """
-    return await login_with_ptit_sso(db, code)
+    return ptit_sso_login(db, code)

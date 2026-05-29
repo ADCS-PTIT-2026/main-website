@@ -7,17 +7,18 @@ from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
 from app.core.security import hash_password
-import httpx
+from app.core.logger import logger
+import requests
+import secrets
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
-AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
-AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
-AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
-AZURE_REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI")
+PTIT_CLIENT_ID = os.getenv("PTIT_CLIENT_ID")
+PTIT_TOKEN_ENDPOINT = os.getenv("PTIT_TOKEN_ENDPOINT")
+PTIT_REDIRECT_URI = os.getenv("PTIT_REDIRECT_URI")
 
 def login(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
@@ -87,69 +88,61 @@ def refresh_access_token(db: Session, refresh_token: str):
         "refresh_token": new_refresh_token
     }
 
-async def login_with_ptit_sso(db: Session, code: str):
-    """
-    Xử lý trao đổi mã code lấy Access Token của Microsoft, lấy thông tin User 
-    và đăng nhập/đăng ký vào hệ thống nội bộ.
-    """
-    token_url = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/token"
-    
-    # Đổi code lấy Access Token từ Microsoft
-    data = {
-        "client_id": AZURE_CLIENT_ID,
-        "scope": "openid email profile User.Read",
-        "code": code,
-        "redirect_uri": AZURE_REDIRECT_URI,
+def ptit_sso_login(db: Session, code: str):
+    logger.info("[PTIT_SSO] Request received with code")
+
+    payload = {
         "grant_type": "authorization_code",
-        "client_secret": AZURE_CLIENT_SECRET,
+        "code": code,
+        "redirect_uri": PTIT_REDIRECT_URI,
+        "client_id": PTIT_CLIENT_ID
     }
-    
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(token_url, data=data)
-        if token_response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Không thể xác thực với Microsoft")
-        
-        ms_tokens = token_response.json()
-        ms_access_token = ms_tokens.get("access_token")
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
 
-        # Dùng Microsoft Access Token lấy thông tin User (gọi Graph API)
-        user_info_response = await client.get(
-            "https://graph.microsoft.com/v1.0/me",
-            headers={"Authorization": f"Bearer {ms_access_token}"}
+    token_response = requests.post(PTIT_TOKEN_ENDPOINT, data=payload, headers=headers)
+
+    if token_response.status_code != 200:
+        logger.warning(f"[PTIT_SSO] Failed to exchange token: {token_response.text}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Không thể xác thực với hệ thống PTIT!"
         )
-        if user_info_response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Không thể lấy thông tin tài khoản từ Microsoft")
-        
-        ms_user = user_info_response.json()
-        
-    email = ms_user.get("mail") or ms_user.get("userPrincipalName")
-    name = ms_user.get("displayName", "PTIT User")
 
-    if not email or not email.endswith("@ptit.edu.vn"):
-        raise HTTPException(status_code=403, detail="Hệ thống chỉ chấp nhận email trường @ptit.edu.vn")
+    token_data = token_response.json()
+    id_token = token_data.get("id_token")
+
+    if not id_token:
+        raise HTTPException(status_code=400, detail="Không nhận được id_token từ PTIT.")
+
+    try:
+        user_info = jwt.get_unverified_claims(id_token)
+    except Exception as e:
+        logger.error(f"[PTIT_SSO] Error decoding id_token: {e}")
+        raise HTTPException(status_code=400, detail="Token trả về không hợp lệ.")
+
+    email = user_info.get("email")
+    name = user_info.get("name") or user_info.get("preferred_username") or email.split('@')[0]
+
+    if not email:
+        logger.warning("[PTIT_SSO] Missing email from PTIT token")
+        raise HTTPException(status_code=400, detail="Không thể lấy được email từ hệ thống PTIT.")
 
     user = get_user_by_email(db, email)
+
     if not user:
-        new_user = User(
+        logger.info(f"[PTIT_SSO] Creating new user email={email}")
+        user = create_user(db, User(
             username=name,
             email=email,
-            password_hash=hash_password("SSO_AUTHENTICATED_ACCOUNT_" + os.urandom(8).hex()),
-            is_active=True
-        )
-        user = create_user(db, new_user)
-        
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Tài khoản đã bị khóa!")
+            password_hash=hash_password(secrets.token_urlsafe(16))
+        ))
 
-    access_token = create_access_token({"sub": str(user.user_id)})
-    refresh_token = create_refresh_token({"sub": str(user.user_id)})
+    logger.info(f"[PTIT_SSO] Success user_id={user.user_id}")
 
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": {
-            "id": str(user.user_id),
-            "email": user.email,
-            "name": user.username
-        }
+        "access_token": create_access_token({"sub": str(user.user_id)}),
+        "refresh_token": create_refresh_token({"sub": str(user.user_id)}),
+        "user": {"id": str(user.user_id), "email": user.email, "name": user.username}
     }
