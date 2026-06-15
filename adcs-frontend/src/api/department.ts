@@ -2,19 +2,25 @@ import axiosClient from './axiosClient';
 
 // Định nghĩa kiểu dữ liệu payload gửi lên backend
 export interface DepartmentPayload {
+  id?: number | null;
   name: string;
   code?: string | null;
   description?: string | null;
-  parent_id?: string | null;
+  ten_viet_tat?: string | null;
+  ten_hien_thi?: string | null;
+  loai_don_vi?: string | null;
+  cap_don_vi?: string | null;
+  level_number?: number | null;
+  is_formal?: boolean | null;
+  has_seal?: boolean | null;
+  parent_name?: string | null;
+  child_count?: number | null;
+  parent_id?: number | null;
 }
 
 // Định nghĩa kiểu dữ liệu trả về từ backend
-export interface DepartmentResponse {
+export interface DepartmentResponse extends DepartmentPayload {
   department_id: string;
-  name: string;
-  code: string | null;
-  description: string | null;
-  parent_id: string | null;
   created_at: string;
 }
 
@@ -23,7 +29,6 @@ export interface DepartmentTreeResponse extends DepartmentResponse {
 }
 
 export const departmentApi = {
-  // GET /departments trả về list dạng tree
   getAll: (): Promise<DepartmentTreeResponse[]> => 
     axiosClient.get('/departments'),
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.schemas.department import (
     DepartmentCreateRequest,
     DepartmentUpdateRequest,
@@ -17,14 +17,6 @@ from app.services.department_service import (
 )
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("", response_model=list[DepartmentTreeResponse])
