@@ -6,18 +6,22 @@ const DepartmentManagementPage: React.FC = () => {
   const [flatDepartments, setFlatDepartments] = useState<DepartmentResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState<DepartmentPayload>({ name: '', code: '', description: '', parent_id: '' });
+  
+  const defaultFormState: DepartmentPayload = { 
+    id: null, name: '', code: '', description: '', parent_id: null,
+    ten_viet_tat: '', ten_hien_thi: '', loai_don_vi: '', cap_don_vi: '',
+    level_number: null, is_formal: false, has_seal: false
+  };
+  
+  const [formData, setFormData] = useState<DepartmentPayload>(defaultFormState);
   const [loading, setLoading] = useState(false);
   
-
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
-  // Tự động mở (Expand) node gốc khi tải dữ liệu xong
   useEffect(() => {
     if (treeData.length > 0 && expandedNodes.size === 0) {
       const rootIds = treeData.map(n => n.department_id);
@@ -25,7 +29,6 @@ const DepartmentManagementPage: React.FC = () => {
     }
   }, [treeData]);
 
-  // Drag to Pan
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as Element).closest('.prevent-drag')) return;
     setIsDragging(true);
@@ -50,7 +53,6 @@ const DepartmentManagementPage: React.FC = () => {
     });
   };
 
-  // Hàm làm phẳng (Flatten) cây để tạo danh sách 1 chiều phục vụ tìm kiếm & select box
   const flattenTree = (nodes: DepartmentTreeResponse[]): DepartmentResponse[] => {
     let list: DepartmentResponse[] = [];
     nodes.forEach(node => {
@@ -63,7 +65,6 @@ const DepartmentManagementPage: React.FC = () => {
     return list;
   };
 
-  // Load dữ liệu từ Backend
   const loadDepartments = async () => {
     try {
       const data = await departmentApi.getAll();
@@ -78,46 +79,60 @@ const DepartmentManagementPage: React.FC = () => {
     loadDepartments();
   }, []);
 
-  // Cập nhật form khi chọn một phòng ban
   useEffect(() => {
     if (selectedId && !isCreating) {
       const dept = flatDepartments.find(d => d.department_id === selectedId);
       if (dept) {
         setFormData({
+          id: dept.id || null,
           name: dept.name,
           code: dept.code || '',
           description: dept.description || '',
-          parent_id: dept.parent_id || ''
+          ten_viet_tat: dept.ten_viet_tat || '',
+          ten_hien_thi: dept.ten_hien_thi || '',
+          loai_don_vi: dept.loai_don_vi || '',
+          cap_don_vi: dept.cap_don_vi || '',
+          level_number: dept.level_number || null,
+          is_formal: dept.is_formal || false,
+          has_seal: dept.has_seal || false,
+          parent_id: dept.parent_id || null
         });
       }
     }
   }, [selectedId, isCreating, flatDepartments]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    
+    // Xử lý Checkbox cho boolean fields
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } 
+    // Xử lý Ép kiểu Number cho các trường ID / Cấp độ
+    else if (name === 'id' || name === 'parent_id' || name === 'level_number') {
+      setFormData(prev => ({ ...prev, [name]: value === '' ? null : Number(value) }));
+    } 
+    // Các trường text thông thường
+    else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = async () => {
     try {
       setLoading(true);
-      const payload = {
-        ...formData,
-        parent_id: formData.parent_id || null // Chuyển empty string thành null cho backend
-      };
-
       if (isCreating) {
-        await departmentApi.create(payload);
+        await departmentApi.create(formData);
         alert('Thêm phòng ban thành công!');
       } else {
         if (selectedId) {
-          await departmentApi.update(selectedId, payload);
+          await departmentApi.update(selectedId, formData);
           alert('Cập nhật phòng ban thành công!');
         }
       }
       await loadDepartments();
       setIsCreating(false);
-      // Giữ nguyên selectedId nếu đang edit, hoặc reset nếu vừa tạo mới
       if (isCreating) setSelectedId(null);
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Đã có lỗi xảy ra');
@@ -146,29 +161,20 @@ const DepartmentManagementPage: React.FC = () => {
   const handleAddClick = () => {
     setIsCreating(true);
     setSelectedId('new');
-    setFormData({
-      name: 'Phòng ban mới',
-      code: '',
-      description: '',
-      parent_id: ''
-    });
+    setFormData({ ...defaultFormState, name: 'Phòng ban mới' });
   };
 
-  // Component Đệ quy để vẽ từng Node của sơ đồ cây
   const RenderNode = ({ node, level }: { node: DepartmentTreeResponse, level: number }) => {
     const isSelected = node.department_id === selectedId;
     const isRoot = level === 0;
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes.has(node.department_id);
-    
     const isLeafParent = hasChildren && node.children.every(c => !c.children || c.children.length === 0);
 
     return (
       <div className="flex flex-col items-center relative">
-        {/* Đường thẳng đứng nối từ cha xuống */}
         {!isRoot && <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700"></div>}
 
-        {/* Thẻ hiển thị Phòng ban */}
         <div 
           onClick={() => { setSelectedId(node.department_id); setIsCreating(false); }}
           className={`prevent-drag w-64 bg-white dark:bg-slate-900 border-2 rounded-xl p-4 shadow-lg flex flex-col items-center text-center relative z-10 cursor-pointer transition-all hover:-translate-y-1 ${
@@ -186,13 +192,14 @@ const DepartmentManagementPage: React.FC = () => {
           )}
           
           <h4 className={`font-bold uppercase tracking-wide text-sm ${isRoot ? 'text-slate-900 dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
-            {node.name}
+            {node.ten_hien_thi || node.name}
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{node.code || 'Phân nhánh'}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {node.code || 'Phân nhánh'} {node.id && `(ID: ${node.id})`}
+          </p>
           
           {isRoot && <span className="mt-2 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-bold uppercase">Cấp cao nhất</span>}
 
-          {/* Nút Expand / Collapse */}
           {hasChildren && (
             <button 
               onClick={(e) => toggleExpand(node.department_id, e)}
@@ -203,16 +210,11 @@ const DepartmentManagementPage: React.FC = () => {
           )}
         </div>
 
-        {/* Hiển thị các phòng ban con */}
         {isExpanded && hasChildren && (
           isLeafParent ? (
-            // --- FIX: LAYOUT DỌC CHO NODE LÁ ĐẢM BẢO LIỀN MẠCH ---
             <div className="flex flex-col items-center mt-3 relative w-full">
-              {/* Trục dọc nối từ nút Expand xuống */}
               <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700"></div>
-              
               <div className="relative flex flex-col gap-4">
-                {/* Đường rẽ ngang từ trục dọc sang xương sống */}
                 <div className="absolute top-0 left-[-2rem] h-0.5 bg-slate-300 dark:bg-slate-700" style={{ width: 'calc(50% + 2rem)' }}></div>
 
                 {node.children.map((child, index) => {
@@ -221,16 +223,9 @@ const DepartmentManagementPage: React.FC = () => {
                   
                   return (
                     <div key={child.department_id} className="relative prevent-drag">
-                      {/* Đoạn xương sống (nối dọc) được chia thành từng khúc theo mỗi Node */}
-                      <div 
-                        className="absolute left-[-2rem] w-0.5 bg-slate-300 dark:bg-slate-700" 
-                        style={{ top: 0, bottom: isLast ? '50%' : '-1rem' }} 
-                      ></div>
-                      
-                      {/* Đoạn rẽ ngang vào Card */}
+                      <div className="absolute left-[-2rem] w-0.5 bg-slate-300 dark:bg-slate-700" style={{ top: 0, bottom: isLast ? '50%' : '-1rem' }}></div>
                       <div className="absolute top-1/2 left-[-2rem] w-8 h-0.5 bg-slate-300 dark:bg-slate-700 -translate-y-1/2"></div>
                       
-                      {/* Thẻ con thu gọn (Compact Card) */}
                       <div 
                         onClick={() => { setSelectedId(child.department_id); setIsCreating(false); }}
                         className={`w-64 bg-white dark:bg-slate-900 border-2 rounded-xl p-3 shadow-sm flex items-center text-left cursor-pointer transition-all hover:translate-x-1 ${
@@ -241,7 +236,9 @@ const DepartmentManagementPage: React.FC = () => {
                           <span className="material-symbols-outlined text-sm">groups</span>
                         </div>
                         <div>
-                          <h4 className={`font-bold text-sm line-clamp-1 ${isChildSelected ? 'text-primary' : 'text-slate-800 dark:text-slate-200'}`}>{child.name}</h4>
+                          <h4 className={`font-bold text-sm line-clamp-1 ${isChildSelected ? 'text-primary' : 'text-slate-800 dark:text-slate-200'}`}>
+                            {child.name}
+                          </h4>
                         </div>
                       </div>
                     </div>
@@ -250,7 +247,6 @@ const DepartmentManagementPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            // --- LAYOUT NGANG (HORIZONTAL) CHO PHÂN NHÁNH CHÍNH ---
             <>
               <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 mt-3"></div>
               <div className="flex gap-12 relative pt-0">
@@ -286,7 +282,6 @@ const DepartmentManagementPage: React.FC = () => {
           </button>
         </div>
 
-        {/* FIX LỖI GIẬT KHI DRAG: Thêm select-none vào thẻ chứa Canvas */}
         <div 
           className={`flex-1 overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           onMouseDown={handleMouseDown}
@@ -317,53 +312,79 @@ const DepartmentManagementPage: React.FC = () => {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="size-14 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
-                <span className="material-symbols-outlined text-3xl">corporate_fare</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 dark:text-white line-clamp-1">{formData.name || 'Đang nhập...'}</h4>
-                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500 uppercase">
-                  {formData.code || 'NO-CODE'}
-                </span>
-              </div>
-            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tên phòng ban <span className="text-primary">*</span></label>
                 <input name="name" value={formData.name} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary" />
               </div>
+              
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mã định danh (Code)</label>
-                <input name="code" value={formData.code || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 uppercase outline-none focus:ring-1 focus:ring-primary" />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tên hiển thị</label>
+                <input name="ten_hien_thi" value={formData.ten_hien_thi || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary" />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mã (Code)</label>
+                  <input name="code" value={formData.code || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 uppercase outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">ID (Nội bộ)</label>
+                  <input type="number" name="id" value={formData.id ?? ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tên viết tắt</label>
+                  <input name="ten_viet_tat" value={formData.ten_viet_tat || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Cấp độ (Level)</label>
+                  <input type="number" name="level_number" value={formData.level_number ?? ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Phòng ban cấp trên</label>
                 <div className="relative">
                   <select 
                     name="parent_id" 
-                    value={formData.parent_id || ''} 
+                    value={formData.parent_id ?? ''} 
                     onChange={handleInputChange} 
                     className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 outline-none focus:ring-1 focus:ring-primary appearance-none"
                   >
                     <option value="">-- Cấp cao nhất --</option>
                     {flatDepartments
-                      .filter(d => d.department_id !== selectedId) // Không cho phép chọn chính nó làm cha
+                      .filter(d => d.department_id !== selectedId && d.id != null) // Chỉ hiển thị các PB có 'id' nội bộ
                       .map(dept => (
-                        <option key={dept.department_id} value={dept.department_id}>{dept.name}</option>
+                        <option key={dept.department_id} value={dept.id!}>
+                          {dept.name} (ID: {dept.id})
+                        </option>
                     ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-sm">expand_more</span>
                 </div>
               </div>
+
+              <div className="flex items-center gap-4 py-2">
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input type="checkbox" name="is_formal" checked={formData.is_formal || false} onChange={handleInputChange} className="rounded text-primary focus:ring-primary" />
+                  Đơn vị chính thức
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input type="checkbox" name="has_seal" checked={formData.has_seal || false} onChange={handleInputChange} className="rounded text-primary focus:ring-primary" />
+                  Có con dấu
+                </label>
+              </div>
             </div>
 
-            <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
               <label className="block text-xs font-bold text-primary uppercase mb-2"><span className="material-symbols-outlined text-sm align-middle mr-1">smart_toy</span>Mô tả (Ngữ cảnh AI)</label>
-              <textarea name="description" value={formData.description || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 placeholder:italic outline-none focus:ring-1 focus:ring-primary" rows={5} />
+              <textarea name="description" value={formData.description || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 placeholder:italic outline-none focus:ring-1 focus:ring-primary" rows={4} />
             </div>
           </div>
 

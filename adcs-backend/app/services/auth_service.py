@@ -52,7 +52,8 @@ def register(db: Session, name: str, email: str, password: str):
     new_user = User(
         username=name,
         email=email,
-        password_hash=hashed_pwd
+        password_hash=hashed_pwd,
+        is_active=True
     )
 
     user = create_user(db, new_user)
