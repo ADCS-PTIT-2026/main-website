@@ -3,7 +3,8 @@ import toast from 'react-hot-toast';
 import { 
   uploadTranslationFiles, 
   getTranslations, 
-  updateTranslationComment, 
+  updateTranslationComment,
+  deleteTranslation, // Thêm hàm delete vào import
   type TranslationFile 
 } from '../../api/translation';
 
@@ -100,6 +101,21 @@ const TranslationPage: React.FC = () => {
       toast.success(`Đã lưu nhận xét cho tệp ${fileName}`);
     } catch (error) {
       toast.error("Không thể lưu nhận xét");
+    }
+  };
+
+  const handleDeleteFile = async (id: string, fileName: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa bản dịch "${fileName}" không?`)) {
+      return;
+    }
+
+    try {
+      await deleteTranslation(id);
+      toast.success(`Đã xóa tệp ${fileName}`);
+      setFiles(files.filter(f => f.id !== id));
+    } catch (error) {
+      toast.error("Không thể xóa tệp lúc này");
+      console.error(error);
     }
   };
 
@@ -249,19 +265,31 @@ const TranslationPage: React.FC = () => {
 
                     <td className="px-6 py-4 text-right">
                       {file.status === 'success' && file.result_file_url ? (
-                        <a 
-                          href={file.result_file_url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline cursor-pointer"
-                        >
-                          Tải về (.docx)
-                        </a>
+                        <div className="flex items-center justify-end gap-2">
+                          <a 
+                            href={file.result_file_url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline cursor-pointer"
+                          >
+                            Tải về (.docx)
+                          </a>
+                          
+                          {/* NÚT XÓA KHI ĐÃ HOÀN TẤT */}
+                          <button 
+                            onClick={() => handleDeleteFile(file.id, file.filename)}
+                            className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors"
+                            title="Xóa tệp"
+                          >
+                            <span className="material-symbols-outlined text-lg">delete</span>
+                          </button>
+                        </div>
                       ) : (
+                        /* NÚT XÓA KHI ĐANG PENDING/LỖI */
                         <button 
-                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors disabled:opacity-30"
-                          title="Chức năng xóa tạm thời ẩn"
-                          disabled
+                          onClick={() => handleDeleteFile(file.id, file.filename)}
+                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors"
+                          title="Xóa tệp"
                         >
                           <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
