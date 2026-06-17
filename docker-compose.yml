@@ -1,7 +1,7 @@
 services:
-  adcs-db-2:
-    image: postgres:16-alpine
-    container_name: adcs-db-2
+  db:
+    image: postgres:17-alpine
+    container_name: adcs-db
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -11,43 +11,51 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - /var/lib/adcs/postgres:/var/lib/postgresql/data
+      - /var/lib/adcs/postgres:/var/lib/postgresql/data/pgdata
+      - ./backup.sql:/docker-entrypoint-initdb.d/backup.sql
     networks:
       - adcs_web_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
-  adcs-backend:
+  backend:
     build:
       context: ./adcs-backend
-    container_name: adcs-backend
+    container_name: backend
     restart: always
     env_file:
       - ./adcs-backend/.env
     environment:
-      - DATABASE_URL=postgresql://postgres:adcs2026@adcs-db-2:5432/adcs_db_2
+      - DATABASE_URL=postgresql://postgres:adcs2026@db:5432/adcs_db_2
     expose:
       - "8000"
     volumes:
       - ./adcs-backend:/app 
-      # giữ nguyên ổ lớn cho upload
       - /mnt/data2tb/adcs/uploads:/mnt/data2tb/adcs/uploads
+      - ./adcs-backend/logs:/app/logs
     depends_on:
-      - adcs-db-2
+      db:
+        condition: service_healthy
     networks:
       adcs_web_network:
         aliases:
           - backend
 
-  adcs-frontend:
+  frontend:
     build:
       context: ./adcs-frontend
-    container_name: adcs-frontend
+    container_name: frontend
     restart: always
     env_file:
       - ./adcs-frontend/.env
     ports:
       - "12011:80"
     depends_on:
-      - adcs-backend
+      - backend
     networks:
       - adcs_web_network
 

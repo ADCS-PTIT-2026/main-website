@@ -1,7 +1,9 @@
 import logging
 import contextvars
 import random
+import os
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
 request_id_var = contextvars.ContextVar("request_id", default="SYSTEM")
 
@@ -27,7 +29,23 @@ console_handler.setFormatter(formatter)
 console_handler.addFilter(RequestIdFilter())
 logger.addHandler(console_handler)
 
-# file_handler = logging.FileHandler("adcs_app.log", encoding="utf-8")
-# file_handler.setFormatter(formatter)
-# file_handler.addFilter(RequestIdFilter())
-# logger.addHandler(file_handler)
+
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+log_filename = os.path.join(log_dir, "adcs_app.log")
+
+file_handler = TimedRotatingFileHandler(
+    filename=log_filename,
+    when="midnight",     
+    interval=1,
+    backupCount=30,
+    encoding="utf-8"
+)
+
+file_handler.suffix = "%Y-%m-%d"
+
+file_handler.setFormatter(formatter)
+file_handler.addFilter(RequestIdFilter())
+logger.addHandler(file_handler)

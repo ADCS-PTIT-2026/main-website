@@ -12,10 +12,12 @@ const TranslationPage: React.FC = () => {
   const [files, setFiles] = useState<TranslationFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const fetchFiles = async () => {
+    if (!userId) return; 
     try {
-      const data = await getTranslations();
+      const data = await getTranslations(userId);
       setFiles(data);
     } catch (error) {
       console.error("Lỗi tải danh sách dịch:", error);
@@ -23,8 +25,23 @@ const TranslationPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchFiles();
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.id) {
+          setUserId(parsedUser.id);
+        }
+      } catch (error) {
+        console.error('Lỗi khi đọc thông tin người dùng:', error);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    fetchFiles();
+  }, [userId]);
 
   useEffect(() => {
     const hasActiveTasks = files.some(f => f.status === 'pending' || f.status === 'translating');

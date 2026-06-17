@@ -16,8 +16,6 @@ const LoginPage: React.FC = () => {
     }
   }, [navigate]);
 
-  const [errorMessage, setErrorMessage] = useState('');
-
   const handleAuthSubmit = async (formData: any) => {
     setIsLoading(true);
     setErrorMsg(null);
@@ -46,7 +44,7 @@ const LoginPage: React.FC = () => {
 
   const handleSSOLogin = () => {
     setIsLoading(true);
-    setErrorMessage('');
+    setErrorMsg('');
 
     try {
       const ptitAuthUrl = authAPI.getPtitLoginUrl();
@@ -54,7 +52,7 @@ const LoginPage: React.FC = () => {
       window.location.href = ptitAuthUrl;
     } catch (error) {
       console.error('PTIT SSO Redirect Error:', error);
-      setErrorMessage('Lỗi cấu hình hệ thống đăng nhập PTIT. Vui lòng thử lại sau.');
+      setErrorMsg('Lỗi cấu hình hệ thống đăng nhập PTIT. Vui lòng thử lại sau.');
       setIsLoading(false);
     }
   };

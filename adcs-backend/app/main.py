@@ -8,7 +8,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.concurrency import iterate_in_threadpool
 
-from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history
+from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history, translation
 from app.core.http_client import http_client
 from app.core.logger import request_id_var, generate_request_id, logger
 
@@ -71,6 +71,7 @@ app.include_router(department.router, prefix="/api/departments", tags=["Departme
 app.include_router(system_parameter.router, prefix="/api/system-parameters", tags="AI_Config")
 app.include_router(telegram.router, prefix="/api/telegram", tags="Telegram")
 app.include_router(history.router, prefix="/api/history", tags="History")
+app.include_router(translation.router, prefix="/api/translations", tags="Translation")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
