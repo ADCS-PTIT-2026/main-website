@@ -214,7 +214,7 @@ async def search_in_data_service(query: str, start_date: str = None, end_date: s
         response = await http_client.client.post(
             DATA_SERVICE_SEARCH_URL, 
             json=payload, 
-            timeout=60,
+            timeout=30,
             headers=headers
         )
         response.raise_for_status()

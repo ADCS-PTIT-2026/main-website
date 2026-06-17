@@ -8,19 +8,18 @@ class TranslationLog(Base):
     __tablename__ = "translation_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    user_id = Column(String, index=True, nullable=True) # Lưu ID người dùng
+    user_id = Column(UUID(as_uuid=True), index=True, nullable=True)
     
     filename = Column(String(255), nullable=False)
-    file_type = Column(String(50), nullable=False) # pdf, docx, png...
-    file_hash = Column(String(255), index=True, nullable=True) # Dùng để check trùng lặp (Bước 2)
+    file_type = Column(String(50), nullable=False)
+    file_hash = Column(String(255), index=True, nullable=True)
     
     status = Column(String(50), default="pending") # pending, translating, success, failed
-    comment = Column(Text, nullable=True) # Lưu nhận xét của người dùng
+    comment = Column(Text, nullable=True)
     
     source_language = Column(String(50), default="vi")
     target_language = Column(String(50), default="en")
     
-    # Đường dẫn file kết quả (sau khi render thành .docx)
     result_file_url = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
