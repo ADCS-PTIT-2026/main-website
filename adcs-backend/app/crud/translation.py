@@ -45,3 +45,12 @@ def update_translation_comment(db: Session, log: TranslationLog, comment: str) -
     db.commit()
     db.refresh(log)
     return log
+
+def delete_translation_log(db: Session, log_id: str) -> bool:
+    """Xóa bản ghi nhật ký dịch thuật."""
+    log = get_translation_log_by_id(db, log_id)
+    if log:
+        db.delete(log)
+        db.commit()
+        return True
+    return False

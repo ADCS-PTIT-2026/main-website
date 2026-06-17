@@ -41,3 +41,7 @@ export async function getTranslations(userId: string | null): Promise<Translatio
 export async function updateTranslationComment(id: string, comment: string): Promise<{ message: string }> {
   return axiosClient.put(`/translations/${id}/comment`, { comment });
 }
+
+export async function deleteTranslation(id: string): Promise<{ message: string }> {
+  return axiosClient.delete(`/translations/${id}`);
+}

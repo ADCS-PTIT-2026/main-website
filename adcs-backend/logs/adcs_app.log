@@ -1,0 +1,764 @@
+[2026-06-17 04:18:14,892] [ADCS2606170418148927871] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-17 04:18:15,482] [ADCS2606170418148927871] [INFO] 📤 HOÀN THÀNH: 200 (Mất 589.52ms)
+[2026-06-17 04:18:15,602] [ADCS2606170418156022290] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 04:18:15,623] [ADCS2606170418156231678] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 04:18:15,628] [ADCS2606170418156022290] [INFO] 📤 HOÀN THÀNH: 200 (Mất 26.00ms)
+[2026-06-17 04:18:15,651] [ADCS2606170418156231678] [INFO] 📤 HOÀN THÀNH: 200 (Mất 27.91ms)
+[2026-06-17 04:18:17,408] [ADCS2606170418174077609] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 04:18:17,409] [ADCS2606170418174077609] [INFO] Fetching all departments
+[2026-06-17 04:18:17,425] [ADCS2606170418174077609] [INFO] Built department tree with 2 root nodes
+[2026-06-17 04:18:17,427] [ADCS2606170418174077609] [INFO] 📤 HOÀN THÀNH: 200 (Mất 19.60ms)
+[2026-06-17 04:18:24,059] [ADCS2606170418240598576] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-17 04:18:24,092] [ADCS2606170418240598576] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-17 04:18:34,105] [ADCS2606170418240598576] [ERROR] Lỗi kết nối khi gọi Data Service (History API): 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 36, in fetch_processing_history
+    response = await client.get(url, params=params, timeout=10.0)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout
+[2026-06-17 04:18:34,109] [ADCS2606170418240598576] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Không thể lấy dữ liệu lịch sử từ máy chủ dữ liệu lúc này."}
+[2026-06-17 04:18:34,109] [ADCS2606170418240598576] [INFO] 📤 HOÀN THÀNH: 500 (Mất 10050.30ms)
+[2026-06-17 06:53:33,387] [ADCS2606170653333871104] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-17 06:53:33,936] [ADCS2606170653333871104] [INFO] 📤 HOÀN THÀNH: 200 (Mất 548.91ms)
+[2026-06-17 06:53:33,990] [ADCS2606170653339902904] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 06:53:33,991] [ADCS2606170653339912149] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 06:53:34,007] [ADCS2606170653339902904] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.04ms)
+[2026-06-17 06:53:34,034] [ADCS2606170653339912149] [INFO] 📤 HOÀN THÀNH: 200 (Mất 42.33ms)
+[2026-06-17 06:55:18,355] [ADCS2606170655183558772] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 06:55:18,413] [ADCS2606170655183558772] [INFO] 📤 HOÀN THÀNH: 200 (Mất 57.59ms)
+[2026-06-17 06:58:18,030] [ADCS2606170658180294335] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 06:58:18,041] [ADCS2606170658180294335] [INFO] 📤 HOÀN THÀNH: 200 (Mất 11.14ms)
+[2026-06-17 06:58:20,434] [ADCS2606170658204345457] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 06:58:20,438] [ADCS2606170658204345457] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.18ms)
+[2026-06-17 06:58:27,806] [ADCS2606170658278063256] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 06:58:27,810] [ADCS2606170658278063256] [INFO] Fetching all departments
+[2026-06-17 06:58:27,824] [ADCS2606170658278063256] [INFO] Built department tree with 2 root nodes
+[2026-06-17 06:58:27,829] [ADCS2606170658278063256] [INFO] 📤 HOÀN THÀNH: 200 (Mất 22.36ms)
+[2026-06-17 06:58:38,463] [ADCS2606170658384631939] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-17 06:58:38,517] [ADCS2606170658384631939] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-17 06:58:44,523] [ADCS2606170658445232825] [INFO] 📥 BẮT ĐẦU: GET /api/users
+[2026-06-17 06:58:44,524] [ADCS2606170658445241479] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles
+[2026-06-17 06:58:44,524] [ADCS2606170658445241850] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 06:58:44,526] [ADCS2606170658445232825] [INFO] Yêu cầu lấy danh sách toàn bộ người dùng
+[2026-06-17 06:58:44,527] [ADCS2606170658445241479] [INFO] Yêu cầu lấy danh sách nhóm quyền (Roles)
+[2026-06-17 06:58:44,528] [ADCS2606170658445241850] [INFO] Fetching all departments
+[2026-06-17 06:58:44,531] [ADCS2606170658445241479] [INFO] Lấy thành công 2 nhóm quyền
+[2026-06-17 06:58:44,532] [ADCS2606170658445241479] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.70ms)
+[2026-06-17 06:58:44,546] [ADCS2606170658445232825] [INFO] Lấy thành công 1 người dùng
+[2026-06-17 06:58:44,555] [ADCS2606170658445241850] [INFO] Built department tree with 2 root nodes
+[2026-06-17 06:58:44,557] [ADCS2606170658445241850] [INFO] 📤 HOÀN THÀNH: 200 (Mất 32.67ms)
+[2026-06-17 06:58:44,560] [ADCS2606170658445232825] [INFO] 📤 HOÀN THÀNH: 200 (Mất 36.21ms)
+[2026-06-17 06:58:48,347] [ADCS2606170658483475836] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles/permissions-matrix
+[2026-06-17 06:58:48,347] [ADCS2606170658483471429] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/permissions
+[2026-06-17 06:58:48,349] [ADCS2606170658483497876] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles
+[2026-06-17 06:58:48,349] [ADCS2606170658483475836] [INFO] Yêu cầu lấy Ma trận phân quyền (Permissions Matrix)
+[2026-06-17 06:58:48,349] [ADCS2606170658483471429] [INFO] Yêu cầu lấy danh sách các Quyền (Permissions)
+[2026-06-17 06:58:48,351] [ADCS2606170658483497876] [INFO] Yêu cầu lấy danh sách nhóm quyền (Roles)
+[2026-06-17 06:58:48,355] [ADCS2606170658483497876] [INFO] Lấy thành công 2 nhóm quyền
+[2026-06-17 06:58:48,356] [ADCS2606170658483471429] [INFO] Lấy thành công 12 quyền
+[2026-06-17 06:58:48,357] [ADCS2606170658483497876] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.58ms)
+[2026-06-17 06:58:48,357] [ADCS2606170658483471429] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.37ms)
+[2026-06-17 06:58:48,357] [ADCS2606170658483475836] [INFO] Lấy ma trận phân quyền thành công
+[2026-06-17 06:58:48,359] [ADCS2606170658483475836] [INFO] 📤 HOÀN THÀNH: 200 (Mất 11.45ms)
+[2026-06-17 06:58:48,527] [ADCS2606170658384631939] [ERROR] Lỗi kết nối khi gọi Data Service (History API): 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 36, in fetch_processing_history
+    response = await client.get(url, params=params, timeout=10.0)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout
+[2026-06-17 06:58:48,532] [ADCS2606170658384631939] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Không thể lấy dữ liệu lịch sử từ máy chủ dữ liệu lúc này."}
+[2026-06-17 06:58:48,533] [ADCS2606170658384631939] [INFO] 📤 HOÀN THÀNH: 500 (Mất 10069.29ms)
+[2026-06-17 06:58:49,875] [ADCS2606170658498753303] [INFO] 📥 BẮT ĐẦU: GET /api/system-parameters
+[2026-06-17 06:58:49,877] [ADCS2606170658498753303] [INFO] Yêu cầu lấy toàn bộ cấu hình hệ thống (System Parameters)
+[2026-06-17 06:58:49,883] [ADCS2606170658498753303] [INFO] Lấy thành công 0 tham số cấu hình
+[2026-06-17 06:58:49,884] [ADCS2606170658498753303] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.73ms)
+[2026-06-17 06:58:53,180] [ADCS2606170658531799023] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 06:58:53,180] [ADCS2606170658531809906] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles
+[2026-06-17 06:58:53,181] [ADCS2606170658531799023] [INFO] Fetching all departments
+[2026-06-17 06:58:53,182] [ADCS2606170658531829424] [INFO] 📥 BẮT ĐẦU: GET /api/users
+[2026-06-17 06:58:53,185] [ADCS2606170658531829424] [INFO] Yêu cầu lấy danh sách toàn bộ người dùng
+[2026-06-17 06:58:53,185] [ADCS2606170658531809906] [INFO] Yêu cầu lấy danh sách nhóm quyền (Roles)
+[2026-06-17 06:58:53,186] [ADCS2606170658531829424] [INFO] Lấy thành công 1 người dùng
+[2026-06-17 06:58:53,187] [ADCS2606170658531829424] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.97ms)
+[2026-06-17 06:58:53,191] [ADCS2606170658531799023] [INFO] Built department tree with 2 root nodes
+[2026-06-17 06:58:53,193] [ADCS2606170658531799023] [INFO] 📤 HOÀN THÀNH: 200 (Mất 13.60ms)
+[2026-06-17 06:58:53,196] [ADCS2606170658531809906] [INFO] Lấy thành công 2 nhóm quyền
+[2026-06-17 06:58:53,198] [ADCS2606170658531809906] [INFO] 📤 HOÀN THÀNH: 200 (Mất 18.15ms)
+[2026-06-17 06:58:56,751] [ADCS2606170658567512434] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles
+[2026-06-17 06:58:56,751] [ADCS2606170658567517357] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/permissions
+[2026-06-17 06:58:56,751] [ADCS2606170658567517994] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles/permissions-matrix
+[2026-06-17 06:58:56,752] [ADCS2606170658567512434] [INFO] Yêu cầu lấy danh sách nhóm quyền (Roles)
+[2026-06-17 06:58:56,752] [ADCS2606170658567517357] [INFO] Yêu cầu lấy danh sách các Quyền (Permissions)
+[2026-06-17 06:58:56,752] [ADCS2606170658567517994] [INFO] Yêu cầu lấy Ma trận phân quyền (Permissions Matrix)
+[2026-06-17 06:58:56,754] [ADCS2606170658567512434] [INFO] Lấy thành công 2 nhóm quyền
+[2026-06-17 06:58:56,755] [ADCS2606170658567517357] [INFO] Lấy thành công 12 quyền
+[2026-06-17 06:58:56,755] [ADCS2606170658567512434] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.09ms)
+[2026-06-17 06:58:56,756] [ADCS2606170658567517357] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.61ms)
+[2026-06-17 06:58:56,760] [ADCS2606170658567517994] [INFO] Lấy ma trận phân quyền thành công
+[2026-06-17 06:58:56,761] [ADCS2606170658567517994] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.88ms)
+[2026-06-17 06:59:02,618] [ADCS2606170659026183365] [INFO] 📥 BẮT ĐẦU: GET /api/role-permissions/roles
+[2026-06-17 06:59:02,619] [ADCS2606170659026183365] [INFO] Yêu cầu lấy danh sách nhóm quyền (Roles)
+[2026-06-17 06:59:02,622] [ADCS2606170659026226036] [INFO] 📥 BẮT ĐẦU: GET /api/users
+[2026-06-17 06:59:02,622] [ADCS2606170659026183365] [INFO] Lấy thành công 2 nhóm quyền
+[2026-06-17 06:59:02,623] [ADCS2606170659026183365] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.93ms)
+[2026-06-17 06:59:02,624] [ADCS2606170659026249664] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 06:59:02,629] [ADCS2606170659026226036] [INFO] Yêu cầu lấy danh sách toàn bộ người dùng
+[2026-06-17 06:59:02,630] [ADCS2606170659026249664] [INFO] Fetching all departments
+[2026-06-17 06:59:02,637] [ADCS2606170659026226036] [INFO] Lấy thành công 1 người dùng
+[2026-06-17 06:59:02,643] [ADCS2606170659026226036] [INFO] 📤 HOÀN THÀNH: 200 (Mất 21.65ms)
+[2026-06-17 06:59:02,670] [ADCS2606170659026249664] [INFO] Built department tree with 2 root nodes
+[2026-06-17 06:59:02,675] [ADCS2606170659026249664] [INFO] 📤 HOÀN THÀNH: 200 (Mất 50.55ms)
+[2026-06-17 06:59:09,545] [ADCS2606170659095453753] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-17 06:59:09,551] [ADCS2606170659095453753] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-17 06:59:19,563] [ADCS2606170659095453753] [ERROR] Lỗi kết nối khi gọi Data Service (History API): 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 36, in fetch_processing_history
+    response = await client.get(url, params=params, timeout=10.0)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout
+[2026-06-17 06:59:19,566] [ADCS2606170659095453753] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Không thể lấy dữ liệu lịch sử từ máy chủ dữ liệu lúc này."}
+[2026-06-17 06:59:19,566] [ADCS2606170659095453753] [INFO] 📤 HOÀN THÀNH: 500 (Mất 10021.24ms)
+[2026-06-17 07:14:15,829] [ADCS2606170714158293439] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 07:14:15,844] [ADCS2606170714158443959] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 07:14:15,845] [ADCS2606170714158293439] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.55ms)
+[2026-06-17 07:14:15,848] [ADCS2606170714158443959] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.87ms)
+[2026-06-17 07:20:46,062] [ADCS2606170720460621706] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 07:20:46,083] [ADCS2606170720460621706] [INFO] 📤 HOÀN THÀNH: 200 (Mất 20.33ms)
+[2026-06-17 07:20:46,083] [ADCS2606170720460621706] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:20:46,083] [ADCS2606170720460621706] [INFO] Bắt đầu gửi file 'TTr nhan su.doc' tới AI Service (save_document=True)
+[2026-06-17 07:20:46,098] [ADCS2606170720460989054] [INFO] 📥 BẮT ĐẦU: GET /api/documents/4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:20:46,103] [ADCS2606170720460989054] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.34ms)
+[2026-06-17 07:20:46,113] [ADCS2606170720460621706] [ERROR] Lỗi HTTP từ AI Service (400): {"detail":"Unsupported file type: application/msword"}
+[2026-06-17 07:20:46,113] [ADCS2606170720460621706] [INFO] AI results: None
+[2026-06-17 07:20:46,116] [ADCS2606170720460621706] [WARNING] AI Service xử lý thất bại hoặc không trả về kết quả hợp lệ. document_id=4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:20:46,121] [ADCS2606170720460621706] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:20:49,127] [ADCS2606170720491276647] [INFO] 📥 BẮT ĐẦU: GET /api/documents/4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:20:49,132] [ADCS2606170720491276647] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.47ms)
+[2026-06-17 07:22:27,461] [ADCS2606170722274618168] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-17 07:22:27,463] [ADCS2606170722274618168] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-17 07:22:27,463] [ADCS2606170722274618168] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.46ms)
+[2026-06-17 07:24:07,434] [ADCS2606170724074349984] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 07:24:07,444] [ADCS2606170724074349984] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.40ms)
+[2026-06-17 07:30:14,336] [ADCS2606170730143361183] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 07:30:14,337] [ADCS2606170730143371061] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 07:30:14,343] [ADCS2606170730143371061] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.20ms)
+[2026-06-17 07:30:14,352] [ADCS2606170730143361183] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.70ms)
+[2026-06-17 07:35:53,641] [ADCS2606170735536417997] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-17 07:35:54,170] [ADCS2606170735536417997] [INFO] 📤 HOÀN THÀNH: 200 (Mất 529.17ms)
+[2026-06-17 07:35:54,203] [ADCS2606170735542031083] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 07:35:54,216] [ADCS2606170735542031083] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.78ms)
+[2026-06-17 07:35:54,220] [ADCS2606170735542207777] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 07:35:54,224] [ADCS2606170735542207777] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.92ms)
+[2026-06-17 07:35:55,394] [ADCS2606170735553947545] [INFO] 📥 BẮT ĐẦU: GET /api/documents/4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 07:35:55,398] [ADCS2606170735553947545] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.07ms)
+[2026-06-17 07:46:15,953] [ADCS2606170746159537916] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 07:46:15,962] [ADCS2606170746159537916] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.64ms)
+[2026-06-17 07:52:52,840] [ADCS2606170752528408284] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-17 07:52:52,851] [ADCS2606170752528408284] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-17 07:52:55,748] [ADCS2606170752557487346] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-17 07:52:55,752] [ADCS2606170752557487346] [INFO] Fetching all departments
+[2026-06-17 07:52:55,764] [ADCS2606170752557487346] [INFO] Built department tree with 2 root nodes
+[2026-06-17 07:52:55,768] [ADCS2606170752557487346] [INFO] 📤 HOÀN THÀNH: 200 (Mất 19.76ms)
+[2026-06-17 07:53:02,861] [ADCS2606170752528408284] [ERROR] Lỗi kết nối khi gọi Data Service (History API): 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 101, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 36, in fetch_processing_history
+    response = await client.get(url, params=params, timeout=10.0)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectTimeout
+[2026-06-17 07:53:02,867] [ADCS2606170752528408284] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Không thể lấy dữ liệu lịch sử từ máy chủ dữ liệu lúc này."}
+[2026-06-17 07:53:02,867] [ADCS2606170752528408284] [INFO] 📤 HOÀN THÀNH: 500 (Mất 10026.63ms)
+[2026-06-17 07:59:38,779] [ADCS2606170759387796850] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-17 07:59:38,824] [ADCS2606170759387796850] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công văn'
+[2026-06-17 07:59:42,629] [ADCS2606170759387796850] [INFO] Tìm kiếm AI thành công.
+[2026-06-17 07:59:42,630] [ADCS2606170759387796850] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3851.28ms)
+[2026-06-17 08:02:22,300] [ADCS2606170802223002874] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-17 08:02:22,344] [ADCS2606170802223002874] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='thông báo nghỉ lễ'
+[2026-06-17 08:02:23,499] [ADCS2606170802223002874] [INFO] Tìm kiếm AI thành công.
+[2026-06-17 08:02:23,499] [ADCS2606170802223002874] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1199.12ms)
+[2026-06-17 08:11:09,791] [ADCS2606170811097915913] [INFO] 📥 BẮT ĐẦU: GET /api/documents/4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 08:11:09,842] [ADCS2606170811097915913] [INFO] 📤 HOÀN THÀNH: 200 (Mất 51.04ms)
+[2026-06-17 08:11:12,746] [ADCS2606170811127454821] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-17 08:11:12,750] [ADCS2606170811127497954] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-17 08:11:12,760] [ADCS2606170811127497954] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.37ms)
+[2026-06-17 08:11:12,798] [ADCS2606170811127454821] [INFO] 📤 HOÀN THÀNH: 200 (Mất 52.11ms)
+[2026-06-17 08:11:13,727] [ADCS2606170811137275962] [INFO] 📥 BẮT ĐẦU: GET /api/documents/4469500b-d6b5-4823-a68c-ddd94839a954
+[2026-06-17 08:11:13,744] [ADCS2606170811137275962] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.08ms)
+[2026-06-17 08:11:24,667] [ADCS2606170811246672963] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:11:24,689] [ADCS2606170811246672963] [INFO] 📤 HOÀN THÀNH: 200 (Mất 22.15ms)
+[2026-06-17 08:11:24,689] [ADCS2606170811246672963] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:24,690] [ADCS2606170811246672963] [INFO] Bắt đầu gửi file 'TTr nhan su.pdf' tới AI Service (save_document=True)
+[2026-06-17 08:11:24,937] [ADCS2606170811249375905] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:24,948] [ADCS2606170811249375905] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.24ms)
+[2026-06-17 08:11:27,998] [ADCS2606170811279986800] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:28,010] [ADCS2606170811279986800] [INFO] 📤 HOÀN THÀNH: 200 (Mất 11.76ms)
+[2026-06-17 08:11:31,775] [ADCS2606170811317758445] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:31,784] [ADCS2606170811317758445] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.23ms)
+[2026-06-17 08:11:34,760] [ADCS2606170811347607040] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:34,763] [ADCS2606170811347607040] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.21ms)
+[2026-06-17 08:11:37,757] [ADCS2606170811377577835] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:37,760] [ADCS2606170811377577835] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.76ms)
+[2026-06-17 08:11:40,766] [ADCS2606170811407667449] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:40,772] [ADCS2606170811407667449] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.38ms)
+[2026-06-17 08:11:43,770] [ADCS2606170811437701624] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:43,773] [ADCS2606170811437701624] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.27ms)
+[2026-06-17 08:11:46,765] [ADCS2606170811467641087] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:46,768] [ADCS2606170811467641087] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.77ms)
+[2026-06-17 08:11:48,996] [ADCS2606170811489969984] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:48,999] [ADCS2606170811489969984] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.03ms)
+[2026-06-17 08:11:50,445] [ADCS2606170811246672963] [INFO] AI Service phản hồi thành công cho file 'TTr nhan su.pdf'
+[2026-06-17 08:11:50,445] [ADCS2606170811246672963] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Tờ trình của Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu kính gửi Giám đốc Học viện về việc đề xuất tuyển dụng nhân sự. Nội dung dựa trên Quyết định thành lập trung tâm và các chỉ đạo về phát triển khoa học công nghệ, đổi mới sáng tạo. Trung tâm đề xuất tuyển dụng 05 cộng tác viên trợ lý và 04 kỹ sư làm trưởng nhóm để thực hiện các nhiệm vụ trọng tâm trong năm 2025. Mục đích của việc tuyển dụng là hỗ trợ thiết lập trung tâm, truyền thông và phát triển các sản phẩm đào tạo, ứng dụng AI đầu tiên. Ngoài ra, nhân sự được tuyển dụng sẽ tham gia đào tạo, bồi dưỡng nguồn nhân lực AI cho sinh viên của Học viện. Văn bản đã xác định được 09 ứng viên phù hợp và đính kèm thông tin chi tiết trong các phụ lục. Yêu cầu hành động là Giám đốc Học viện xem xét và phê duyệt việc tuyển dụng này. Các cơ quan được gửi văn bản gồm các phòng chức năng liên quan như TCCB-LĐ, TCKT, VPHV để nắm bắt và phối hợp. Việc đề xuất này nhằm đảm bảo nguồn lực thực hiện kế hoạch hoạt động của trung tâm mới thành lập.', 'key_points': ['Đề xuất tuyển dụng 09 nhân sự gồm cộng tác viên và kỹ sư cho Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu.', 'Mục tiêu tuyển dụng là hỗ trợ thiết lập trung tâm, phát triển sản phẩm AI và đào tạo nguồn nhân lực cho sinh viên.', 'Văn bản căn cứ vào Quyết định thành lập trung tâm và Nghị quyết số 57-NQ/TW về phát triển khoa học công nghệ.', 'Yêu cầu Giám đốc Học viện phê duyệt kế hoạch tuyển dụng nhân sự năm 2025.', 'Thông tin chi tiết về ứng viên được trình bày trong hai phụ lục kèm theo tờ trình.'], 'loai_van_ban': {'nhan': 'tờ trình', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': None, 'ngay_ban_hanh': None, 'co_quan_ban_hanh': 'Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu', 'nguoi_ky': 'Trần Tiến Công', 'chuc_vu_nguoi_ky': 'Trưởng trung tâm', 'noi_nhan': ['PGS.TS Đặng Hoài Bắc, Giám đốc Học viện'], 'trich_yeu': 'Về việc Tuyển dụng nhân sự trung tâm', 'can_cu_phap_ly': ['Quyết định số 3100/QĐ-HV ngày 17/12/2025 của Giám đốc Học viện về việc thành lập Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu', 'Nghị quyết số 57-NQ/TW ngày 22/12/2024 của Bộ Chính trị về đột phá phát triển khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số quốc gia'], 'yeu_cau_hanh_dong': 'Xem xét và phê duyệt việc tuyển dụng 09 nhân sự (05 cộng tác viên và 04 kỹ sư) cho Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu.', 'do_khan': 'thuong'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 7, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là loại Tờ trình (thuộc nhóm other trong quy tắc với thời gian mặc định 7 ngày) và mức độ khẩn cấp là thường (không có dấu hiệu khẩn cấp), do đó giữ nguyên thời gian xử lý là 7 ngày để đảm bảo quy trình thẩm định nhân sự và phê duyệt đúng quy định.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['tuyển dụng', 'nhân sự', 'cộng tác viên', 'kỹ sư', 'quản lý nhân sự'], '_buoc_2_ung_vien': ['Phòng Tổ chức Cán bộ Lao động — phù hợp vì phụ trách công tác tuyển dụng, quản lý nhân sự và biên chế', 'Phòng Hành chính (HCM) — loại vì chỉ phụ trách hành chính tại cơ sở TP.HCM, không phải chức năng tuyển dụng toàn Học viện', 'Phòng Tài chính Kế toán — loại vì chỉ phụ trách tài chính, không trực tiếp thực hiện quy trình tuyển dụng nhân sự'], '_buoc_3_ket_luan': 'Chọn Phòng Tổ chức Cán bộ Lao động vì nội dung văn bản liên quan trực tiếp đến công tác tuyển dụng và quản lý nhân sự, đây là chức năng chính của phòng này.', 'phong_ban': 'PTCC', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Tổ chức Cán bộ Lao động', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Văn bản đề xuất tuyển dụng nhân sự, đây là nhiệm vụ chuyên môn thuộc phạm vi quản lý của Phòng Tổ chức Cán bộ Lao động theo danh sách phòng ban hợp lệ.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 3, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 25.738}
+[2026-06-17 08:11:50,448] [ADCS2606170811246672963] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:50,460] [ADCS2606170811246672963] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:50,460] [ADCS2606170811246672963] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:51,996] [ADCS2606170811519967649] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:11:52,001] [ADCS2606170811519967649] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.30ms)
+[2026-06-17 08:15:33,566] [ADCS2606170815335664026] [INFO] 📥 BẮT ĐẦU: GET /api/documents/e2593bf5-55e2-482a-82d7-6b29b0e472c6
+[2026-06-17 08:15:33,604] [ADCS2606170815335664026] [INFO] 📤 HOÀN THÀNH: 200 (Mất 37.80ms)
+[2026-06-17 08:15:38,530] [ADCS2606170815385306020] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:15:38,577] [ADCS2606170815385306020] [INFO] 📤 HOÀN THÀNH: 200 (Mất 47.16ms)
+[2026-06-17 08:15:38,578] [ADCS2606170815385306020] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:38,578] [ADCS2606170815385306020] [INFO] Bắt đầu gửi file 'TTr nhan su.pdf' tới AI Service (save_document=True)
+[2026-06-17 08:15:38,776] [ADCS2606170815387767918] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:38,803] [ADCS2606170815387767918] [INFO] 📤 HOÀN THÀNH: 200 (Mất 27.34ms)
+[2026-06-17 08:15:42,193] [ADCS2606170815421933927] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:42,224] [ADCS2606170815421933927] [INFO] 📤 HOÀN THÀNH: 200 (Mất 31.44ms)
+[2026-06-17 08:15:45,155] [ADCS2606170815451555757] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:45,173] [ADCS2606170815451555757] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.96ms)
+[2026-06-17 08:15:48,157] [ADCS2606170815481573639] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:48,163] [ADCS2606170815481573639] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.30ms)
+[2026-06-17 08:15:51,160] [ADCS2606170815511604784] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:51,164] [ADCS2606170815511604784] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.47ms)
+[2026-06-17 08:15:54,725] [ADCS2606170815547251262] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:54,729] [ADCS2606170815547251262] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.36ms)
+[2026-06-17 08:15:57,776] [ADCS2606170815577766578] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:15:57,782] [ADCS2606170815577766578] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.20ms)
+[2026-06-17 08:16:00,152] [ADCS2606170816001522549] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:00,156] [ADCS2606170816001522549] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.60ms)
+[2026-06-17 08:16:03,157] [ADCS2606170816031576100] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:03,160] [ADCS2606170816031576100] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.48ms)
+[2026-06-17 08:16:06,158] [ADCS2606170816061583504] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:06,164] [ADCS2606170816061583504] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.41ms)
+[2026-06-17 08:16:07,813] [ADCS2606170815385306020] [INFO] AI Service phản hồi thành công cho file 'TTr nhan su.pdf'
+[2026-06-17 08:16:07,815] [ADCS2606170815385306020] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Tờ trình của Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu đề xuất việc tuyển dụng nhân sự để hỗ trợ hoạt động của đơn vị mới thành lập. Căn cứ Quyết định thành lập trung tâm và các chỉ đạo về phát triển khoa học công nghệ, trưởng trung tâm đề xuất tuyển 05 cộng tác viên trợ lý và 04 kỹ sư làm trưởng nhóm cho năm 2025. Mục đích của việc tuyển dụng là hỗ trợ thiết lập trung tâm, truyền thông và phát triển các sản phẩm đào tạo AI đầu tiên. Ngoài ra, nhân sự được tuyển sẽ tham gia đào tạo, bồi dưỡng nguồn nhân lực AI cho sinh viên thông qua các lớp ngắn hạn. Văn bản đã hoàn tất việc tìm kiếm 09 ứng viên phù hợp và có thông tin chi tiết trong các phụ lục kèm theo. Nội dung trình bày rõ ràng các nhiệm vụ cần thực hiện và lý do cần thiết phải bổ sung nhân sự ngay. Tờ trình được gửi trực tiếp đến Giám đốc Học viện để xem xét và phê duyệt. Việc ký ban hành thuộc về Trưởng Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu. Văn bản yêu cầu Giám đốc Học viện ra quyết định cho phép tuyển dụng để đảm bảo tiến độ công việc.', 'key_points': ['Đề xuất tuyển dụng 09 nhân sự gồm 05 cộng tác viên và 04 kỹ sư cho Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu.', 'Nhiệm vụ chính của nhân sự là hỗ trợ thiết lập trung tâm, truyền thông và phát triển sản phẩm AI.', 'Văn bản yêu cầu Giám đốc Học viện phê duyệt việc tuyển dụng để thực hiện kế hoạch năm 2025.', 'Việc tuyển dụng dựa trên Quyết định thành lập trung tâm và định hướng phát triển khoa học công nghệ quốc gia.', 'Thông tin chi tiết về 09 ứng viên đã được trình bày trong Phụ lục 1 và Phụ lục 2 kèm theo.'], 'loai_van_ban': {'nhan': 'to_trinh', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': None, 'ngay_ban_hanh': 'ngày tháng năm 2025', 'co_quan_ban_hanh': 'Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu', 'nguoi_ky': 'Trần Tiến Công', 'chuc_vu_nguoi_ky': 'Trưởng Trung tâm', 'noi_nhan': ['PGS.TS Đặng Hoài Bắc, Giám đốc Học viện', 'TCCB-LĐ', 'TCKT', 'KHĐT', 'VPHV', 'QLKHCN&HTQT'], 'trich_yeu': 'Đề xuất tuyển dụng 09 nhân sự (05 cộng tác viên, 04 kỹ sư) cho Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu năm 2025.', 'can_cu_phap_ly': ['Quyết định số 3100/QĐ-HV ngày 17/12/2025 của Giám đốc Học viện về việc thành lập Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu', 'Nghị quyết số 57-NQ/TW ngày 22/12/2024 của Bộ Chính trị về đột phá phát triển khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số quốc gia'], 'yeu_cau_hanh_dong': 'Xem xét và phê duyệt việc tuyển dụng 09 nhân sự để thực hiện các nhiệm vụ của Trung tâm Đào tạo Trí tuệ nhân tạo chuyên sâu.', 'do_khan': 'thuong'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 7, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là Tờ trình (to_trinh) thuộc loại công văn thông thường, không có tính chất khẩn cấp. Thời gian xử lý cần đủ để xem xét hồ sơ, đối chiếu định mức nhân sự và quy trình phê duyệt của Giám đốc Học viện, do đó đề xuất 7 ngày là hợp lý.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['tuyển dụng', 'nhân sự', 'cộng tác viên', 'kỹ sư', 'trưởng nhóm'], '_buoc_2_ung_vien': ['Phòng Tổ chức Cán bộ Lao động — phù hợp vì chức năng quản lý, tuyển dụng và bổ nhiệm nhân sự', 'Phòng Kế hoạch đầu tư — loại vì chức năng chính là quy hoạch và quản lý dự án đầu tư, không trực tiếp tuyển dụng', 'Phòng Tài chính Kế toán — loại vì chỉ phụ trách quản lý ngân sách và chi trả lương, không phải bộ phận tuyển dụng'], '_buoc_3_ket_luan': 'Chọn Phòng Tổ chức Cán bộ Lao động vì nội dung văn bản là đề xuất tuyển dụng nhân sự, đây là chức năng chính của phòng này', 'phong_ban': 'PTCLD', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Tổ chức Cán bộ Lao động', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Văn bản đề xuất tuyển dụng nhân sự, đây là nhiệm vụ trực tiếp thuộc chức năng quản lý nhân sự của Phòng Tổ chức Cán bộ Lao động.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 3, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 29.214}
+[2026-06-17 08:16:07,817] [ADCS2606170815385306020] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:07,835] [ADCS2606170815385306020] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:07,835] [ADCS2606170815385306020] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:09,163] [ADCS2606170816091637269] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:09,167] [ADCS2606170816091637269] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.20ms)
+[2026-06-17 08:16:13,309] [ADCS2606170816133094676] [INFO] 📥 BẮT ĐẦU: PUT /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0/ai-result
+[2026-06-17 08:16:13,313] [ADCS2606170816133094676] [INFO] Người dùng yêu cầu cập nhật (Approve) kết quả AI cho document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:13,319] [ADCS2606170816133094676] [INFO] Đã cập nhật thủ công thành công document_id=3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:13,323] [ADCS2606170816133094676] [WARNING] Người dùng hiennv1@ptit.edu.vn chưa cấu hình Telegram Chat ID. Bỏ qua tác vụ gửi tin nhắn.
+[2026-06-17 08:16:13,324] [ADCS2606170816133094676] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.91ms)
+[2026-06-17 08:16:13,336] [ADCS2606170816133359607] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:13,340] [ADCS2606170816133359607] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.08ms)
+[2026-06-17 08:16:16,349] [ADCS2606170816163493676] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:16:16,364] [ADCS2606170816163493676] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.64ms)
+[2026-06-17 08:16:17,943] [ADCS2606170816179431282] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:16:17,946] [ADCS2606170816179431282] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.00ms)
+[2026-06-17 08:21:33,030] [ADCS2606170821330308415] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:21:33,038] [ADCS2606170821330308415] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.45ms)
+[2026-06-17 08:21:33,809] [ADCS2606170821338098346] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:21:33,815] [ADCS2606170821338098346] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.31ms)
+[2026-06-17 08:21:49,063] [ADCS2606170821490636087] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:21:49,072] [ADCS2606170821490636087] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.09ms)
+[2026-06-17 08:21:54,084] [ADCS2606170821540848319] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-17 08:21:54,103] [ADCS2606170821540848319] [INFO] 📤 HOÀN THÀNH: 200 (Mất 19.49ms)
+[2026-06-17 08:21:54,640] [ADCS2606170821546406263] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:21:54,659] [ADCS2606170821546406263] [INFO] 📤 HOÀN THÀNH: 200 (Mất 19.71ms)
+[2026-06-17 08:21:58,452] [ADCS2606170821584527204] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:21:58,457] [ADCS2606170821584527204] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.22ms)
+[2026-06-17 08:22:01,789] [ADCS2606170822017894403] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:22:01,794] [ADCS2606170822017894403] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.90ms)
+[2026-06-17 08:22:05,785] [ADCS2606170822057854659] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:22:05,788] [ADCS2606170822057854659] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.26ms)
+[2026-06-17 08:22:09,794] [ADCS2606170822097949894] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:22:09,800] [ADCS2606170822097949894] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.19ms)
+[2026-06-17 08:22:12,820] [ADCS2606170822128194806] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:22:12,830] [ADCS2606170822128194806] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.94ms)
+[2026-06-17 08:22:13,650] [ADCS2606170822136498683] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:22:13,655] [ADCS2606170822136498683] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.16ms)
+[2026-06-17 08:22:14,259] [ADCS2606170822142597487] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:22:14,263] [ADCS2606170822142597487] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.43ms)
+[2026-06-17 08:22:15,985] [ADCS2606170822159858442] [INFO] 📥 BẮT ĐẦU: GET /api/documents/3fe19594-b66f-4e39-8dbc-9305d7160fa0
+[2026-06-17 08:22:15,992] [ADCS2606170822159858442] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.64ms)
+[2026-06-17 08:22:24,610] [ADCS2606170822246101500] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:22:24,623] [ADCS2606170822246101500] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.87ms)
+[2026-06-17 08:22:24,623] [ADCS2606170822246101500] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:24,623] [ADCS2606170822246101500] [INFO] Bắt đầu gửi file 'test_orc.png' tới AI Service (save_document=True)
+[2026-06-17 08:22:24,841] [ADCS2606170822248418499] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:24,844] [ADCS2606170822248418499] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.52ms)
+[2026-06-17 08:22:27,879] [ADCS2606170822278793192] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:27,892] [ADCS2606170822278793192] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.82ms)
+[2026-06-17 08:22:30,866] [ADCS2606170822308662146] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:30,869] [ADCS2606170822308662146] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.03ms)
+[2026-06-17 08:22:34,050] [ADCS2606170822340502477] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:34,056] [ADCS2606170822340502477] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.53ms)
+[2026-06-17 08:22:37,793] [ADCS2606170822377936806] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:37,795] [ADCS2606170822377936806] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.64ms)
+[2026-06-17 08:22:39,874] [ADCS2606170822398742956] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:39,878] [ADCS2606170822398742956] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.74ms)
+[2026-06-17 08:22:42,870] [ADCS2606170822428703602] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:42,874] [ADCS2606170822428703602] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.34ms)
+[2026-06-17 08:22:45,875] [ADCS2606170822458758727] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:45,877] [ADCS2606170822458758727] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.58ms)
+[2026-06-17 08:22:48,876] [ADCS2606170822488769239] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:48,879] [ADCS2606170822488769239] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.31ms)
+[2026-06-17 08:22:51,868] [ADCS2606170822518682182] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:51,870] [ADCS2606170822518682182] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.51ms)
+[2026-06-17 08:22:54,871] [ADCS2606170822548713610] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:54,874] [ADCS2606170822548713610] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.20ms)
+[2026-06-17 08:22:57,875] [ADCS2606170822578751199] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:22:57,877] [ADCS2606170822578751199] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.65ms)
+[2026-06-17 08:23:00,869] [ADCS2606170823008697269] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:00,873] [ADCS2606170823008697269] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.14ms)
+[2026-06-17 08:23:03,873] [ADCS2606170823038739143] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:03,878] [ADCS2606170823038739143] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.81ms)
+[2026-06-17 08:23:06,872] [ADCS2606170823068723892] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:06,876] [ADCS2606170823068723892] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.64ms)
+[2026-06-17 08:23:07,414] [ADCS2606170822246101500] [INFO] AI Service phản hồi thành công cho file 'test_orc.png'
+[2026-06-17 08:23:07,414] [ADCS2606170822246101500] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Quyết định số M3A/QĐ-TTG do Thủ tướng Chính phủ ban hành vào ngày 12 tháng 6 năm 2025 tại Hà Nội. Nội dung chính của quyết định là ban hành Danh mục công nghệ chiến lược và sản phẩm công nghệ chiến lược, đồng thời quy định Nhóm công nghệ chiến lược theo lĩnh vực. Quyết định được xây dựng dựa trên các căn cứ pháp lý quan trọng như Luật Tổ chức Chính phủ, Luật Tổ chức chính quyền địa phương và các Nghị quyết của Chính phủ về phát triển khoa học công nghệ, đổi mới sáng tạo. Theo đó, Bộ Khoa học và Công nghệ được giao chủ trì phối hợp với các bộ liên quan để xem xét điều chỉnh, bổ sung danh mục này khi cần thiết. Đặc biệt, quyết định cũng quy định việc phối hợp với Bộ Quốc phòng và Bộ Công an để phê duyệt danh mục phục vụ cho lĩnh vực quốc phòng và an ninh. Quyết định có hiệu lực thi hành kể từ ngày ký và yêu cầu các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, cùng Chủ tịch UBND các địa phương chịu trách nhiệm thi hành. Văn bản này đánh dấu bước tiến quan trọng trong việc định hướng và quản lý các công nghệ trọng yếu của quốc gia.', 'key_points': ['Ban hành Danh mục công nghệ chiến lược, sản phẩm công nghệ chiến lược và Nhóm công nghệ theo lĩnh vực.', 'Giao Bộ Khoa học và Công nghệ chủ trì, phối hợp các bộ liên quan để điều chỉnh, bổ sung danh mục theo nhu cầu phát triển.', 'Yêu cầu Bộ Khoa học và Công nghệ phối hợp với Bộ Quốc phòng, Bộ Công an để phê duyệt danh mục phục vụ quốc phòng, an ninh.', 'Quyết định có hiệu lực thi hành ngay từ ngày ký và yêu cầu các cơ quan, địa phương nghiêm túc thực hiện.'], 'loai_van_ban': {'nhan': 'quyet_dinh', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': 'M3A/QĐ-TTG', 'ngay_ban_hanh': '12 tháng 6 năm 2025', 'co_quan_ban_hanh': 'Thủ tướng Chính phủ', 'nguoi_ky': 'Thủ tướng Chính phủ', 'chuc_vu_nguoi_ky': 'Thủ tướng Chính phủ', 'noi_nhan': ['Thủ tướng, các Phó Thủ tướng Chính phủ', 'Các bộ, cơ quan ngang bộ, cơ quan thuộc Chính phủ', 'HĐND, UBND các tỉnh, thành phố trực thuộc trung ương', 'Văn phòng Trung ương Đảng', 'Văn phòng Quốc hội', 'Ủy ban Trung ương Mặt trận Tổ quốc Việt Nam', 'Văn phòng Chính phủ'], 'trich_yeu': 'Ban hành Danh mục công nghệ chiến lược và sản phẩm công nghệ chiến lược; quy định cơ chế điều chỉnh và phối hợp thực hiện.', 'can_cu_phap_ly': ['Luật Tổ chức Chính phủ ngày 18 tháng 02 năm 2025', 'Luật Tổ chức chính quyền địa phương ngày 19 tháng 02 năm 2025', 'Nghị quyết số 03/NQ-CP ngày 09 tháng 01 năm 2025', 'Nghị quyết số 57-NQ/TW ngày 22 tháng 12 năm 2024 của Bộ Chính trị', 'Nghị quyết số 71/NQ-CP ngày 01 tháng 4 năm 2025', 'Tờ trình số 47/TTr-BKHCN ngày 05 tháng 6 năm 2025', 'Tờ trình số 55/TTr-BKHCN ngày 11 tháng 6 năm 2025'], 'yeu_cau_hanh_dong': 'Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ và Chủ tịch UBND các tỉnh, thành phố trực thuộc trung ương chịu trách nhiệm thi hành Quyết định này.', 'do_khan': 'thuong_khan'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 3, 'muc_uu_tien': 'khẩn cấp', 'ly_do': 'Văn bản là Quyết định của Thủ tướng Chính phủ về công nghệ chiến lược, thuộc loại khẩn cấp (thuong_khan) do ảnh hưởng trực tiếp đến định hướng phát triển quốc gia, yêu cầu triển khai nhanh chóng và xác nhận từng bước.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['công nghệ chiến lược', 'khoa học và công nghệ', 'chuyển đổi số', 'đổi mới sáng tạo', 'quản lý khoa học'], '_buoc_2_ung_vien': ['Phòng Quản lý Khoa học công nghệ & HTQT — phù hợp vì trực tiếp quản lý hoạt động khoa học công nghệ và hợp tác quốc tế, khớp với nội dung công nghệ chiến lược', 'Viện Công nghệ Thông tin – Truyền thông — loại vì là đơn vị nghiên cứu cụ thể, không phải cơ quan quản lý chính sách chiến lược cấp văn phòng', 'Phòng Kế hoạch đầu tư — loại vì chủ yếu phụ trách quy hoạch đầu tư, không chuyên sâu về công nghệ chiến lược'], '_buoc_3_ket_luan': 'Chọn Phòng Quản lý Khoa học công nghệ & HTQT vì nội dung văn bản tập trung vào quản lý, xây dựng danh mục và điều chỉnh công nghệ chiến lược quốc gia.', 'phong_ban': 'QLKH', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Quản lý Khoa học công nghệ & HTQT', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Văn bản yêu cầu xác định và quản lý danh mục công nghệ chiến lược, đây là chức năng cốt lõi của Phòng Quản lý Khoa học công nghệ & HTQT trong cơ cấu tổ chức.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.92, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 1, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 42.771}
+[2026-06-17 08:23:07,417] [ADCS2606170822246101500] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:07,429] [ADCS2606170822246101500] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:07,429] [ADCS2606170822246101500] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:09,877] [ADCS2606170823098765642] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:23:09,880] [ADCS2606170823098765642] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.58ms)
+[2026-06-17 08:34:49,317] [ADCS2606170834493177554] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:34:49,320] [ADCS2606170834493177554] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.03ms)
+[2026-06-17 08:35:14,851] [ADCS2606170835148511597] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:35:14,856] [ADCS2606170835148511597] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.85ms)
+[2026-06-17 08:35:23,337] [ADCS2606170835233379274] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-17 08:35:23,350] [ADCS2606170835233379274] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.58ms)
+[2026-06-17 08:35:23,911] [ADCS2606170835239111057] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:35:23,914] [ADCS2606170835239111057] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.89ms)
+[2026-06-17 08:37:24,436] [ADCS2606170837244363320] [INFO] 📥 BẮT ĐẦU: GET /api/documents/97d103cd-e1ea-47dc-ad4d-c92b3167cb59
+[2026-06-17 08:37:24,443] [ADCS2606170837244363320] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.10ms)
+[2026-06-17 08:44:57,116] [ADCS2606170844571164969] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:44:57,146] [ADCS2606170844571164969] [INFO] 📤 HOÀN THÀNH: 200 (Mất 29.49ms)
+[2026-06-17 08:44:57,146] [ADCS2606170844571164969] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:44:57,146] [ADCS2606170844571164969] [INFO] Bắt đầu gửi file 'pdf_nhiều bảng biểu.pdf' tới AI Service (save_document=True)
+[2026-06-17 08:44:57,168] [ADCS2606170844571684990] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:44:57,178] [ADCS2606170844571684990] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.83ms)
+[2026-06-17 08:45:00,216] [ADCS2606170845002169345] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:00,234] [ADCS2606170845002169345] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.84ms)
+[2026-06-17 08:45:03,430] [ADCS2606170845034305541] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:03,438] [ADCS2606170845034305541] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.41ms)
+[2026-06-17 08:45:06,215] [ADCS2606170845062151199] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:06,219] [ADCS2606170845062151199] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.36ms)
+[2026-06-17 08:45:09,208] [ADCS2606170845092089923] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:09,210] [ADCS2606170845092089923] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.31ms)
+[2026-06-17 08:45:12,218] [ADCS2606170845122181735] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:12,224] [ADCS2606170845122181735] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.03ms)
+[2026-06-17 08:45:15,212] [ADCS2606170845152121028] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:15,217] [ADCS2606170845152121028] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.13ms)
+[2026-06-17 08:45:18,210] [ADCS2606170845182103406] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:18,213] [ADCS2606170845182103406] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.96ms)
+[2026-06-17 08:45:21,216] [ADCS2606170845212162361] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:21,218] [ADCS2606170845212162361] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.46ms)
+[2026-06-17 08:45:24,212] [ADCS2606170845242123859] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:24,217] [ADCS2606170845242123859] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.28ms)
+[2026-06-17 08:45:27,833] [ADCS2606170845278334694] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:27,838] [ADCS2606170845278334694] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.55ms)
+[2026-06-17 08:45:29,822] [ADCS2606170844571164969] [INFO] AI Service phản hồi thành công cho file 'pdf_nhiều bảng biểu.pdf'
+[2026-06-17 08:45:29,823] [ADCS2606170844571164969] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản quy định chi tiết mức chi thực hiện đối với các đề tài khoa học và công nghệ (KHCN) thuộc các nhóm A, B, C và D tại Học viện. Nội dung chính tập trung vào Điều 15, quy định các nội dung chi tiêu cho đề tài KHCN trọng điểm dựa trên các khoản mục đã nêu tại Điều 14. Cụ thể, văn bản liệt kê các hạng mục chi phí bao gồm chi phí tổ chức hội thảo, chi phí đánh giá kết quả nghiệm thu cấp cơ sở và chi phí nghiệm thu cấp Học viện. Ngoài ra, văn bản cũng quy định rõ về tiền công lao động trực tiếp dành cho các thành viên tham gia đề tài như chủ nhiệm, thư ký, kỹ thuật viên và các chuyên gia. Các chi phí phát sinh khác như thuê hội trường, in ấn tài liệu và nước uống được thanh toán theo thực tế phát sinh kèm chứng từ hợp lý. Mức chi cụ thể cho từng hạng mục sẽ được biểu thị qua các bảng dữ liệu tương ứng trong văn bản gốc. Quy định này nhằm đảm bảo tính minh bạch và tuân thủ Quy chế chi tiêu nội bộ của Học viện trong việc quản lý ngân sách đề tài. Các đơn vị liên quan cần căn cứ vào đây để lập dự toán và thực hiện chi tiêu đúng quy định. Văn bản không ghi rõ số hiệu, ngày ban hành hay người ký, chỉ tập trung vào nội dung quy định nghiệp vụ.', 'key_points': ['Quy định mức chi thực hiện cho đề tài KHCN nhóm A, B, C, D theo Quy chế chi tiêu nội bộ.', 'Chi tiết các nội dung chi tiêu cho đề tài KHCN trọng điểm bao gồm hội thảo và nghiệm thu.', 'Quy định rõ về tiền công lao động trực tiếp cho chủ nhiệm và các thành viên thực hiện đề tài.', 'Yêu cầu thanh toán các chi phí khác theo thực tế phát sinh với chứng từ hợp lý.', 'Văn bản sử dụng các bảng placeholder để quy định mức chi cụ thể cho từng hạng mục.'], 'loai_van_ban': {'nhan': 'quyet_dinh', 'diem_tin_cay': 0.65}, 'extracted_fields': {'so_hieu_van_ban': None, 'ngay_ban_hanh': None, 'co_quan_ban_hanh': 'Học viện', 'nguoi_ky': None, 'chuc_vu_nguoi_ky': None, 'noi_nhan': [], 'trich_yeu': 'Quy định mức chi thực hiện đối với đề tài KHCN trọng điểm và các nội dung chi tiêu liên quan.', 'can_cu_phap_ly': ['Quy chế chi tiêu nội bộ của Học viện'], 'yeu_cau_hanh_dong': 'Thực hiện chi tiêu theo quy định và mức chi đã nêu trong văn bản.', 'do_khan': 'thuong'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 5, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản có tính chất quy định nội bộ về tài chính (quyết định/quy định mức chi), cần thời gian để rà soát quy chế và lập dự toán chi tiết cho các đề tài, thời gian 5-7 ngày là phù hợp cho loại văn bản này.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['KHCN', 'nghiên cứu khoa học', 'chi tiêu', 'tài chính', 'đề tài trọng điểm'], '_buoc_2_ung_vien': ['Phòng Quản lý Khoa học công nghệ & HTQT — phù hợp vì trực tiếp quản lý các đề tài KHCN và quy trình nghiệm thu.', 'Phòng Tài chính Kế toán — phù hợp vì liên quan đến quy định mức chi, thanh toán và chứng từ tài chính.', 'Phòng Đào tạo — loại vì chức năng chính là quản lý đào tạo sinh viên, không phải nghiên cứu khoa học.'], '_buoc_3_ket_luan': 'Chọn Phòng Quản lý Khoa học công nghệ & HTQT vì đây là cơ quan chủ quản trực tiếp về các đề tài nghiên cứu khoa học, trong khi Phòng Tài chính chỉ tham gia vào khâu thanh toán dựa trên quy định do Phòng KHCN đề xuất.', 'phong_ban': 'QLKH', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Quản lý Khoa học công nghệ & HTQT', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Nội dung văn bản quy định chi tiết cho đề tài KHCN (nhóm A, B, C, D) và quy trình nghiệm thu, đây là chức năng cốt lõi của Phòng Quản lý Khoa học công nghệ & HTQT.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 1, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 32.648}
+[2026-06-17 08:45:29,826] [ADCS2606170844571164969] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:29,842] [ADCS2606170844571164969] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:29,842] [ADCS2606170844571164969] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:30,823] [ADCS2606170845308232718] [INFO] 📥 BẮT ĐẦU: GET /api/documents/26eb940b-493d-46cc-adce-a902c31c6367
+[2026-06-17 08:45:30,826] [ADCS2606170845308232718] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.97ms)
+[2026-06-17 08:46:12,715] [ADCS2606170846127159187] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:46:12,730] [ADCS2606170846127159187] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.79ms)
+[2026-06-17 08:46:12,730] [ADCS2606170846127159187] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:12,730] [ADCS2606170846127159187] [INFO] Bắt đầu gửi file 'pdf_bảng biểu thường.pdf' tới AI Service (save_document=True)
+[2026-06-17 08:46:12,950] [ADCS2606170846129507795] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:12,955] [ADCS2606170846129507795] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.06ms)
+[2026-06-17 08:46:15,992] [ADCS2606170846159915559] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:16,004] [ADCS2606170846159915559] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.38ms)
+[2026-06-17 08:46:18,984] [ADCS2606170846189842368] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:18,987] [ADCS2606170846189842368] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.14ms)
+[2026-06-17 08:46:21,980] [ADCS2606170846219808694] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:21,983] [ADCS2606170846219808694] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.21ms)
+[2026-06-17 08:46:24,990] [ADCS2606170846249903871] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:24,996] [ADCS2606170846249903871] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.17ms)
+[2026-06-17 08:46:28,823] [ADCS2606170846288235758] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:28,825] [ADCS2606170846288235758] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.49ms)
+[2026-06-17 08:46:31,823] [ADCS2606170846318235078] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:31,826] [ADCS2606170846318235078] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.15ms)
+[2026-06-17 08:46:34,833] [ADCS2606170846348334009] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:34,836] [ADCS2606170846348334009] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.34ms)
+[2026-06-17 08:46:37,830] [ADCS2606170846378303882] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:37,832] [ADCS2606170846378303882] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.39ms)
+[2026-06-17 08:46:40,846] [ADCS2606170846408463785] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:40,849] [ADCS2606170846408463785] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.33ms)
+[2026-06-17 08:46:43,824] [ADCS2606170846438247339] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:43,828] [ADCS2606170846438247339] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.55ms)
+[2026-06-17 08:46:46,829] [ADCS2606170846468295922] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:46,832] [ADCS2606170846468295922] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.02ms)
+[2026-06-17 08:46:49,831] [ADCS2606170846498317588] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:49,837] [ADCS2606170846498317588] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.61ms)
+[2026-06-17 08:46:52,834] [ADCS2606170846528344915] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:52,839] [ADCS2606170846528344915] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.26ms)
+[2026-06-17 08:46:54,865] [ADCS2606170846127159187] [INFO] AI Service phản hồi thành công cho file 'pdf_bảng biểu thường.pdf'
+[2026-06-17 08:46:54,866] [ADCS2606170846127159187] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Phiếu xác nhận hoàn thành đề tài khoa học công nghệ cấp Học viện, do một đơn vị chủ trì đề tài thực hiện. Nội dung chính là xác nhận các chủ nhiệm đề tài đã hoàn thiện hồ sơ và gửi về Học viện để được xác nhận hoàn thành và thanh quyết toán kinh phí. Văn bản được gửi chính thức đến Phòng Quản lý Khoa học công nghệ & Hợp tác quốc tế và Phòng Tài chính - Kế toán. Mục đích của văn bản là đề nghị các phòng ban liên quan tạo điều kiện để chủ nhiệm đề tài thực hiện thủ tục thanh quyết toán. Văn bản có kèm theo danh mục các đề tài khoa học công nghệ liên quan (được đánh dấu bằng placeholder bảng). Đơn vị chủ trì đề tài cam kết đã chuẩn bị đầy đủ bộ hồ sơ và đề nghị sự phối hợp từ các đơn vị chức năng. Văn bản kết thúc bằng phần xác nhận của Trưởng đơn vị chủ trì và xác nhận của Phòng Quản lý KHCN&HTQT. Đây là loại văn bản hành chính quan trọng để khép lại quy trình thực hiện đề tài và giải ngân kinh phí. Việc xử lý văn bản này đòi hỏi sự phối hợp chặt chẽ giữa phòng quản lý khoa học và phòng tài chính. Kết luận của văn bản là đề nghị các bên liên quan hoàn tất thủ tục để đề tài được công nhận hoàn thành.', 'key_points': ['Đơn vị chủ trì đề tài xác nhận đã hoàn thiện hồ sơ đề tài KHCN cấp Học viện.', 'Văn bản yêu cầu các phòng liên quan tạo điều kiện thực hiện thủ tục thanh quyết toán kinh phí.', 'Văn bản được gửi đến Phòng Quản lý KHCN&HTQT và Phòng Tài chính - Kế toán để xử lý.', 'Hồ sơ đề tài kèm theo danh mục các đề tài cụ thể để đối chiếu.', 'Văn bản cần sự xác nhận của Trưởng đơn vị chủ trì và Phòng Quản lý KHCN&HTQT.'], 'loai_van_ban': {'nhan': 'Phiếu xác nhận hoàn thành đề tài KHCN', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': 'Mẫu 11', 'ngay_ban_hanh': None, 'co_quan_ban_hanh': 'Học viện Công nghệ Bưu chính Viễn thông', 'nguoi_ky': None, 'chuc_vu_nguoi_ky': 'Trưởng (Đơn vị chủ trì đề tài)', 'noi_nhan': ['Phòng Quản lý KHCN&HTQT', 'Phòng Tài chính - Kế toán'], 'trich_yeu': 'Xác nhận hoàn thiện hồ sơ đề tài KHCN và đề nghị thanh quyết toán kinh phí.', 'can_cu_phap_ly': [], 'yeu_cau_hanh_dong': 'Tạo điều kiện để chủ nhiệm đề tài thực hiện thủ tục thanh quyết toán kinh phí và hoàn thành đề tài.', 'do_khan': None}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 5, 'muc_uu_tien': 'bình thường', 'ly_do': 'Đây là văn bản xác nhận hoàn thành đề tài (loại công văn/xác nhận), cần thời gian để rà soát hồ sơ, đối chiếu số liệu tài chính và thực hiện thủ tục thanh quyết toán theo quy định, mức độ ưu tiên là bình thường.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['quản lý khoa học công nghệ', 'thanh quyết toán', 'hồ sơ đề tài', 'kinh phí đề tài', 'xác nhận hoàn thành'], '_buoc_2_ung_vien': ['Phòng Quản lý Khoa học công nghệ & HTQT — phù hợp vì là đơn vị trực tiếp quản lý đề tài KHCN và xác nhận hoàn thành theo văn bản.', 'Phòng Tài chính - Kế toán — phù hợp vì liên quan đến thanh quyết toán kinh phí đề tài theo yêu cầu.', 'Phòng Đào tạo — loại vì chức năng chính là quản lý đào tạo, không trực tiếp xử lý thanh quyết toán đề tài KHCN.'], '_buoc_3_ket_luan': 'Chọn Phòng Quản lý Khoa học công nghệ & HTQT vì văn bản được gửi trực tiếp đến đơn vị này để xác nhận hoàn thành, đồng thời phối hợp với Phòng Tài chính - Kế toán để xử lý phần kinh phí.', 'phong_ban': None, 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Quản lý Khoa học công nghệ & HTQT', 'nguoi_xu_ly_de_xuat': None, 'ly_do': "Văn bản ghi rõ gửi đến 'Phòng Quản lý KHCN&HTQT' để xác nhận hoàn thành đề tài, đây là chức năng chính của phòng này theo danh sách.", 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 1, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 42.115}
+[2026-06-17 08:46:54,868] [ADCS2606170846127159187] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:54,879] [ADCS2606170846127159187] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:54,879] [ADCS2606170846127159187] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:55,831] [ADCS2606170846558317217] [INFO] 📥 BẮT ĐẦU: GET /api/documents/9b1d57a2-a440-46aa-80c0-3e58757adb90
+[2026-06-17 08:46:55,839] [ADCS2606170846558317217] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.03ms)
+[2026-06-17 08:49:51,508] [ADCS2606170849515086880] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-17 08:49:51,523] [ADCS2606170849515086880] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.97ms)
+[2026-06-17 08:49:51,523] [ADCS2606170849515086880] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:49:51,523] [ADCS2606170849515086880] [INFO] Bắt đầu gửi file 'pdf_bảng biểu phức tạp.pdf' tới AI Service (save_document=True)
+[2026-06-17 08:49:51,734] [ADCS2606170849517343253] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:49:51,737] [ADCS2606170849517343253] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.87ms)
+[2026-06-17 08:49:54,796] [ADCS2606170849547967172] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:49:54,799] [ADCS2606170849547967172] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.03ms)
+[2026-06-17 08:49:57,775] [ADCS2606170849577752523] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:49:57,780] [ADCS2606170849577752523] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.91ms)
+[2026-06-17 08:50:00,862] [ADCS2606170850008629795] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:00,868] [ADCS2606170850008629795] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.50ms)
+[2026-06-17 08:50:03,912] [ADCS2606170850039121473] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:03,916] [ADCS2606170850039121473] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.39ms)
+[2026-06-17 08:50:06,778] [ADCS2606170850067786085] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:06,784] [ADCS2606170850067786085] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.73ms)
+[2026-06-17 08:50:09,785] [ADCS2606170850097854800] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:09,791] [ADCS2606170850097854800] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.16ms)
+[2026-06-17 08:50:12,777] [ADCS2606170850127776416] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:12,780] [ADCS2606170850127776416] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.44ms)
+[2026-06-17 08:50:15,772] [ADCS2606170850157723645] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:15,778] [ADCS2606170850157723645] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.87ms)
+[2026-06-17 08:50:18,772] [ADCS2606170850187723652] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:18,775] [ADCS2606170850187723652] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.48ms)
+[2026-06-17 08:50:21,777] [ADCS2606170850217773334] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:21,782] [ADCS2606170850217773334] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.96ms)
+[2026-06-17 08:50:24,779] [ADCS2606170850247798128] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:24,783] [ADCS2606170850247798128] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.62ms)
+[2026-06-17 08:50:27,777] [ADCS2606170850277778095] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:27,780] [ADCS2606170850277778095] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.31ms)
+[2026-06-17 08:50:30,775] [ADCS2606170850307753408] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:30,778] [ADCS2606170850307753408] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.91ms)
+[2026-06-17 08:50:33,776] [ADCS2606170850337767862] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:33,781] [ADCS2606170850337767862] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.96ms)
+[2026-06-17 08:50:36,862] [ADCS2606170850368625731] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:36,865] [ADCS2606170850368625731] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.39ms)
+[2026-06-17 08:50:37,404] [ADCS2606170849515086880] [INFO] AI Service phản hồi thành công cho file 'pdf_bảng biểu phức tạp.pdf'
+[2026-06-17 08:50:37,404] [ADCS2606170849515086880] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Mẫu 3.2 - Dự toán kinh phí dùng để lập kế hoạch tài chính cho việc thực hiện các đề tài khoa học công nghệ, bao gồm đề tài trọng điểm và đề tài được tài trợ. Mục đích chính của tài liệu này là hướng dẫn chi tiết cách trình bày các khoản chi phí, đặc biệt là công lao động trực tiếp tham gia thực hiện đề tài. Văn bản quy định cấu trúc của bảng dự toán, yêu cầu liệt kê chi tiết tiền công theo từng nội dung công việc cụ thể. Đây là một biểu mẫu hành chính bắt buộc đối với các đơn vị thực hiện nhiệm vụ khoa học công nghệ thuộc danh sách các đề tài nêu trên. Nội dung văn bản tập trung vào khía cạnh kế toán và quản lý tài chính cho các dự án nghiên cứu. Người sử dụng cần điền đầy đủ các thông tin như tên đề tài, mã số, loại đề tài và tổng hợp các khoản chi phí vào các mục quy định. Việc tuân thủ mẫu này đảm bảo tính minh bạch và chính xác trong công tác dự toán kinh phí. Kết luận, đây là công cụ quản lý tài chính quan trọng để kiểm soát ngân sách cho các hoạt động khoa học công nghệ.', 'key_points': ['Văn bản là biểu mẫu dự toán kinh phí cho đề tài khoa học công nghệ trọng điểm hoặc được tài trợ.', 'Yêu cầu chi tiết hóa khoản công lao động trực tiếp theo các nội dung công việc cụ thể.', 'Cần điền đầy đủ các thông tin cơ bản như tên đề tài, mã số và loại đề tài trước khi lập bảng chi tiết.', 'Mẫu này là bắt buộc đối với việc lập kế hoạch tài chính cho các đề tài nghiên cứu.', 'Nội dung tập trung vào việc phân loại và dự trù kinh phí cho nhân sự thực hiện đề tài.'], 'loai_van_ban': {'nhan': 'mẫu_biểu', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': 'Mẫu 3.2', 'ngay_ban_hanh': None, 'co_quan_ban_hanh': None, 'nguoi_ky': None, 'chuc_vu_nguoi_ky': None, 'noi_nhan': [], 'trich_yeu': 'Dự toán kinh phí thực hiện đề tài khoa học công nghệ, bao gồm công lao động trực tiếp.', 'can_cu_phap_ly': [], 'yeu_cau_hanh_dong': 'Lập và điền đầy đủ thông tin vào mẫu dự toán kinh phí theo quy định.', 'do_khan': 'thuong'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 5, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là mẫu biểu quy định quy trình dự toán kinh phí (loại other), mức độ khẩn cấp thường (thuong), do đó đề xuất thời gian xử lý 5 ngày là hợp lý để bộ phận liên quan rà soát và điền thông tin.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['dự toán kinh phí', 'công lao động', 'khoa học công nghệ', 'kế toán', 'ngân sách'], '_buoc_2_ung_vien': ['Phòng Tài chính Kế toán — phù hợp vì trực tiếp phụ trách công tác dự toán, kế toán và quản lý ngân sách.', 'Phòng Quản lý Khoa học công nghệ & HTQT — phù hợp vì liên quan đến quản lý đề tài KHCN.', 'Phòng Kế hoạch đầu tư — loại vì chủ yếu phụ trách kế hoạch đầu tư dự án lớn, không chuyên sâu vào dự toán chi tiết nhân sự đề tài.'], '_buoc_3_ket_luan': 'Chọn Phòng Tài chính Kế toán vì nội dung chính của văn bản là dự toán kinh phí và công lao động, thuộc chức năng cốt lõi của bộ phận tài chính.', 'phong_ban': 'PTCKT', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Tài chính Kế toán', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Văn bản tập trung vào dự toán kinh phí và công lao động, đây là chức năng chính của Phòng Tài chính Kế toán trong việc quản lý dòng tiền và chi phí.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'medium', 'total_chunks_processed': 1, 'source_pages': 1, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 45.865}
+[2026-06-17 08:50:37,406] [ADCS2606170849515086880] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:37,418] [ADCS2606170849515086880] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:37,418] [ADCS2606170849515086880] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:39,839] [ADCS2606170850398398553] [INFO] 📥 BẮT ĐẦU: GET /api/documents/de3552be-c164-494b-b17b-1444d54858ba
+[2026-06-17 08:50:39,841] [ADCS2606170850398398553] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.32ms)
+[2026-06-17 08:55:10,237] [ADCS2606170855102376791] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:10,242] [ADCS2606170855102376791] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.98ms)
+[2026-06-17 08:55:15,980] [ADCS2606170855159803473] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-17 08:55:16,002] [ADCS2606170855159803473] [INFO] 📤 HOÀN THÀNH: 200 (Mất 21.97ms)
+[2026-06-17 08:55:16,219] [ADCS2606170855162192631] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:16,222] [ADCS2606170855162192631] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.14ms)
+[2026-06-17 08:55:19,461] [ADCS2606170855194611453] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:19,464] [ADCS2606170855194611453] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.04ms)
+[2026-06-17 08:55:22,677] [ADCS2606170855226774240] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:22,685] [ADCS2606170855226774240] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.98ms)
+[2026-06-17 08:55:25,952] [ADCS2606170855259527215] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:25,956] [ADCS2606170855259527215] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.06ms)
+[2026-06-17 08:55:29,033] [ADCS2606170855290324641] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:29,037] [ADCS2606170855290324641] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.23ms)
+[2026-06-17 08:55:32,051] [ADCS2606170855320516667] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:32,056] [ADCS2606170855320516667] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.53ms)
+[2026-06-17 08:55:35,075] [ADCS2606170855350756652] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:35,078] [ADCS2606170855350756652] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.86ms)
+[2026-06-17 08:55:38,092] [ADCS2606170855380928812] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:38,097] [ADCS2606170855380928812] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.12ms)
+[2026-06-17 08:55:41,117] [ADCS2606170855411176619] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:41,121] [ADCS2606170855411176619] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.02ms)
+[2026-06-17 08:55:44,144] [ADCS2606170855441448851] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:44,150] [ADCS2606170855441448851] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.33ms)
+[2026-06-17 08:55:47,167] [ADCS2606170855471679125] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 08:55:47,171] [ADCS2606170855471679125] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.74ms)
+[2026-06-17 09:27:10,930] [ADCS2606170927109302379] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:10,934] [ADCS2606170927109302379] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:10,966] [ADCS2606170927109302379] [INFO] 📤 HOÀN THÀNH: 200 (Mất 35.82ms)
+[2026-06-17 09:27:13,380] [ADCS2606170927133803475] [INFO] 📥 BẮT ĐẦU: DELETE /api/translations/8a76615a-31b2-4cc7-9fe4-972139b0cb27
+[2026-06-17 09:27:13,389] [ADCS2606170927133803475] [INFO] Đã xóa thành công bản ghi dịch thuật log_id: 8a76615a-31b2-4cc7-9fe4-972139b0cb27
+[2026-06-17 09:27:13,389] [ADCS2606170927133803475] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.58ms)
+[2026-06-17 09:27:16,068] [ADCS2606170927160683076] [INFO] 📥 BẮT ĐẦU: DELETE /api/translations/1d448153-e61b-4c1c-a420-25be7b1745df
+[2026-06-17 09:27:16,119] [ADCS2606170927160683076] [INFO] Đã xóa thành công bản ghi dịch thuật log_id: 1d448153-e61b-4c1c-a420-25be7b1745df
+[2026-06-17 09:27:16,120] [ADCS2606170927160683076] [INFO] 📤 HOÀN THÀNH: 200 (Mất 51.65ms)
+[2026-06-17 09:27:18,280] [ADCS2606170927182804567] [INFO] 📥 BẮT ĐẦU: DELETE /api/translations/51d8277e-19db-4d0b-8f32-a2580b2c7b44
+[2026-06-17 09:27:18,289] [ADCS2606170927182804567] [INFO] Đã xóa thành công bản ghi dịch thuật log_id: 51d8277e-19db-4d0b-8f32-a2580b2c7b44
+[2026-06-17 09:27:18,290] [ADCS2606170927182804567] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.73ms)
+[2026-06-17 09:27:28,724] [ADCS2606170927287243055] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-17 09:27:28,730] [ADCS2606170927287243055] [INFO] Bắt đầu xử lý upload 1 file dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:28,740] [ADCS2606170927287243055] [INFO] Đã tạo bản ghi dịch thuật: 2cdc41e3-ebcc-4c1a-82fa-c139574c324e cho file pdf_thường.pdf
+[2026-06-17 09:27:28,740] [ADCS2606170927287243055] [INFO] Hoàn tất upload cho user_id ac613023-4f11-40d7-a9cf-d6de8c27bb76. Thành công: 1, Trùng lặp: 0
+[2026-06-17 09:27:28,740] [ADCS2606170927287243055] [INFO] 📤 HOÀN THÀNH: 200 (Mất 16.69ms)
+[2026-06-17 09:27:28,741] [ADCS2606170927287243055] [INFO] [Background Task] Bắt đầu xử lý dịch thuật cho log_id: 2cdc41e3-ebcc-4c1a-82fa-c139574c324e (pdf_thường.pdf)
+[2026-06-17 09:27:28,775] [ADCS2606170927287243055] [INFO] [Background Task] Đang gửi pdf_thường.pdf sang Data Service...
+[2026-06-17 09:27:28,966] [ADCS2606170927289661578] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:28,970] [ADCS2606170927289661578] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:29,010] [ADCS2606170927289661578] [INFO] 📤 HOÀN THÀNH: 200 (Mất 44.20ms)
+[2026-06-17 09:27:33,015] [ADCS2606170927330152200] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:33,016] [ADCS2606170927330152200] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:33,019] [ADCS2606170927330152200] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.87ms)
+[2026-06-17 09:27:36,868] [ADCS2606170927368689805] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:36,870] [ADCS2606170927368689805] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:36,873] [ADCS2606170927368689805] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.99ms)
+[2026-06-17 09:27:40,872] [ADCS2606170927408727349] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:40,875] [ADCS2606170927408727349] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:40,880] [ADCS2606170927408727349] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.39ms)
+[2026-06-17 09:27:44,873] [ADCS2606170927448738021] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:44,875] [ADCS2606170927448738021] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:44,878] [ADCS2606170927448738021] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.91ms)
+[2026-06-17 09:27:48,868] [ADCS2606170927488688922] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:48,871] [ADCS2606170927488688922] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:48,875] [ADCS2606170927488688922] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.97ms)
+[2026-06-17 09:27:52,877] [ADCS2606170927528778183] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:52,879] [ADCS2606170927528778183] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:52,882] [ADCS2606170927528778183] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.50ms)
+[2026-06-17 09:27:56,886] [ADCS2606170927568866231] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:27:56,888] [ADCS2606170927568866231] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:27:56,891] [ADCS2606170927568866231] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.45ms)
+[2026-06-17 09:28:00,874] [ADCS2606170928008749551] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:28:00,875] [ADCS2606170928008749551] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:28:00,878] [ADCS2606170928008749551] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.78ms)
+[2026-06-17 09:28:04,868] [ADCS2606170928048681422] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:28:04,870] [ADCS2606170928048681422] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:28:04,881] [ADCS2606170928048681422] [INFO] 📤 HOÀN THÀNH: 200 (Mất 13.08ms)
+[2026-06-17 09:28:07,237] [ADCS2606170927287243055] [ERROR] [Background Task] Lỗi hệ thống khi xử lý dịch thuật (log_id: 2cdc41e3-ebcc-4c1a-82fa-c139574c324e): 'utf-8' codec can't decode byte 0x83 in position 10: invalid start byte
+Traceback (most recent call last):
+  File "/app/app/services/translation_service.py", line 124, in process_translation_background
+    res_data = response.json()
+               ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/json/__init__.py", line 341, in loads
+    s = s.decode(detect_encoding(s), 'surrogatepass')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0x83 in position 10: invalid start byte
+[2026-06-17 09:28:08,871] [ADCS2606170928088713171] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-17 09:28:08,872] [ADCS2606170928088713171] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-17 09:28:08,876] [ADCS2606170928088713171] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.50ms)

@@ -83,9 +83,6 @@ const DocumentPage: React.FC = () => {
     };
   }, [previewUrl]);
 
-  // -----------------------------------------------------------------
-  // HANDLERS TẢI LÊN & DUYỆT
-  // -----------------------------------------------------------------
   const loadDocument = async (documentId: string) => {
     setLoading(true);
     setError("");
@@ -102,16 +99,10 @@ const DocumentPage: React.FC = () => {
         const ext = doc.local_path.split('.').pop()?.toLowerCase() || 'pdf';
         setFileType(ext);
       } else {
+        // CHỈ CẦN setPreviewUrl NHƯ THẾ NÀY, BỎ setFileType ĐI
         setPreviewUrl((currentUrl) => {
           if (currentUrl && currentUrl.startsWith('blob:')) {
             return currentUrl;
-          }
-          return null;
-        });
-        
-        setFileType((currentType) => {
-          if (previewUrl && previewUrl.startsWith('blob:')) {
-            return currentType;
           }
           return null;
         });
