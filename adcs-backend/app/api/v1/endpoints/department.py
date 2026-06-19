@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -8,12 +8,14 @@ from app.schemas.department import (
     DepartmentResponse,
     DepartmentTreeResponse,
     MessageResponse,
+    RegionSearchResponse
 )
 from app.services.department_service import (
     get_all_departments_service,
     create_department_service,
     update_department_service,
     delete_department_service,
+    get_departments_by_region_service
 )
 
 router = APIRouter()
@@ -47,3 +49,10 @@ def delete_department(
     db: Session = Depends(get_db)
 ):
     return delete_department_service(db, id)
+
+@router.get("/region", response_model=RegionSearchResponse | list[RegionSearchResponse])
+def search_departments_by_region(
+    region: str = Query("all", description="Filter by region: 'north', 'south', or 'all'"),
+    db: Session = Depends(get_db)
+):
+    return get_departments_by_region_service(db, region)

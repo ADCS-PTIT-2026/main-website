@@ -37,6 +37,7 @@ services:
       - ./adcs-backend:/app 
       - /mnt/data2tb/adcs/uploads:/mnt/data2tb/adcs/uploads
       - ./adcs-backend/logs:/app/logs
+      - ./adcs-backend/static:/app/static
     depends_on:
       db:
         condition: service_healthy

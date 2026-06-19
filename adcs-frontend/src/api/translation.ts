@@ -45,3 +45,9 @@ export async function updateTranslationComment(id: string, comment: string): Pro
 export async function deleteTranslation(id: string): Promise<{ message: string }> {
   return axiosClient.delete(`/translations/${id}`);
 }
+
+export async function downloadAllTranslationsZip(): Promise<any> {
+  return axiosClient.get(`/translations/download-all/zip`, { 
+    responseType: 'blob' 
+  });
+}
