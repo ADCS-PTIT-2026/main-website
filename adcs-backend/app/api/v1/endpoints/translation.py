@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
+from fastapi.responses import FileResponse, StreamingResponse 
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -38,3 +39,30 @@ def update_translation_comment_api(
 @router.delete("/{log_id}")
 def delete_translation_api(log_id: str, db: Session = Depends(get_db)):
     return translation_service.delete_translation_service(db, log_id)
+
+@router.get("/{log_id}/download")
+def download_translated_file(log_id: str, db: Session = Depends(get_db)):
+    """Tải file kết quả dịch thuật."""
+    
+    file_path, original_filename = translation_service.get_download_file_info(db, log_id)
+        
+    return FileResponse(
+        path=file_path, 
+        filename=f"Translated_{original_filename}",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+@router.get("/download-all/zip")
+def download_all_translated_files(
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user)
+):
+    """Tải toàn bộ file đã dịch thành công dưới dạng .zip"""
+    
+    zip_buffer = translation_service.get_all_translated_files_zip(db, current_user.user_id)
+    
+    return StreamingResponse(
+        zip_buffer, 
+        media_type="application/zip", 
+        headers={"Content-Disposition": "attachment; filename=Tat_ca_ban_dich_PTIT.zip"}
+    )

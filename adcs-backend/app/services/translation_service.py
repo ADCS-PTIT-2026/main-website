@@ -1,5 +1,6 @@
 import httpx
-import asyncio
+import io
+import zipfile
 import hashlib
 import os
 from fastapi import BackgroundTasks, HTTPException, UploadFile
@@ -121,11 +122,22 @@ async def process_translation_background(log_id: str, file_content: bytes, filen
             response = await client.post(DATA_SERVICE_TRANSLATE_URL, files=files, data=data)
             response.raise_for_status()
             
-            res_data = response.json()
-            result_url = res_data.get("download_url")
-
-        await asyncio.sleep(5) 
-        result_url = f"/static/downloads/translated_{log_id}.docx"
+            content_type = response.headers.get("content-type", "")
+            
+            if "application/json" in content_type:
+                res_data = response.json()
+                result_url = res_data.get("download_url")
+            else:
+                logger.info(f"[Background Task] Data Service trả về file nhị phân ({content_type}). Đang lưu file...")
+                
+                save_dir = "static/downloads"
+                os.makedirs(save_dir, exist_ok=True)
+                
+                file_path = os.path.join(save_dir, f"translated_{log_id}.docx")
+                with open(file_path, "wb") as f:
+                    f.write(response.content)
+                
+                result_url = f"/{file_path}"
 
         crud_translation.update_translation_status(db, log, status="success", result_url=result_url)
         logger.info(f"[Background Task] Hoàn tất dịch thuật log_id: {log_id}. Trạng thái: success")
@@ -144,3 +156,44 @@ async def process_translation_background(log_id: str, file_content: bytes, filen
             crud_translation.update_translation_status(db, log, status="failed")
     finally:
         db.close()
+
+def get_download_file_info(db: Session, log_id: str):
+    """Xử lý logic kiểm tra và lấy đường dẫn vật lý của file dịch thuật."""
+    log = crud_translation.get_translation_log_by_id(db, log_id)
+    if not log or not log.result_file_url:
+        logger.warning(f"Tải file thất bại: Không tìm thấy log_id {log_id} hoặc chưa có kết quả")
+        raise HTTPException(status_code=404, detail="File kết quả chưa sẵn sàng hoặc không tồn tại")
+    
+    file_path = log.result_file_url.lstrip("/")
+    
+    if not os.path.exists(file_path):
+        logger.error(f"Tải file thất bại: Không tìm thấy file vật lý tại {file_path}")
+        raise HTTPException(status_code=404, detail="File vật lý không tồn tại trên máy chủ")
+        
+    return file_path, log.filename
+
+def get_all_translated_files_zip(db: Session, user_id: str):
+    """Gom tất cả các file đã dịch thành công của user thành 1 file ZIP trong bộ nhớ."""
+    logs = crud_translation.get_translation_logs_by_user(db, user_id)
+    
+    success_logs = [log for log in logs if log.status == "success" and log.result_file_url]
+
+    if not success_logs:
+        logger.warning(f"Tải ZIP thất bại: User {user_id} không có file nào thành công.")
+        raise HTTPException(status_code=404, detail="Không có tài liệu nào để tải về.")
+
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for log in success_logs:
+            file_path = log.result_file_url.lstrip("/")
+            
+            if os.path.exists(file_path):
+                safe_id = str(log.id)[:8]
+                arcname = f"Translated_{safe_id}_{log.filename}"
+                zip_file.write(file_path, arcname)
+            else:
+                logger.error(f"Lỗi khi nén ZIP: Không tìm thấy file vật lý {file_path}")
+
+    zip_buffer.seek(0)
+    return zip_buffer

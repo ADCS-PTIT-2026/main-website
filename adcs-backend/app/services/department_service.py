@@ -147,3 +147,57 @@ def delete_department_service(db: Session, department_id):
     except Exception as e:
         logger.error(f"Error deleting department id={department_id}: {str(e)}", exc_info=True)
         raise
+
+def get_departments_by_region_service(db: Session, region: str):
+    region = region.lower()
+    if region not in ['north', 'south', 'all']:
+        raise HTTPException(status_code=400, detail="Region parameter must be 'north', 'south', or 'all'")
+
+    all_deps = list_departments(db)
+    
+    children_map = {}
+    for d in all_deps:
+        if d.parent_id not in children_map:
+            children_map[d.parent_id] = []
+        children_map[d.parent_id].append(d)
+        
+    def get_all_descendants(root_id):
+        descendants = []
+        queue = children_map.get(root_id, [])
+        while queue:
+            current = queue.pop(0)
+            descendants.append(current)
+            queue.extend(children_map.get(current.id, []))
+        return descendants
+
+    def map_unit(u):
+        return {
+            "ma_don_vi": u.code,
+            "id": u.id,
+            "ten_hien_thi": u.ten_hien_thi if u.ten_hien_thi else u.name,
+            "nhom": u.loai_don_vi,
+            "mo_ta": u.description
+        }
+
+    results = []
+    
+    if region in ['north', 'all']:
+        north_units = get_all_descendants(40)
+        results.append({
+            "region": "north",
+            "label": "Học viện - Cơ sở phía Bắc",
+            "units": [map_unit(u) for u in north_units]
+        })
+        
+    if region in ['south', 'all']:
+        south_units = get_all_descendants(39)
+        results.append({
+            "region": "south",
+            "label": "Học viện - Cơ sở phía Nam",
+            "units": [map_unit(u) for u in south_units]
+        })
+        
+    if region != 'all' and len(results) == 1:
+        return results[0]
+        
+    return results
