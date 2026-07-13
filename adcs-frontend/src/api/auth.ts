@@ -37,7 +37,7 @@ export const authAPI = {
 
   ptitSsoCallback: async (code: string): Promise<LoginResponse> => {
     const response = await axiosClient.get(`/auth/sso/callback?code=${code}`);
-    return response.data;
+    return response as unknown as LoginResponse;
   },
 
   getPtitLogoutUrl: (idTokenHint: string): string => {

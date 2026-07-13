@@ -1,0 +1,220 @@
+{
+  "region": "north",
+  "label": "Học viện - Cơ sở phía Bắc",
+  "units": [
+    {
+      "ma_don_vi": "BGD1",
+      "id": 43,
+      "ten_hien_thi": "Lãnh đạo Học viện",
+      "nhom": "LÃNH ĐẠO",
+      "mo_ta": "chỉ đạo toàn Học viện, ký ban hành văn bản cấp cao, quyết định chiến lược, điều hành chung"
+    },
+    {
+      "ma_don_vi": "PDT1",
+      "id": 34,
+      "ten_hien_thi": "Phòng Đào tạo",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "tuyển sinh đại học/cao đẳng, chương trình đào tạo, kế hoạch học tập, lịch thi học kỳ, cấp phát văn bằng chứng chỉ, liên kết đào tạo ngoài trường"
+    },
+    {
+      "ma_don_vi": "PGV1",
+      "id": 30,
+      "ten_hien_thi": "Phòng Giáo vụ",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "quản lý điểm học tập, học bổng khuyến học, xử lý kết quả học tập, hồ sơ sinh viên, đăng ký môn học, xếp lớp, cảnh báo học vụ"
+    },
+    {
+      "ma_don_vi": "PKH1",
+      "id": 31,
+      "ten_hien_thi": "Phòng Kế hoạch - Đầu tư",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "kế hoạch phát triển trường, đầu tư xây dựng cơ sở vật chất, mua sắm thiết bị tài sản, đấu thầu, quản lý dự án đầu tư"
+    },
+    {
+      "ma_don_vi": "PKT1",
+      "id": 32,
+      "ten_hien_thi": "Phòng Tài chính - Kế toán",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "ngân sách tài chính, chi tiêu nội bộ, quyết toán, thu học phí, thanh toán hóa đơn, lương thưởng phụ cấp, kiểm toán nội bộ, BHXH tài chính"
+    },
+    {
+      "ma_don_vi": "PQL1",
+      "id": 33,
+      "ten_hien_thi": "Phòng Quản lý Khoa học công nghệ và Hợp tác quốc tế",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "quản lý đề tài nghiên cứu khoa học, hội thảo khoa học, công bố quốc tế, hợp tác đối tác nước ngoài, trao đổi học thuật, sáng chế bản quyền"
+    },
+    {
+      "ma_don_vi": "PSV1",
+      "id": 35,
+      "ten_hien_thi": "Phòng Chính trị và Công tác sinh viên",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "kỷ luật sinh viên, hỗ trợ sinh viên khó khăn, hoạt động đoàn thể Đoàn Hội, an ninh trật tự khuôn viên, ký túc xá, tư vấn tâm lý học đường"
+    },
+    {
+      "ma_don_vi": "PTC1",
+      "id": 36,
+      "ten_hien_thi": "Phòng Tổ chức cán bộ - Lao động",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "tuyển dụng nhân sự cán bộ giảng viên, hợp đồng lao động, bổ nhiệm miễn nhiệm, phụ cấp thâm niên, kỷ luật cán bộ, đào tạo bồi dưỡng CB, quản lý hồ sơ nhân sự"
+    },
+    {
+      "ma_don_vi": "VPH1",
+      "id": 37,
+      "ten_hien_thi": "Văn phòng Học viện",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "hành chính tổng hợp, lưu trữ công văn đến/đi, văn thư con dấu, lịch họp Ban Giám đốc, tiếp khách, hội nghị"
+    },
+    {
+      "ma_don_vi": "KAT1",
+      "id": 77,
+      "ten_hien_thi": "Khoa An toàn thông tin",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy an toàn thông tin, an ninh mạng, mã hóa, bảo mật hệ thống, phòng chống tấn công mạng, CTF, chương trình cử nhân ATTT, học thuật khoa ATTT"
+    },
+    {
+      "ma_don_vi": "KCB1",
+      "id": 23,
+      "ten_hien_thi": "Khoa Cơ bản 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy môn cơ sở đại cương: Toán, Vật lý, Ngoại ngữ tiếng Anh, Giáo dục chính trị, Quốc phòng an ninh, Thể dục thể chất"
+    },
+    {
+      "ma_don_vi": "KCN1",
+      "id": 22,
+      "ten_hien_thi": "Khoa Công nghệ thông tin 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy công nghệ thông tin, lập trình phần mềm, hệ thống thông tin, khoa học máy tính, cơ sở dữ liệu, trí tuệ nhân tạo cơ bản, học thuật khoa CNTT Hà Nội"
+    },
+    {
+      "ma_don_vi": "KDP1",
+      "id": 18,
+      "ten_hien_thi": "Khoa Đa phương tiện",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy truyền thông đa phương tiện, báo chí, thiết kế đồ họa, multimedia, sản xuất nội dung số, phim ảnh, âm nhạc, học thuật khoa ĐPT"
+    },
+    {
+      "ma_don_vi": "KDT1",
+      "id": 24,
+      "ten_hien_thi": "Khoa Kỹ thuật điện tử 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy kỹ thuật điện tử, vi mạch bán dẫn, IoT Internet of Things, tự động hóa công nghiệp, điều khiển robot, điện tử máy tính, học thuật khoa ĐT Hà Nội"
+    },
+    {
+      "ma_don_vi": "KHCN",
+      "id": 41,
+      "ten_hien_thi": "Khoa học công nghệ",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "nghiên cứu liên ngành khoa học kỹ thuật, công nghệ mới tiên tiến, hỗ trợ nghiên cứu ứng dụng toàn Học viện, phối hợp dự án R&D"
+    },
+    {
+      "ma_don_vi": "KQT1",
+      "id": 19,
+      "ten_hien_thi": "Khoa Quản trị kinh doanh 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy quản trị kinh doanh, kinh tế học, marketing, khởi nghiệp kinh doanh startup, quản lý tổ chức, học thuật khoa QTKD Hà Nội"
+    },
+    {
+      "ma_don_vi": "KSD1",
+      "id": 25,
+      "ten_hien_thi": "Khoa Đào tạo Sau đại học",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "quản lý nghiên cứu sinh NCS tiến sĩ, học viên cao học thạc sĩ, đề tài luận văn tiến sĩ/thạc sĩ, bảo vệ luận văn, học thuật sau đại học"
+    },
+    {
+      "ma_don_vi": "KTC1",
+      "id": 20,
+      "ten_hien_thi": "Khoa Tài chính kế toán 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy kế toán doanh nghiệp, kiểm toán, tài chính công ty, phân tích tài chính, thuế, học thuật khoa TCKT Hà Nội"
+    },
+    {
+      "ma_don_vi": "KTN1",
+      "id": 240,
+      "ten_hien_thi": "Khoa Trí tuệ nhân tạo",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy trí tuệ nhân tạo AI, học máy machine learning, deep learning, xử lý ngôn ngữ tự nhiên NLP, thị giác máy tính computer vision, học thuật khoa AI"
+    },
+    {
+      "ma_don_vi": "KVT1",
+      "id": 21,
+      "ten_hien_thi": "Khoa Viễn thông 1",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy viễn thông, mạng truyền thông, tín hiệu hệ thống, 5G mạng di động, truyền thông vô tuyến, internet băng rộng, học thuật khoa VT Hà Nội"
+    },
+    {
+      "ma_don_vi": "TKT1",
+      "id": 29,
+      "ten_hien_thi": "Trung tâm Khảo thí và Đảm bảo chất lượng giáo dục",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "tổ chức thi cử học kỳ, đánh giá chất lượng giáo dục, kiểm định trường, khảo sát sinh viên/doanh nghiệp, đảm bảo chất lượng ĐBCLGD, cải tiến chương trình"
+    },
+    {
+      "ma_don_vi": "TTN1",
+      "id": 28,
+      "ten_hien_thi": "Trung tâm Thí nghiệm - Thực hành",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "quản lý phòng lab thí nghiệm thực hành, thiết bị dụng cụ thí nghiệm, hỗ trợ thực hành thực tập sinh viên, an toàn phòng thí nghiệm"
+    },
+    {
+      "ma_don_vi": "TDM1",
+      "id": 255,
+      "ten_hien_thi": "Trung tâm Đổi mới sáng tạo và Khởi nghiệp",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "ươm tạo startup khởi nghiệp, hỗ trợ dự án đổi mới sáng tạo sinh viên, kết nối doanh nghiệp công nghệ, hackathon, vườn ươm công nghệ"
+    },
+    {
+      "ma_don_vi": "TDT1",
+      "id": 2,
+      "ten_hien_thi": "Trung tâm Đào tạo Bưu chính Viễn thông",
+      "nhom": "TRUNG TÂM",
+      "has_seal": true,
+      "mo_ta": "đào tạo nghề bưu chính viễn thông ngắn hạn, bồi dưỡng nhân lực ngành BCVT, đào tạo theo đơn đặt hàng doanh nghiệp viễn thông, chứng chỉ nghề"
+    },
+    {
+      "ma_don_vi": "TDV1",
+      "id": 26,
+      "ten_hien_thi": "Trung tâm Dịch vụ",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "hậu cần phục vụ giảng đường, quản lý ký túc xá, điện nước kỹ thuật, vệ sinh môi trường, sửa chữa bảo trì cơ sở vật chất, căng tin"
+    },
+    {
+      "ma_don_vi": "TQT1",
+      "id": 27,
+      "ten_hien_thi": "Trung tâm Đào tạo Quốc tế",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "hợp tác quốc tế trong đào tạo, học bổng nước ngoài, chương trình liên kết quốc tế, du học, trao đổi sinh viên quốc tế, giảng viên nước ngoài"
+    },
+    {
+      "ma_don_vi": "VLD1",
+      "id": 245,
+      "ten_hien_thi": "Viện Lãnh đạo, Quản trị và Quản lý Việt Nam",
+      "nhom": "VIỆN NGHIÊN CỨU",
+      "mo_ta": "bồi dưỡng lãnh đạo cấp cao quản lý nhà nước, quản trị tổ chức doanh nghiệp, chương trình đào tạo cho cán bộ cơ quan nhà nước và tập đoàn"
+    },
+    {
+      "ma_don_vi": "VCN1",
+      "id": 3,
+      "ten_hien_thi": "Viện Công nghệ thông tin và Truyền thông",
+      "nhom": "VIỆN NGHIÊN CỨU",
+      "has_seal": true,
+      "mo_ta": "nghiên cứu triển khai CNTT và truyền thông, cung cấp dịch vụ CNTT, chuyển giao công nghệ, hợp đồng nghiên cứu phát triển R&D với doanh nghiệp"
+    },
+    {
+      "ma_don_vi": "VKH1",
+      "id": 91,
+      "ten_hien_thi": "Viện Khoa học Kỹ thuật Bưu điện",
+      "nhom": "VIỆN NGHIÊN CỨU",
+      "has_seal": true,
+      "mo_ta": "nghiên cứu kỹ thuật viễn thông bưu điện, đo lường kiểm định thiết bị viễn thông, tư vấn thiết kế hạ tầng BCVT, công nghệ truyền thông không gian vũ trụ"
+    },
+    {
+      "ma_don_vi": "VKT1",
+      "id": 4,
+      "ten_hien_thi": "Viện Kinh tế Bưu điện",
+      "nhom": "VIỆN NGHIÊN CỨU",
+      "has_seal": true,
+      "mo_ta": "nghiên cứu kinh tế bưu chính viễn thông, định mức kinh tế kỹ thuật ngành, tư vấn quản trị doanh nghiệp BCVT, marketing viễn thông"
+    }
+  ]
+}

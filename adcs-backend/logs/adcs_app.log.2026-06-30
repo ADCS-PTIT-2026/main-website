@@ -1,0 +1,340 @@
+[2026-06-30 04:47:43,451] [ADCS2606300447434517056] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 04:47:43,507] [ADCS2606300447434517056] [INFO] 📤 HOÀN THÀNH: 200 (Mất 56.14ms)
+[2026-06-30 06:48:15,742] [ADCS2606300648157425457] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 06:48:15,755] [ADCS2606300648157425457] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.70ms)
+[2026-06-30 06:48:15,802] [ADCS2606300648158024635] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 06:48:15,809] [ADCS2606300648158024635] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.71ms)
+[2026-06-30 06:52:09,710] [ADCS2606300652097108404] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 06:52:09,718] [ADCS2606300652097108404] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.68ms)
+[2026-06-30 06:55:14,228] [ADCS2606300655142281464] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 06:55:14,234] [ADCS2606300655142281464] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.49ms)
+[2026-06-30 07:03:59,640] [ADCS2606300703596409396] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 07:03:59,658] [ADCS2606300703596409396] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.52ms)
+[2026-06-30 07:03:59,716] [ADCS2606300703597164250] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-30 07:03:59,728] [ADCS2606300703597164250] [INFO] 📤 HOÀN THÀNH: 200 (Mất 11.92ms)
+[2026-06-30 13:07:50,391] [ADCS2606301307503918907] [INFO] 📥 BẮT ĐẦU: GET /api/.env.production
+[2026-06-30 13:07:50,394] [ADCS2606301307503918907] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-30 13:07:50,394] [ADCS2606301307503918907] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.26ms)
+[2026-06-30 15:08:36,264] [ADCS2606301508362645551] [INFO] 📥 BẮT ĐẦU: GET /api/departments/mock_region
+[2026-06-30 15:08:36,270] [ADCS2606301508362645551] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.81ms)
+[2026-06-30 15:09:45,215] [ADCS2606301509452159887] [INFO] 📥 BẮT ĐẦU: GET /api/departments/mock_region
+[2026-06-30 15:09:45,221] [ADCS2606301509452159887] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.40ms)
+[2026-06-30 15:09:52,270] [ADCS2606301509522702211] [INFO] 📥 BẮT ĐẦU: GET /api/departments/mock_region
+[2026-06-30 15:09:52,275] [ADCS2606301509522702211] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.36ms)
+[2026-06-30 18:37:39,132] [ADCS2606301837391324178] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-30 18:37:39,133] [ADCS2606301837391324178] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-30 18:37:39,133] [ADCS2606301837391324178] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.23ms)
+[2026-06-30 19:32:35,694] [ADCS2606301932356945077] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-30 19:32:35,697] [ADCS2606301932356945077] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-30 19:32:35,698] [ADCS2606301932356945077] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.31ms)
+[2026-06-30 21:42:02,847] [ADCS2606302142028474627] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-30 21:42:02,849] [ADCS2606302142028474627] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-30 21:42:02,850] [ADCS2606302142028474627] [INFO] 📤 HOÀN THÀNH: 404 (Mất 2.73ms)
+[2026-06-30 22:33:35,697] [ADCS2606302233356976934] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-30 22:33:35,698] [ADCS2606302233356976934] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-30 22:33:35,698] [ADCS2606302233356976934] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.21ms)
+[2026-07-01 04:38:45,187] [ADCS2607010438451879950] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-07-01 04:38:45,240] [ADCS2607010438451879950] [INFO] 📤 HOÀN THÀNH: 200 (Mất 52.93ms)
+[2026-07-01 04:39:07,799] [ADCS2607010439077998301] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-07-01 04:39:07,808] [ADCS2607010439077998301] [INFO] 📤 HOÀN THÀNH: 200 (Mất 8.87ms)
+[2026-07-01 04:40:28,413] [ADCS2607010440284129030] [INFO] 📥 BẮT ĐẦU: POST /api/auth/register
+[2026-07-01 04:40:28,741] [ADCS2607010440284129030] [INFO] 📤 HOÀN THÀNH: 200 (Mất 328.20ms)
+[2026-07-01 04:40:35,239] [ADCS2607010440352391155] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-07-01 04:40:35,788] [ADCS2607010440352391155] [INFO] 📤 HOÀN THÀNH: 200 (Mất 548.13ms)
+[2026-07-01 04:40:35,825] [ADCS2607010440358256508] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-07-01 04:40:35,840] [ADCS2607010440358404044] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-07-01 04:40:35,865] [ADCS2607010440358404044] [INFO] 📤 HOÀN THÀNH: 200 (Mất 24.98ms)
+[2026-07-01 04:40:35,878] [ADCS2607010440358256508] [INFO] 📤 HOÀN THÀNH: 200 (Mất 52.66ms)
+[2026-07-01 04:41:43,666] [ADCS2607010441436665636] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-07-01 04:41:44,197] [ADCS2607010441436665636] [INFO] 📤 HOÀN THÀNH: 200 (Mất 530.36ms)
+[2026-07-01 04:42:24,470] [ADCS2607010442244706138] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-07-01 04:42:24,996] [ADCS2607010442244706138] [WARNING] ⚠️ CHI TIẾT LỖI (401): {"detail":"Email hoặc mật khẩu không chính xác!"}
+[2026-07-01 04:42:24,996] [ADCS2607010442244706138] [INFO] 📤 HOÀN THÀNH: 401 (Mất 526.03ms)
+[2026-07-01 04:42:40,617] [ADCS2607010442406175941] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-07-01 04:42:41,145] [ADCS2607010442406175941] [INFO] 📤 HOÀN THÀNH: 200 (Mất 527.83ms)
+[2026-07-01 04:44:43,364] [ADCS2607010444433643943] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-07-01 04:44:43,374] [ADCS2607010444433643943] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.75ms)
+[2026-07-01 04:46:02,031] [ADCS2607010446020315194] [INFO] 📥 BẮT ĐẦU: GET /api/documents/2ab8012c-1fb9-4717-b0b5-dd2d05a04bd5
+[2026-07-01 04:46:02,037] [ADCS2607010446020315194] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.81ms)
+[2026-07-01 04:46:11,523] [ADCS2607010446115238853] [INFO] 📥 BẮT ĐẦU: GET /api/documents/2ab8012c-1fb9-4717-b0b5-dd2d05a04bd5
+[2026-07-01 04:46:11,526] [ADCS2607010446115238853] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.91ms)
+[2026-07-01 04:47:35,979] [ADCS2607010447359793626] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-07-01 04:47:36,003] [ADCS2607010447359793626] [INFO] 📤 HOÀN THÀNH: 200 (Mất 23.64ms)
+[2026-07-01 04:47:36,018] [ADCS2607010447360189199] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-07-01 04:47:36,024] [ADCS2607010447360189199] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.53ms)
+[2026-07-01 04:48:05,340] [ADCS2607010448053405030] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-07-01 04:48:05,342] [ADCS2607010448053405030] [INFO] Truy vấn danh sách dịch thuật cho user_id: c8bbfefe-bf1c-4061-b5d5-32bfe20a2d49
+[2026-07-01 04:48:05,351] [ADCS2607010448053405030] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.44ms)
+[2026-07-01 04:48:37,998] [ADCS2607010448379986128] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-07-01 04:48:38,007] [ADCS2607010448379986128] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-07-01 04:48:38,183] [ADCS2607010448379986128] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-07-01 04:48:38,190] [ADCS2607010448379986128] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-07-01 04:48:38,190] [ADCS2607010448379986128] [INFO] 📤 HOÀN THÀNH: 500 (Mất 191.77ms)
+[2026-07-01 04:49:36,078] [ADCS2607010449360785677] [INFO] 📥 BẮT ĐẦU: GET /api/documents/upload
+[2026-07-01 04:49:36,083] [ADCS2607010449360785677] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=upload
+[2026-07-01 04:49:36,154] [ADCS2607010449360785677] [ERROR] Lỗi HTTP từ Data Service (Search): {"detail":[{"type":"int_parsing","loc":["path","document_id"],"msg":"Input should be a valid integer, unable to parse string as an integer","input":"upload"}]}
+[2026-07-01 04:49:36,155] [ADCS2607010449360785677] [ERROR] ❌ LỖI HỆ THỐNG: 4 validation errors:
+  {'type': 'missing', 'loc': ('response', 'document_id'), 'msg': 'Field required', 'input': {'error': 'Data Service không phản hồi đúng cách'}}
+  {'type': 'missing', 'loc': ('response', 'is_chua_doc'), 'msg': 'Field required', 'input': {'error': 'Data Service không phản hồi đúng cách'}}
+  {'type': 'missing', 'loc': ('response', 'created_at'), 'msg': 'Field required', 'input': {'error': 'Data Service không phản hồi đúng cách'}}
+  {'type': 'missing', 'loc': ('response', 'updated_at'), 'msg': 'Field required', 'input': {'error': 'Data Service không phản hồi đúng cách'}}
+
+  File "/app/app/api/v1/endpoints/document.py", line 58, in get_document_detail
+    GET /api/documents/{document_id}
+[2026-07-01 04:50:36,205] [ADCS2607010450362054526] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-07-01 04:50:36,234] [ADCS2607010450362054526] [INFO] 📤 HOÀN THÀNH: 200 (Mất 28.73ms)
+[2026-07-01 04:50:36,234] [ADCS2607010450362054526] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:36,234] [ADCS2607010450362054526] [INFO] Bắt đầu gửi file '2017_97KH-HV về rà soát, xây dựng TNSM năm 2017.pdf' tới AI Service (save_document=True)
+[2026-07-01 04:50:36,341] [ADCS2607010450363414195] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:36,356] [ADCS2607010450363414195] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.35ms)
+[2026-07-01 04:50:42,452] [ADCS2607010450424521752] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:42,455] [ADCS2607010450424521752] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.43ms)
+[2026-07-01 04:50:45,472] [ADCS2607010450454726871] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:45,483] [ADCS2607010450454726871] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.83ms)
+[2026-07-01 04:50:48,441] [ADCS2607010450484418701] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:48,443] [ADCS2607010450484418701] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.57ms)
+[2026-07-01 04:50:51,524] [ADCS2607010450515246168] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:51,527] [ADCS2607010450515246168] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.79ms)
+[2026-07-01 04:50:54,447] [ADCS2607010450544478558] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:50:54,451] [ADCS2607010450544478558] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.30ms)
+[2026-07-01 04:51:00,447] [ADCS2607010451004462953] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:00,449] [ADCS2607010451004462953] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.78ms)
+[2026-07-01 04:51:03,441] [ADCS2607010451034415446] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:03,444] [ADCS2607010451034415446] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.15ms)
+[2026-07-01 04:51:09,443] [ADCS2607010451094436843] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:09,448] [ADCS2607010451094436843] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.01ms)
+[2026-07-01 04:51:12,510] [ADCS2607010451125101132] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:12,516] [ADCS2607010451125101132] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.61ms)
+[2026-07-01 04:51:15,443] [ADCS2607010451154434140] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:15,446] [ADCS2607010451154434140] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.14ms)
+[2026-07-01 04:51:18,478] [ADCS2607010451184782500] [INFO] 📥 BẮT ĐẦU: GET /api/documents/eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:18,481] [ADCS2607010451184782500] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.87ms)
+[2026-07-01 04:51:18,893] [ADCS2607010450362054526] [INFO] AI Service phản hồi thành công cho file '2017_97KH-HV về rà soát, xây dựng TNSM năm 2017.pdf'
+[2026-07-01 04:51:18,894] [ADCS2607010450362054526] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Kế hoạch số 97/KH-HV do Học viện Công nghệ Bưu chính Viễn thông ban hành ngày 28 tháng 2 năm 2017, nhằm rà soát và hiệu chỉnh sứ mạng, tầm nhìn cũng như mục tiêu chiến lược của đơn vị. Mục đích chính của văn bản là xác định các bước đi cụ thể để hoàn thiện định hướng phát triển dài hạn của Học viện trong giai đoạn tới. Nội dung kế hoạch quy định chi tiết việc thành lập Tổ soạn thảo và phân công trách nhiệm cụ thể cho các đơn vị liên quan. Văn phòng Học viện được giao nhiệm vụ trình Giám đốc ban hành kế hoạch, tổ chức họp lấy ý kiến và phổ biến rộng rãi đến toàn thể cán bộ, giảng viên. Tổ soạn thảo có trách nhiệm nghiên cứu chiến lược của Bộ, phân tích sứ mạng hiện hành và xây dựng dự thảo hoàn chỉnh. Phòng Tài chính Kế toán phối hợp với Văn phòng để lập dự toán và thanh quyết toán kinh phí cho nhiệm vụ này. Phòng Chính trị và Công tác sinh viên hỗ trợ phổ biến, tuyên truyền các nội dung liên quan tới người học. Kế hoạch này yêu cầu sự phối hợp chặt chẽ giữa các đơn vị chức năng để đảm bảo tiến độ và hiệu quả thực hiện. Việc ban hành văn bản này đánh dấu sự khởi đầu cho quy trình chiến lược mới của Học viện.', 'key_points': ['Ban hành Kế hoạch rà soát, hiệu chỉnh sứ mạng, tầm nhìn và mục tiêu chiến lược của Học viện.', 'Thành lập Tổ soạn thảo và phân công trách nhiệm cụ thể cho các đơn vị thực hiện.', 'Văn phòng Học viện chịu trách nhiệm trình Giám đốc ban hành và tổ chức lấy ý kiến.', 'Phối hợp giữa các phòng ban để xây dựng dự toán kinh phí và thanh quyết toán.', 'Tuyên truyền sứ mạng, tầm nhìn tới toàn thể cán bộ, giảng viên và người học.'], 'loai_van_ban': {'nhan': 'ke_hoach', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': '97/KH-HV', 'ngay_ban_hanh': '28 tháng 2 năm 2017', 'co_quan_ban_hanh': 'HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG', 'nguoi_ky': None, 'chuc_vu_nguoi_ky': 'Giám đốc Học viện', 'noi_nhan': ['Ban GDHV (b/c)', 'Các đơn vị trên (t/h)', 'Lưu: VT, VP'], 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'can_cu_phap_ly': ['Chiến lược, mục tiêu phát triển của Bộ Thông tin và Truyền thông giai đoạn 2017-2020'], 'yeu_cau_hanh_dong': 'Các đơn vị (Văn phòng, Tổ soạn thảo, Phòng Tài chính Kế toán, Phòng Chính trị và Công tác sinh viên) thực hiện phân công nhiệm vụ cụ thể để hoàn thành kế hoạch rà soát và hiệu chỉnh chiến lược.', 'do_khan': 'thuong'}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 7, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là loại Kế hoạch (ke_hoach) với độ khẩn cấp thường (thuong), theo quy tắc đề xuất thời gian xử lý là 5-10 ngày, chọn mức trung bình là 7 ngày để các đơn vị phối hợp hoàn thành nhiệm vụ.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['ra soát chiến lược', 'sứ mạng', 'tầm nhìn', 'mục tiêu', 'tổ soạn thảo'], '_buoc_2_ung_vien': ['Văn phòng Học viện — phù hợp vì là đầu mối trình Giám đốc, tổ chức họp và phối hợp các đơn vị', 'Phòng Chính trị & Công tác Sinh viên — phù hợp vì có nhiệm vụ phổ biến, tuyên truyền nội dung chiến lược', 'Phòng Tài chính Kế toán — loại vì chỉ phối hợp về kinh phí, không phải đơn vị chủ trì nội dung chiến lược'], '_buoc_3_ket_luan': 'Chọn Văn phòng Học viện vì đơn vị này có vai trò đầu mối, chịu trách nhiệm chính trong việc trình ký, tổ chức họp và phối hợp thực hiện toàn bộ kế hoạch rà soát chiến lược.', 'phong_ban': 'VP', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng/Ban chức năng > Văn phòng', 'nguoi_xu_ly_de_xuat': None, 'ly_do': 'Văn phòng Học viện được phân công chính trong mục II.1 để trình Giám đốc ban hành, tổ chức họp lấy ý kiến và phổ biến kế hoạch, đóng vai trò đầu mối tổng hợp.', 'diem_tin_cay': 0.85}, 'diem_tin_cay': 0.85, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 42.641}
+[2026-07-01 04:51:18,897] [ADCS2607010450362054526] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:18,905] [ADCS2607010450362054526] [ERROR] Crash hệ thống trong background task xử lý tài liệu (id=eaeace80-ab6e-4b71-8ce5-109f54495638): (psycopg2.errors.InvalidDatetimeFormat) invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...huc_vu_nguoi_ky='Giám đốc Học viện', ngay_van_ban='28 tháng ...
+                                                             ^
+
+[SQL: UPDATE documents SET so_ky_hieu=%(so_ky_hieu)s, trich_yeu=%(trich_yeu)s, loai_van_ban_text=%(loai_van_ban_text)s, don_vi_ban_hanh=%(don_vi_ban_hanh)s, chuc_vu_nguoi_ky=%(chuc_vu_nguoi_ky)s, ngay_van_ban=%(ngay_van_ban)s, do_khan=%(do_khan)s, noi_nhan=%(noi_nhan)s::JSONB, can_cu_phap_ly=%(can_cu_phap_ly)s::JSONB, yeu_cau_hanh_dong=%(yeu_cau_hanh_dong)s, status=%(status)s, summary=%(summary)s, key_points=%(key_points)s::JSONB, confidence=%(confidence)s, muc_tin_cay=%(muc_tin_cay)s, loai_van_ban=%(loai_van_ban)s::JSONB, de_xuat_xu_ly=%(de_xuat_xu_ly)s::JSONB, goi_y_phong_ban=%(goi_y_phong_ban)s::JSONB, total_chunks_processed=%(total_chunks_processed)s, source_pages=%(source_pages)s, storage_info=%(storage_info)s::JSONB, processing_time=%(processing_time)s, updated_at=now(), related_documents=%(related_documents)s::JSONB WHERE documents.document_id = %(documents_document_id)s::UUID]
+[parameters: {'so_ky_hieu': '97/KH-HV', 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'loai_van_ban_text': 'ke_hoach', 'don_vi_ban_hanh': 'HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG', 'chuc_vu_nguoi_ky': 'Giám đốc Học viện', 'ngay_van_ban': '28 tháng 2 năm 2017', 'do_khan': 'thuong', 'noi_nhan': '["Ban GDHV (b/c)", "C\\u00e1c \\u0111\\u01a1n v\\u1ecb tr\\u00ean (t/h)", "L\\u01b0u: VT, VP"]', 'can_cu_phap_ly': '["Chi\\u1ebfn l\\u01b0\\u1ee3c, m\\u1ee5c ti\\u00eau ph\\u00e1t tri\\u1ec3n c\\u1ee7a B\\u1ed9 Th\\u00f4ng tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020"]', 'yeu_cau_hanh_dong': 'Các đơn vị (Văn phòng, Tổ soạn thảo, Phòng Tài chính Kế toán, Phòng Chính trị và Công tác sinh viên) thực hiện phân công nhiệm vụ cụ thể để hoàn thành kế hoạch rà soát và hiệu chỉnh chiến lược.', 'status': 'processed', 'summary': 'Văn bản là Kế hoạch số 97/KH-HV do Học viện Công nghệ Bưu chính Viễn thông ban hành ngày 28 tháng 2 năm 2017, nhằm rà soát và hiệu chỉnh sứ mạng, tầm ... (837 characters truncated) ...  đơn vị chức năng để đảm bảo tiến độ và hiệu quả thực hiện. Việc ban hành văn bản này đánh dấu sự khởi đầu cho quy trình chiến lược mới của Học viện.', 'key_points': '["Ban h\\u00e0nh K\\u1ebf ho\\u1ea1ch r\\u00e0 so\\u00e1t, hi\\u1ec7u ch\\u1ec9nh s\\u1ee9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn v\\u00e0 m\\u1ee5c ti\\u0 ... (657 characters truncated) ... e9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn t\\u1edbi to\\u00e0n th\\u1ec3 c\\u00e1n b\\u1ed9, gi\\u1ea3ng vi\\u00ean v\\u00e0 ng\\u01b0\\u1eddi h\\u1ecdc."]', 'confidence': 0.85, 'muc_tin_cay': 'high', 'loai_van_ban': '{"nhan": "ke_hoach", "diem_tin_cay": 0.95}', 'de_xuat_xu_ly': '{"so_ngay_de_xuat": 7, "muc_uu_tien": "b\\u00ecnh th\\u01b0\\u1eddng", "ly_do": "V\\u0103n b\\u1ea3n l\\u00e0 lo\\u1ea1i K\\u1ebf ho\\u1ea1ch (ke_hoa ... (212 characters truncated) ... \\u00ecnh l\\u00e0 7 ng\\u00e0y \\u0111\\u1ec3 c\\u00e1c \\u0111\\u01a1n v\\u1ecb ph\\u1ed1i h\\u1ee3p ho\\u00e0n th\\u00e0nh nhi\\u1ec7m v\\u1ee5."}', 'goi_y_phong_ban': '{"_buoc_1_tu_khoa_chuc_nang": ["ra so\\u00e1t chi\\u1ebfn l\\u01b0\\u1ee3c", "s\\u1ee9 m\\u1ea1ng", "t\\u1ea7m nh\\u00ecn", "m\\u1ee5c ti\\u00eau", " ... (1642 characters truncated) ... 0e0 ph\\u1ed5 bi\\u1ebfn k\\u1ebf ho\\u1ea1ch, \\u0111\\u00f3ng vai tr\\u00f2 \\u0111\\u1ea7u m\\u1ed1i t\\u1ed5ng h\\u1ee3p.", "diem_tin_cay": 0.85}', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': '{"save_document": true, "num_chunks": 0, "chunk_types": {}, "total_chars": 0, "message": "Data Service kh\\u00f4ng ph\\u1ea3n h\\u1ed3i: All connection attempts failed", "stored": false}', 'processing_time': 42.641, 'related_documents': '[]', 'documents_document_id': UUID('eaeace80-ab6e-4b71-8ce5-109f54495638')}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...huc_vu_nguoi_ky='Giám đốc Học viện', ngay_van_ban='28 tháng ...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 130, in process_document_background
+    db.commit()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2030, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1311, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1286, in _prepare_impl
+    self.session.flush()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4331, in flush
+    self._flush(objects)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4466, in _flush
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4427, in _flush
+    flush_context.execute()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 85, in save_obj
+    _emit_update_statements(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 912, in _emit_update_statements
+    c = connection.execute(
+        ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.DataError: (psycopg2.errors.InvalidDatetimeFormat) invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...huc_vu_nguoi_ky='Giám đốc Học viện', ngay_van_ban='28 tháng ...
+                                                             ^
+
+[SQL: UPDATE documents SET so_ky_hieu=%(so_ky_hieu)s, trich_yeu=%(trich_yeu)s, loai_van_ban_text=%(loai_van_ban_text)s, don_vi_ban_hanh=%(don_vi_ban_hanh)s, chuc_vu_nguoi_ky=%(chuc_vu_nguoi_ky)s, ngay_van_ban=%(ngay_van_ban)s, do_khan=%(do_khan)s, noi_nhan=%(noi_nhan)s::JSONB, can_cu_phap_ly=%(can_cu_phap_ly)s::JSONB, yeu_cau_hanh_dong=%(yeu_cau_hanh_dong)s, status=%(status)s, summary=%(summary)s, key_points=%(key_points)s::JSONB, confidence=%(confidence)s, muc_tin_cay=%(muc_tin_cay)s, loai_van_ban=%(loai_van_ban)s::JSONB, de_xuat_xu_ly=%(de_xuat_xu_ly)s::JSONB, goi_y_phong_ban=%(goi_y_phong_ban)s::JSONB, total_chunks_processed=%(total_chunks_processed)s, source_pages=%(source_pages)s, storage_info=%(storage_info)s::JSONB, processing_time=%(processing_time)s, updated_at=now(), related_documents=%(related_documents)s::JSONB WHERE documents.document_id = %(documents_document_id)s::UUID]
+[parameters: {'so_ky_hieu': '97/KH-HV', 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'loai_van_ban_text': 'ke_hoach', 'don_vi_ban_hanh': 'HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG', 'chuc_vu_nguoi_ky': 'Giám đốc Học viện', 'ngay_van_ban': '28 tháng 2 năm 2017', 'do_khan': 'thuong', 'noi_nhan': '["Ban GDHV (b/c)", "C\\u00e1c \\u0111\\u01a1n v\\u1ecb tr\\u00ean (t/h)", "L\\u01b0u: VT, VP"]', 'can_cu_phap_ly': '["Chi\\u1ebfn l\\u01b0\\u1ee3c, m\\u1ee5c ti\\u00eau ph\\u00e1t tri\\u1ec3n c\\u1ee7a B\\u1ed9 Th\\u00f4ng tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020"]', 'yeu_cau_hanh_dong': 'Các đơn vị (Văn phòng, Tổ soạn thảo, Phòng Tài chính Kế toán, Phòng Chính trị và Công tác sinh viên) thực hiện phân công nhiệm vụ cụ thể để hoàn thành kế hoạch rà soát và hiệu chỉnh chiến lược.', 'status': 'processed', 'summary': 'Văn bản là Kế hoạch số 97/KH-HV do Học viện Công nghệ Bưu chính Viễn thông ban hành ngày 28 tháng 2 năm 2017, nhằm rà soát và hiệu chỉnh sứ mạng, tầm ... (837 characters truncated) ...  đơn vị chức năng để đảm bảo tiến độ và hiệu quả thực hiện. Việc ban hành văn bản này đánh dấu sự khởi đầu cho quy trình chiến lược mới của Học viện.', 'key_points': '["Ban h\\u00e0nh K\\u1ebf ho\\u1ea1ch r\\u00e0 so\\u00e1t, hi\\u1ec7u ch\\u1ec9nh s\\u1ee9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn v\\u00e0 m\\u1ee5c ti\\u0 ... (657 characters truncated) ... e9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn t\\u1edbi to\\u00e0n th\\u1ec3 c\\u00e1n b\\u1ed9, gi\\u1ea3ng vi\\u00ean v\\u00e0 ng\\u01b0\\u1eddi h\\u1ecdc."]', 'confidence': 0.85, 'muc_tin_cay': 'high', 'loai_van_ban': '{"nhan": "ke_hoach", "diem_tin_cay": 0.95}', 'de_xuat_xu_ly': '{"so_ngay_de_xuat": 7, "muc_uu_tien": "b\\u00ecnh th\\u01b0\\u1eddng", "ly_do": "V\\u0103n b\\u1ea3n l\\u00e0 lo\\u1ea1i K\\u1ebf ho\\u1ea1ch (ke_hoa ... (212 characters truncated) ... \\u00ecnh l\\u00e0 7 ng\\u00e0y \\u0111\\u1ec3 c\\u00e1c \\u0111\\u01a1n v\\u1ecb ph\\u1ed1i h\\u1ee3p ho\\u00e0n th\\u00e0nh nhi\\u1ec7m v\\u1ee5."}', 'goi_y_phong_ban': '{"_buoc_1_tu_khoa_chuc_nang": ["ra so\\u00e1t chi\\u1ebfn l\\u01b0\\u1ee3c", "s\\u1ee9 m\\u1ea1ng", "t\\u1ea7m nh\\u00ecn", "m\\u1ee5c ti\\u00eau", " ... (1642 characters truncated) ... 0e0 ph\\u1ed5 bi\\u1ebfn k\\u1ebf ho\\u1ea1ch, \\u0111\\u00f3ng vai tr\\u00f2 \\u0111\\u1ea7u m\\u1ed1i t\\u1ed5ng h\\u1ee3p.", "diem_tin_cay": 0.85}', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': '{"save_document": true, "num_chunks": 0, "chunk_types": {}, "total_chars": 0, "message": "Data Service kh\\u00f4ng ph\\u1ea3n h\\u1ed3i: All connection attempts failed", "stored": false}', 'processing_time': 42.641, 'related_documents': '[]', 'documents_document_id': UUID('eaeace80-ab6e-4b71-8ce5-109f54495638')}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+[2026-07-01 04:51:18,913] [ADCS2607010450362054526] [INFO] Đã fallback cập nhật trạng thái 'failed' cho document_id=eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:18,913] [ADCS2607010450362054526] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=eaeace80-ab6e-4b71-8ce5-109f54495638
+[2026-07-01 04:51:37,041] [ADCS2607010451370414649] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-07-01 04:51:37,062] [ADCS2607010451370414649] [INFO] 📤 HOÀN THÀNH: 200 (Mất 21.30ms)
+[2026-07-01 04:51:37,062] [ADCS2607010451370414649] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:37,063] [ADCS2607010451370414649] [INFO] Bắt đầu gửi file '2017_97KH-HV về rà soát, xây dựng TNSM năm 2017.pdf' tới AI Service (save_document=True)
+[2026-07-01 04:51:37,193] [ADCS2607010451371938171] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:37,197] [ADCS2607010451371938171] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.10ms)
+[2026-07-01 04:51:46,242] [ADCS2607010451462421656] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:46,246] [ADCS2607010451462421656] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.39ms)
+[2026-07-01 04:51:52,227] [ADCS2607010451522275400] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:52,231] [ADCS2607010451522275400] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.96ms)
+[2026-07-01 04:51:55,234] [ADCS2607010451552343853] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:55,237] [ADCS2607010451552343853] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.71ms)
+[2026-07-01 04:51:58,232] [ADCS2607010451582327969] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:51:58,235] [ADCS2607010451582327969] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.38ms)
+[2026-07-01 04:52:01,258] [ADCS2607010452012582325] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:01,264] [ADCS2607010452012582325] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.79ms)
+[2026-07-01 04:52:07,221] [ADCS2607010452072214242] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:07,224] [ADCS2607010452072214242] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.13ms)
+[2026-07-01 04:52:10,254] [ADCS2607010452102543546] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:10,260] [ADCS2607010452102543546] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.88ms)
+[2026-07-01 04:52:13,226] [ADCS2607010452132267947] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:13,228] [ADCS2607010452132267947] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.20ms)
+[2026-07-01 04:52:17,852] [ADCS2607010451370414649] [INFO] AI Service phản hồi thành công cho file '2017_97KH-HV về rà soát, xây dựng TNSM năm 2017.pdf'
+[2026-07-01 04:52:17,853] [ADCS2607010451370414649] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Kế hoạch rà soát, hiệu chỉnh sứ mạng, tầm nhìn và mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông, được ban hành vào ngày 28 tháng 2 năm 2017. Mục đích chính của kế hoạch là xác định lại các định hướng phát triển cốt lõi của Học viện trong giai đoạn tới. Nội dung văn bản quy định chi tiết vai trò và nhiệm vụ của các đơn vị thực hiện, bao gồm Văn phòng Học viện và Tổ soạn thảo đặc biệt. Văn phòng Học viện chịu trách nhiệm trình ký, phối hợp lấy ý kiến, thanh quyết toán kinh phí và phổ biến rộng rãi đến toàn thể cán bộ. Tổ soạn thảo có nhiệm vụ nghiên cứu chiến lược của Bộ, phân tích thực trạng và xây dựng dự thảo kế hoạch. Phòng Tài chính Kế toán phối hợp với Văn phòng trong công tác tài chính, trong khi Phòng Chính trị và Công tác sinh viên hỗ trợ công tác tuyên truyền tới người học. Văn bản yêu cầu các đơn vị liên quan phối hợp chặt chẽ để hoàn thiện nội dung trước khi ban hành chính thức. Kết quả của quá trình này sẽ là cơ sở định hướng phát triển dài hạn cho Học viện. Các đơn vị cần tuân thủ quy trình đã đề ra để đảm bảo tính thống nhất và hiệu quả.', 'key_points': ['Ban hành Kế hoạch rà soát, hiệu chỉnh sứ mạng, tầm nhìn và mục tiêu chiến lược của Học viện.', 'Phân công nhiệm vụ cụ thể cho Văn phòng Học viện, Tổ soạn thảo, Phòng Tài chính Kế toán và Phòng Chính trị và Công tác sinh viên.', 'Yêu cầu phối hợp tổ chức họp lấy ý kiến các đơn vị và phổ biến tuyên truyền đến toàn thể cán bộ, giảng viên.', 'Nghiên cứu chiến lược của Bộ Thông tin và Truyền thông giai đoạn 2017-2020 để xây dựng dự thảo kế hoạch.'], 'loai_van_ban': {'nhan': 'ke_hoach', 'diem_tin_cay': 0.98}, 'extracted_fields': {'so_hieu_van_ban': '97/KH-HV', 'ngay_ban_hanh': '28 tháng 2 năm 2017', 'co_quan_ban_hanh': 'Học viện Công nghệ Bưu chính Viễn thông', 'nguoi_ky': None, 'chuc_vu_nguoi_ky': None, 'noi_nhan': ['Ban GDHV', 'Các đơn vị trên', 'VT', 'VP'], 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'can_cu_phap_ly': ['Chiến lược, mục tiêu phát triển của Bộ Thông tin và Truyền thông giai đoạn 2017-2020'], 'yeu_cau_hanh_dong': 'Tổ chức thực hiện rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược; phối hợp lấy ý kiến, thanh quyết toán kinh phí và phổ biến tuyên truyền.', 'do_khan': None}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 7, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là Kế hoạch (ke_hoach) nên thời gian xử lý mặc định là 5-10 ngày. Do không có chỉ dẫn về tính khẩn cấp (thường), nên đề xuất mức trung bình là 7 ngày để các đơn vị có đủ thời gian nghiên cứu và phối hợp.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['tổ chức thực hiện', 'thanh quyết toán', 'phổ biến tuyên truyền', 'lấy ý kiến đơn vị', 'quản lý nhân sự'], '_buoc_2_ung_vien': ['Văn phòng Học viện — phù hợp vì đảm nhiệm vai trò đầu mối tổ chức, trình ký, phối hợp lấy ý kiến và quản lý thủ tục hành chính.', 'Phòng Chính trị và Công tác Sinh viên — phù hợp vì chịu trách nhiệm tuyên truyền, phổ biến nội dung văn bản tới người học.', 'Phòng Tổ chức Cán bộ Lao động — loại vì văn bản không đề cập trực tiếp đến công tác bổ nhiệm hay quản lý hồ sơ nhân sự cụ thể.'], '_buoc_3_ket_luan': 'Chọn Văn phòng Học viện vì đây là đơn vị đầu mối chịu trách nhiệm chính trong việc tổ chức thực hiện, trình ký ban hành kế hoạch và phối hợp các bộ phận khác.', 'phong_ban': 'VP', 'id_phong_ban': 4, 'ten_hien_thi': 'Văn phòng', 'nguoi_xu_ly_de_xuat': 'Giám đốc Học viện (thông qua Văn phòng)', 'ly_do': 'Văn phòng Học viện được giao nhiệm vụ chính trong mục II.1, bao gồm trình Giám đốc ký, phối hợp tổ chức họp lấy ý kiến và làm thủ tục thanh quyết toán, đóng vai trò điều phối chung của toàn bộ kế hoạch.', 'diem_tin_cay': 0.95}, 'diem_tin_cay': 0.95, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 40.77}
+[2026-07-01 04:52:17,857] [ADCS2607010451370414649] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:17,866] [ADCS2607010451370414649] [ERROR] Crash hệ thống trong background task xử lý tài liệu (id=b4b42260-eda0-4d13-9aca-572f82180f04): (psycopg2.errors.InvalidDatetimeFormat) invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...iện Công nghệ Bưu chính Viễn thông', ngay_van_ban='28 tháng ...
+                                                             ^
+
+[SQL: UPDATE documents SET assigned_department_id=%(assigned_department_id)s::UUID, so_ky_hieu=%(so_ky_hieu)s, trich_yeu=%(trich_yeu)s, loai_van_ban_text=%(loai_van_ban_text)s, don_vi_ban_hanh=%(don_vi_ban_hanh)s, ngay_van_ban=%(ngay_van_ban)s, noi_nhan=%(noi_nhan)s::JSONB, can_cu_phap_ly=%(can_cu_phap_ly)s::JSONB, yeu_cau_hanh_dong=%(yeu_cau_hanh_dong)s, status=%(status)s, summary=%(summary)s, key_points=%(key_points)s::JSONB, confidence=%(confidence)s, muc_tin_cay=%(muc_tin_cay)s, loai_van_ban=%(loai_van_ban)s::JSONB, de_xuat_xu_ly=%(de_xuat_xu_ly)s::JSONB, goi_y_phong_ban=%(goi_y_phong_ban)s::JSONB, total_chunks_processed=%(total_chunks_processed)s, source_pages=%(source_pages)s, storage_info=%(storage_info)s::JSONB, processing_time=%(processing_time)s, updated_at=now(), related_documents=%(related_documents)s::JSONB WHERE documents.document_id = %(documents_document_id)s::UUID]
+[parameters: {'assigned_department_id': '1d7422de-3c0d-45ce-8c5e-293653a7a11d', 'so_ky_hieu': '97/KH-HV', 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'loai_van_ban_text': 'ke_hoach', 'don_vi_ban_hanh': 'Học viện Công nghệ Bưu chính Viễn thông', 'ngay_van_ban': '28 tháng 2 năm 2017', 'noi_nhan': '["Ban GDHV", "C\\u00e1c \\u0111\\u01a1n v\\u1ecb tr\\u00ean", "VT", "VP"]', 'can_cu_phap_ly': '["Chi\\u1ebfn l\\u01b0\\u1ee3c, m\\u1ee5c ti\\u00eau ph\\u00e1t tri\\u1ec3n c\\u1ee7a B\\u1ed9 Th\\u00f4ng tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020"]', 'yeu_cau_hanh_dong': 'Tổ chức thực hiện rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược; phối hợp lấy ý kiến, thanh quyết toán kinh phí và phổ biến tuyên truyền.', 'status': 'processed', 'summary': 'Văn bản là Kế hoạch rà soát, hiệu chỉnh sứ mạng, tầm nhìn và mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông, được ban hành vào ngày  ... (797 characters truncated) ...  trình này sẽ là cơ sở định hướng phát triển dài hạn cho Học viện. Các đơn vị cần tuân thủ quy trình đã đề ra để đảm bảo tính thống nhất và hiệu quả.', 'key_points': '["Ban h\\u00e0nh K\\u1ebf ho\\u1ea1ch r\\u00e0 so\\u00e1t, hi\\u1ec7u ch\\u1ec9nh s\\u1ee9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn v\\u00e0 m\\u1ee5c ti\\u0 ... (715 characters truncated) ... tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020 \\u0111\\u1ec3 x\\u00e2y d\\u1ef1ng d\\u1ef1 th\\u1ea3o k\\u1ebf ho\\u1ea1ch."]', 'confidence': 0.95, 'muc_tin_cay': 'high', 'loai_van_ban': '{"nhan": "ke_hoach", "diem_tin_cay": 0.98}', 'de_xuat_xu_ly': '{"so_ngay_de_xuat": 7, "muc_uu_tien": "b\\u00ecnh th\\u01b0\\u1eddng", "ly_do": "V\\u0103n b\\u1ea3n l\\u00e0 K\\u1ebf ho\\u1ea1ch (ke_hoach) n\\u00e ... (278 characters truncated) ... e0y \\u0111\\u1ec3 c\\u00e1c \\u0111\\u01a1n v\\u1ecb c\\u00f3 \\u0111\\u1ee7 th\\u1eddi gian nghi\\u00ean c\\u1ee9u v\\u00e0 ph\\u1ed1i h\\u1ee3p."}', 'goi_y_phong_ban': '{"_buoc_1_tu_khoa_chuc_nang": ["t\\u1ed5 ch\\u1ee9c th\\u1ef1c hi\\u1ec7n", "thanh quy\\u1ebft to\\u00e1n", "ph\\u1ed5 bi\\u1ebfn tuy\\u00ean truy\\u ... (1976 characters truncated) ... \u00e1n, \\u0111\\u00f3ng vai tr\\u00f2 \\u0111i\\u1ec1u ph\\u1ed1i chung c\\u1ee7a to\\u00e0n b\\u1ed9 k\\u1ebf ho\\u1ea1ch.", "diem_tin_cay": 0.95}', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': '{"save_document": true, "num_chunks": 0, "chunk_types": {}, "total_chars": 0, "message": "Data Service kh\\u00f4ng ph\\u1ea3n h\\u1ed3i: All connection attempts failed", "stored": false}', 'processing_time': 40.77, 'related_documents': '[]', 'documents_document_id': UUID('b4b42260-eda0-4d13-9aca-572f82180f04')}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...iện Công nghệ Bưu chính Viễn thông', ngay_van_ban='28 tháng ...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 130, in process_document_background
+    db.commit()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2030, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1311, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1286, in _prepare_impl
+    self.session.flush()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4331, in flush
+    self._flush(objects)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4466, in _flush
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4427, in _flush
+    flush_context.execute()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 85, in save_obj
+    _emit_update_statements(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 912, in _emit_update_statements
+    c = connection.execute(
+        ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.DataError: (psycopg2.errors.InvalidDatetimeFormat) invalid input syntax for type date: "28 tháng 2 năm 2017"
+LINE 1: ...iện Công nghệ Bưu chính Viễn thông', ngay_van_ban='28 tháng ...
+                                                             ^
+
+[SQL: UPDATE documents SET assigned_department_id=%(assigned_department_id)s::UUID, so_ky_hieu=%(so_ky_hieu)s, trich_yeu=%(trich_yeu)s, loai_van_ban_text=%(loai_van_ban_text)s, don_vi_ban_hanh=%(don_vi_ban_hanh)s, ngay_van_ban=%(ngay_van_ban)s, noi_nhan=%(noi_nhan)s::JSONB, can_cu_phap_ly=%(can_cu_phap_ly)s::JSONB, yeu_cau_hanh_dong=%(yeu_cau_hanh_dong)s, status=%(status)s, summary=%(summary)s, key_points=%(key_points)s::JSONB, confidence=%(confidence)s, muc_tin_cay=%(muc_tin_cay)s, loai_van_ban=%(loai_van_ban)s::JSONB, de_xuat_xu_ly=%(de_xuat_xu_ly)s::JSONB, goi_y_phong_ban=%(goi_y_phong_ban)s::JSONB, total_chunks_processed=%(total_chunks_processed)s, source_pages=%(source_pages)s, storage_info=%(storage_info)s::JSONB, processing_time=%(processing_time)s, updated_at=now(), related_documents=%(related_documents)s::JSONB WHERE documents.document_id = %(documents_document_id)s::UUID]
+[parameters: {'assigned_department_id': '1d7422de-3c0d-45ce-8c5e-293653a7a11d', 'so_ky_hieu': '97/KH-HV', 'trich_yeu': 'Rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông.', 'loai_van_ban_text': 'ke_hoach', 'don_vi_ban_hanh': 'Học viện Công nghệ Bưu chính Viễn thông', 'ngay_van_ban': '28 tháng 2 năm 2017', 'noi_nhan': '["Ban GDHV", "C\\u00e1c \\u0111\\u01a1n v\\u1ecb tr\\u00ean", "VT", "VP"]', 'can_cu_phap_ly': '["Chi\\u1ebfn l\\u01b0\\u1ee3c, m\\u1ee5c ti\\u00eau ph\\u00e1t tri\\u1ec3n c\\u1ee7a B\\u1ed9 Th\\u00f4ng tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020"]', 'yeu_cau_hanh_dong': 'Tổ chức thực hiện rà soát, hiệu chỉnh sứ mạng, tầm nhìn, mục tiêu chiến lược; phối hợp lấy ý kiến, thanh quyết toán kinh phí và phổ biến tuyên truyền.', 'status': 'processed', 'summary': 'Văn bản là Kế hoạch rà soát, hiệu chỉnh sứ mạng, tầm nhìn và mục tiêu chiến lược của Học viện Công nghệ Bưu chính Viễn thông, được ban hành vào ngày  ... (797 characters truncated) ...  trình này sẽ là cơ sở định hướng phát triển dài hạn cho Học viện. Các đơn vị cần tuân thủ quy trình đã đề ra để đảm bảo tính thống nhất và hiệu quả.', 'key_points': '["Ban h\\u00e0nh K\\u1ebf ho\\u1ea1ch r\\u00e0 so\\u00e1t, hi\\u1ec7u ch\\u1ec9nh s\\u1ee9 m\\u1ea1ng, t\\u1ea7m nh\\u00ecn v\\u00e0 m\\u1ee5c ti\\u0 ... (715 characters truncated) ... tin v\\u00e0 Truy\\u1ec1n th\\u00f4ng giai \\u0111o\\u1ea1n 2017-2020 \\u0111\\u1ec3 x\\u00e2y d\\u1ef1ng d\\u1ef1 th\\u1ea3o k\\u1ebf ho\\u1ea1ch."]', 'confidence': 0.95, 'muc_tin_cay': 'high', 'loai_van_ban': '{"nhan": "ke_hoach", "diem_tin_cay": 0.98}', 'de_xuat_xu_ly': '{"so_ngay_de_xuat": 7, "muc_uu_tien": "b\\u00ecnh th\\u01b0\\u1eddng", "ly_do": "V\\u0103n b\\u1ea3n l\\u00e0 K\\u1ebf ho\\u1ea1ch (ke_hoach) n\\u00e ... (278 characters truncated) ... e0y \\u0111\\u1ec3 c\\u00e1c \\u0111\\u01a1n v\\u1ecb c\\u00f3 \\u0111\\u1ee7 th\\u1eddi gian nghi\\u00ean c\\u1ee9u v\\u00e0 ph\\u1ed1i h\\u1ee3p."}', 'goi_y_phong_ban': '{"_buoc_1_tu_khoa_chuc_nang": ["t\\u1ed5 ch\\u1ee9c th\\u1ef1c hi\\u1ec7n", "thanh quy\\u1ebft to\\u00e1n", "ph\\u1ed5 bi\\u1ebfn tuy\\u00ean truy\\u ... (1976 characters truncated) ... \u00e1n, \\u0111\\u00f3ng vai tr\\u00f2 \\u0111i\\u1ec1u ph\\u1ed1i chung c\\u1ee7a to\\u00e0n b\\u1ed9 k\\u1ebf ho\\u1ea1ch.", "diem_tin_cay": 0.95}', 'total_chunks_processed': 1, 'source_pages': 2, 'storage_info': '{"save_document": true, "num_chunks": 0, "chunk_types": {}, "total_chars": 0, "message": "Data Service kh\\u00f4ng ph\\u1ea3n h\\u1ed3i: All connection attempts failed", "stored": false}', 'processing_time': 40.77, 'related_documents': '[]', 'documents_document_id': UUID('b4b42260-eda0-4d13-9aca-572f82180f04')}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+[2026-07-01 04:52:17,875] [ADCS2607010451370414649] [INFO] Đã fallback cập nhật trạng thái 'failed' cho document_id=b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:17,875] [ADCS2607010451370414649] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:19,225] [ADCS2607010452192252459] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:19,228] [ADCS2607010452192252459] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.00ms)
+[2026-07-01 04:52:36,559] [ADCS2607010452365592940] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-07-01 04:52:36,565] [ADCS2607010452365592940] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-07-01 04:52:36,792] [ADCS2607010452365592940] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-07-01 04:52:36,793] [ADCS2607010452365592940] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-07-01 04:52:36,793] [ADCS2607010452365592940] [INFO] 📤 HOÀN THÀNH: 500 (Mất 233.85ms)
+[2026-07-01 04:52:42,193] [ADCS2607010452421922405] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:42,196] [ADCS2607010452421922405] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.51ms)
+[2026-07-01 04:52:46,131] [ADCS2607010452461306636] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-07-01 04:52:46,135] [ADCS2607010452461306636] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-07-01 04:52:46,199] [ADCS2607010452461306636] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-07-01 04:52:46,202] [ADCS2607010452461306636] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-07-01 04:52:46,203] [ADCS2607010452461306636] [INFO] 📤 HOÀN THÀNH: 500 (Mất 72.25ms)
+[2026-07-01 04:52:50,169] [ADCS2607010452501692974] [INFO] 📥 BẮT ĐẦU: GET /api/documents/b4b42260-eda0-4d13-9aca-572f82180f04
+[2026-07-01 04:52:50,171] [ADCS2607010452501692974] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.33ms)

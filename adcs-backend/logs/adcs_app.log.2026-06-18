@@ -1,0 +1,611 @@
+[2026-06-18 00:00:01,806] [ADCS2606180000018064738] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-18 00:00:01,807] [ADCS2606180000018064738] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-18 00:00:01,808] [ADCS2606180000018064738] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.52ms)
+[2026-06-18 08:06:45,241] [ADCS2606180806452402717] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:06:45,245] [ADCS2606180806452402717] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:06:45,251] [ADCS2606180806452402717] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.18ms)
+[2026-06-18 08:11:41,461] [ADCS2606180811414618594] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-18 08:11:41,461] [ADCS2606180811414615220] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-18 08:11:41,498] [ADCS2606180811414615220] [INFO] 📤 HOÀN THÀNH: 200 (Mất 36.46ms)
+[2026-06-18 08:11:41,520] [ADCS2606180811414618594] [INFO] 📤 HOÀN THÀNH: 200 (Mất 59.25ms)
+[2026-06-18 08:11:50,860] [ADCS2606180811508601436] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-18 08:11:50,870] [ADCS2606180811508601436] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-18 08:11:51,021] [ADCS2606180811508601436] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-06-18 08:11:51,026] [ADCS2606180811508601436] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-06-18 08:11:51,026] [ADCS2606180811508601436] [INFO] 📤 HOÀN THÀNH: 500 (Mất 165.58ms)
+[2026-06-18 08:11:52,978] [ADCS2606180811529787503] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-18 08:11:52,983] [ADCS2606180811529787503] [INFO] Fetching all departments
+[2026-06-18 08:11:53,017] [ADCS2606180811529787503] [INFO] Built department tree with 2 root nodes
+[2026-06-18 08:11:53,023] [ADCS2606180811529787503] [INFO] 📤 HOÀN THÀNH: 200 (Mất 44.32ms)
+[2026-06-18 08:11:55,843] [ADCS2606180811558428258] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:11:55,846] [ADCS2606180811558428258] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:11:55,872] [ADCS2606180811558428258] [INFO] 📤 HOÀN THÀNH: 200 (Mất 29.82ms)
+[2026-06-18 08:11:56,608] [ADCS2606180811566086538] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-18 08:11:56,614] [ADCS2606180811566086538] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-18 08:11:56,731] [ADCS2606180811566086538] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-06-18 08:11:56,732] [ADCS2606180811566086538] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-06-18 08:11:56,732] [ADCS2606180811566086538] [INFO] 📤 HOÀN THÀNH: 500 (Mất 124.12ms)
+[2026-06-18 08:12:33,302] [ADCS2606180812333022962] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:33,304] [ADCS2606180812333022962] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:33,308] [ADCS2606180812333022962] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.99ms)
+[2026-06-18 08:12:36,308] [ADCS2606180812363088118] [INFO] 📥 BẮT ĐẦU: DELETE /api/translations/56869889-b251-4666-bcd8-f413e27e4a51
+[2026-06-18 08:12:36,325] [ADCS2606180812363088118] [INFO] Đã xóa thành công bản ghi dịch thuật log_id: 56869889-b251-4666-bcd8-f413e27e4a51
+[2026-06-18 08:12:36,326] [ADCS2606180812363088118] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.63ms)
+[2026-06-18 08:12:39,858] [ADCS2606180812398585424] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-18 08:12:39,865] [ADCS2606180812398585424] [INFO] Bắt đầu xử lý upload 1 file dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:39,873] [ADCS2606180812398585424] [INFO] Đã tạo bản ghi dịch thuật: b92acca2-2664-446d-8d90-e3b5f68c2ab1 cho file pdf_thường.pdf
+[2026-06-18 08:12:39,873] [ADCS2606180812398585424] [INFO] Hoàn tất upload cho user_id ac613023-4f11-40d7-a9cf-d6de8c27bb76. Thành công: 1, Trùng lặp: 0
+[2026-06-18 08:12:39,874] [ADCS2606180812398585424] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.84ms)
+[2026-06-18 08:12:39,874] [ADCS2606180812398585424] [INFO] [Background Task] Bắt đầu xử lý dịch thuật cho log_id: b92acca2-2664-446d-8d90-e3b5f68c2ab1 (pdf_thường.pdf)
+[2026-06-18 08:12:39,896] [ADCS2606180812398585424] [INFO] [Background Task] Đang gửi pdf_thường.pdf sang Data Service...
+[2026-06-18 08:12:39,994] [ADCS2606180812399947233] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:39,997] [ADCS2606180812399947233] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:40,001] [ADCS2606180812399947233] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.71ms)
+[2026-06-18 08:12:43,064] [ADCS2606180812430649425] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:43,065] [ADCS2606180812430649425] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:43,068] [ADCS2606180812430649425] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.87ms)
+[2026-06-18 08:12:46,157] [ADCS2606180812461561193] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:46,158] [ADCS2606180812461561193] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:46,169] [ADCS2606180812461561193] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.14ms)
+[2026-06-18 08:12:49,307] [ADCS2606180812493079371] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:49,308] [ADCS2606180812493079371] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:49,313] [ADCS2606180812493079371] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.58ms)
+[2026-06-18 08:12:52,331] [ADCS2606180812523318911] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:52,332] [ADCS2606180812523318911] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:52,352] [ADCS2606180812523318911] [INFO] 📤 HOÀN THÀNH: 200 (Mất 21.61ms)
+[2026-06-18 08:12:55,370] [ADCS2606180812553709149] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:55,372] [ADCS2606180812553709149] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:55,374] [ADCS2606180812553709149] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.88ms)
+[2026-06-18 08:12:58,387] [ADCS2606180812583872637] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:12:58,389] [ADCS2606180812583872637] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:12:58,392] [ADCS2606180812583872637] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.55ms)
+[2026-06-18 08:13:01,405] [ADCS2606180813014051570] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:13:01,406] [ADCS2606180813014051570] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:13:01,409] [ADCS2606180813014051570] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.87ms)
+[2026-06-18 08:13:04,433] [ADCS2606180813044337989] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:13:04,435] [ADCS2606180813044337989] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:13:04,439] [ADCS2606180813044337989] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.78ms)
+[2026-06-18 08:13:08,036] [ADCS2606180813080362437] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:13:08,037] [ADCS2606180813080362437] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:13:08,041] [ADCS2606180813080362437] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.73ms)
+[2026-06-18 08:13:09,921] [ADCS2606180812398585424] [INFO] [Background Task] Data Service trả về file nhị phân (application/vnd.openxmlformats-officedocument.wordprocessingml.document). Đang lưu file...
+[2026-06-18 08:13:09,922] [ADCS2606180812398585424] [ERROR] [Background Task] Lỗi hệ thống khi xử lý dịch thuật (log_id: b92acca2-2664-446d-8d90-e3b5f68c2ab1): [Errno 13] Permission denied: 'static'
+Traceback (most recent call last):
+  File "/app/app/services/translation_service.py", line 133, in process_translation_background
+    os.makedirs(save_dir, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 13] Permission denied: 'static'
+[2026-06-18 08:13:12,032] [ADCS2606180813120323050] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:13:12,034] [ADCS2606180813120323050] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:13:12,038] [ADCS2606180813120323050] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.62ms)
+[2026-06-18 08:15:03,799] [ADCS2606180815037996181] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:03,803] [ADCS2606180815037996181] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:03,848] [ADCS2606180815037996181] [INFO] 📤 HOÀN THÀNH: 200 (Mất 49.28ms)
+[2026-06-18 08:15:05,783] [ADCS2606180815057832809] [INFO] 📥 BẮT ĐẦU: DELETE /api/translations/b92acca2-2664-446d-8d90-e3b5f68c2ab1
+[2026-06-18 08:15:05,820] [ADCS2606180815057832809] [INFO] Đã xóa thành công bản ghi dịch thuật log_id: b92acca2-2664-446d-8d90-e3b5f68c2ab1
+[2026-06-18 08:15:05,821] [ADCS2606180815057832809] [INFO] 📤 HOÀN THÀNH: 200 (Mất 37.75ms)
+[2026-06-18 08:15:10,683] [ADCS2606180815106838299] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-18 08:15:10,725] [ADCS2606180815106838299] [INFO] Bắt đầu xử lý upload 1 file dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:10,741] [ADCS2606180815106838299] [INFO] Đã tạo bản ghi dịch thuật: 7f51fec2-8d6d-480c-8780-be91365b9f8b cho file pdf_thường.pdf
+[2026-06-18 08:15:10,742] [ADCS2606180815106838299] [INFO] Hoàn tất upload cho user_id ac613023-4f11-40d7-a9cf-d6de8c27bb76. Thành công: 1, Trùng lặp: 0
+[2026-06-18 08:15:10,742] [ADCS2606180815106838299] [INFO] 📤 HOÀN THÀNH: 200 (Mất 58.96ms)
+[2026-06-18 08:15:10,742] [ADCS2606180815106838299] [INFO] [Background Task] Bắt đầu xử lý dịch thuật cho log_id: 7f51fec2-8d6d-480c-8780-be91365b9f8b (pdf_thường.pdf)
+[2026-06-18 08:15:10,760] [ADCS2606180815106838299] [INFO] [Background Task] Đang gửi pdf_thường.pdf sang Data Service...
+[2026-06-18 08:15:10,915] [ADCS2606180815109152083] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:10,917] [ADCS2606180815109152083] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:10,921] [ADCS2606180815109152083] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.51ms)
+[2026-06-18 08:15:14,011] [ADCS2606180815140118133] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:14,012] [ADCS2606180815140118133] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:14,016] [ADCS2606180815140118133] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.54ms)
+[2026-06-18 08:15:17,044] [ADCS2606180815170444213] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:17,045] [ADCS2606180815170444213] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:17,050] [ADCS2606180815170444213] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.21ms)
+[2026-06-18 08:15:21,035] [ADCS2606180815210356659] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:21,037] [ADCS2606180815210356659] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:21,043] [ADCS2606180815210356659] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.45ms)
+[2026-06-18 08:15:25,038] [ADCS2606180815250384107] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:25,043] [ADCS2606180815250384107] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:25,082] [ADCS2606180815250384107] [INFO] 📤 HOÀN THÀNH: 200 (Mất 43.59ms)
+[2026-06-18 08:15:28,107] [ADCS2606180815281071203] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:28,109] [ADCS2606180815281071203] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:28,114] [ADCS2606180815281071203] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.57ms)
+[2026-06-18 08:15:31,133] [ADCS2606180815311337302] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:31,134] [ADCS2606180815311337302] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:31,138] [ADCS2606180815311337302] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.38ms)
+[2026-06-18 08:15:34,159] [ADCS2606180815341598019] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:34,161] [ADCS2606180815341598019] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:34,166] [ADCS2606180815341598019] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.19ms)
+[2026-06-18 08:15:38,038] [ADCS2606180815380384437] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:38,040] [ADCS2606180815380384437] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:38,044] [ADCS2606180815380384437] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.93ms)
+[2026-06-18 08:15:40,812] [ADCS2606180815106838299] [INFO] [Background Task] Data Service trả về file nhị phân (application/vnd.openxmlformats-officedocument.wordprocessingml.document). Đang lưu file...
+[2026-06-18 08:15:40,820] [ADCS2606180815106838299] [INFO] [Background Task] Hoàn tất dịch thuật log_id: 7f51fec2-8d6d-480c-8780-be91365b9f8b. Trạng thái: success
+[2026-06-18 08:15:42,027] [ADCS2606180815420279719] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:42,029] [ADCS2606180815420279719] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:42,033] [ADCS2606180815420279719] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.31ms)
+[2026-06-18 08:15:46,945] [ADCS2606180815469459990] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-18 08:15:47,504] [ADCS2606180815469459990] [INFO] 📤 HOÀN THÀNH: 200 (Mất 558.77ms)
+[2026-06-18 08:15:47,576] [ADCS2606180815475768641] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-18 08:15:47,577] [ADCS2606180815475776743] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-18 08:15:47,590] [ADCS2606180815475776743] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.07ms)
+[2026-06-18 08:15:47,592] [ADCS2606180815475768641] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.79ms)
+[2026-06-18 08:15:50,010] [ADCS2606180815500102335] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:15:50,011] [ADCS2606180815500102335] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:15:50,015] [ADCS2606180815500102335] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.95ms)
+[2026-06-18 08:23:58,775] [ADCS2606180823587755454] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:23:58,779] [ADCS2606180823587755454] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:23:58,817] [ADCS2606180823587755454] [INFO] 📤 HOÀN THÀNH: 200 (Mất 41.82ms)
+[2026-06-18 08:24:00,158] [ADCS2606180824001583346] [INFO] 📥 BẮT ĐẦU: GET /api/translations/7f51fec2-8d6d-480c-8780-be91365b9f8b/download
+[2026-06-18 08:24:00,191] [ADCS2606180824001583346] [INFO] 📤 HOÀN THÀNH: 200 (Mất 33.18ms)
+[2026-06-18 08:29:39,324] [ADCS2606180829393243833] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-18 08:29:39,328] [ADCS2606180829393243833] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-18 08:29:39,361] [ADCS2606180829393243833] [INFO] 📤 HOÀN THÀNH: 200 (Mất 36.89ms)
+[2026-06-18 08:29:40,976] [ADCS2606180829409768717] [INFO] 📥 BẮT ĐẦU: GET /api/translations/download-all/zip
+[2026-06-18 08:29:41,015] [ADCS2606180829409768717] [INFO] 📤 HOÀN THÀNH: 200 (Mất 38.78ms)
+[2026-06-18 12:35:48,543] [ADCS2606181235485439185] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-18 12:35:48,544] [ADCS2606181235485439185] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-18 12:35:48,544] [ADCS2606181235485439185] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.21ms)
+[2026-06-18 13:48:21,757] [ADCS2606181348217573755] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-18 13:48:21,758] [ADCS2606181348217573755] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-18 13:48:21,758] [ADCS2606181348217573755] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.23ms)
+[2026-06-18 15:27:19,066] [ADCS2606181527190651576] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-18 15:27:19,660] [ADCS2606181527190651576] [INFO] 📤 HOÀN THÀNH: 200 (Mất 594.49ms)
+[2026-06-18 15:27:19,755] [ADCS2606181527197559048] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-18 15:27:19,764] [ADCS2606181527197648016] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-18 15:27:19,769] [ADCS2606181527197559048] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.40ms)
+[2026-06-18 15:27:19,824] [ADCS2606181527197648016] [INFO] 📤 HOÀN THÀNH: 200 (Mất 60.15ms)
+[2026-06-18 15:27:35,163] [ADCS2606181527351633387] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-18 15:27:35,170] [ADCS2606181527351633387] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='Công văn'
+[2026-06-18 15:27:35,358] [ADCS2606181527351633387] [INFO] Tìm kiếm AI thành công.
+[2026-06-18 15:27:35,359] [ADCS2606181527351633387] [INFO] 📤 HOÀN THÀNH: 200 (Mất 195.65ms)
+[2026-06-18 15:30:28,294] [ADCS2606181530282949516] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-18 15:30:28,818] [ADCS2606181530282949516] [INFO] 📤 HOÀN THÀNH: 200 (Mất 523.22ms)
+[2026-06-18 15:30:28,870] [ADCS2606181530288708153] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-18 15:30:28,872] [ADCS2606181530288729648] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-18 15:30:28,906] [ADCS2606181530288729648] [INFO] 📤 HOÀN THÀNH: 200 (Mất 33.70ms)
+[2026-06-18 15:30:28,907] [ADCS2606181530288708153] [INFO] 📤 HOÀN THÀNH: 200 (Mất 36.79ms)
+[2026-06-18 15:33:02,896] [ADCS2606181533028961158] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-18 15:33:02,902] [ADCS2606181533028961158] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='thông báo nghỉ lễ'
+[2026-06-18 15:33:03,018] [ADCS2606181533028961158] [INFO] Tìm kiếm AI thành công.
+[2026-06-18 15:33:03,018] [ADCS2606181533028961158] [INFO] 📤 HOÀN THÀNH: 200 (Mất 122.04ms)
+[2026-06-18 15:48:17,789] [ADCS2606181548177896675] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-18 15:48:17,791] [ADCS2606181548177896675] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-18 15:48:17,791] [ADCS2606181548177896675] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.42ms)
+[2026-06-18 22:54:47,303] [ADCS2606182254473029291] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-18 22:54:47,304] [ADCS2606182254473029291] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-18 22:54:47,304] [ADCS2606182254473029291] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.16ms)
+[2026-06-19 02:03:36,247] [ADCS2606190203362472840] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-19 02:03:36,278] [ADCS2606190203362472840] [INFO] 📤 HOÀN THÀNH: 200 (Mất 30.61ms)
+[2026-06-19 02:04:42,056] [ADCS2606190204420562461] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:04:42,068] [ADCS2606190204420562461] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='@#$xyz123'
+[2026-06-19 02:04:43,213] [ADCS2606190204420562461] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:04:43,213] [ADCS2606190204420562461] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1157.20ms)
+[2026-06-19 02:04:57,767] [ADCS2606190204577671914] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-19 02:04:57,769] [ADCS2606190204577671914] [INFO] Truy vấn danh sách dịch thuật cho user_id: ac613023-4f11-40d7-a9cf-d6de8c27bb76
+[2026-06-19 02:04:57,771] [ADCS2606190204577671914] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.20ms)
+[2026-06-19 02:05:00,098] [ADCS2606190205000975169] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:05:00,104] [ADCS2606190205000975169] [WARNING] ⚠️ CHI TIẾT LỖI (422): {"detail":[{"type":"missing","loc":["query","query"],"msg":"Field required","input":null}],"body":null}
+[2026-06-19 02:05:00,104] [ADCS2606190205000975169] [INFO] 📤 HOÀN THÀNH: 422 (Mất 6.24ms)
+[2026-06-19 02:05:35,356] [ADCS2606190205353561815] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:05:35,367] [ADCS2606190205353561815] [WARNING] ⚠️ CHI TIẾT LỖI (422): {"detail":[{"type":"missing","loc":["query","query"],"msg":"Field required","input":null}],"body":null}
+[2026-06-19 02:05:35,367] [ADCS2606190205353561815] [INFO] 📤 HOÀN THÀNH: 422 (Mất 11.05ms)
+[2026-06-19 02:05:38,085] [ADCS2606190205380853867] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:05:38,094] [ADCS2606190205380853867] [WARNING] ⚠️ CHI TIẾT LỖI (422): {"detail":[{"type":"missing","loc":["query","query"],"msg":"Field required","input":null}],"body":null}
+[2026-06-19 02:05:38,094] [ADCS2606190205380853867] [INFO] 📤 HOÀN THÀNH: 422 (Mất 8.85ms)
+[2026-06-19 02:07:56,045] [ADCS2606190207560452405] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:07:56,053] [ADCS2606190207560452405] [WARNING] ⚠️ CHI TIẾT LỖI (422): {"detail":[{"type":"missing","loc":["query","query"],"msg":"Field required","input":null}],"body":null}
+[2026-06-19 02:07:56,053] [ADCS2606190207560452405] [INFO] 📤 HOÀN THÀNH: 422 (Mất 8.42ms)
+[2026-06-19 02:08:19,044] [ADCS2606190208190445049] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:08:19,050] [ADCS2606190208190445049] [WARNING] ⚠️ CHI TIẾT LỖI (422): {"detail":[{"type":"missing","loc":["query","query"],"msg":"Field required","input":null}],"body":null}
+[2026-06-19 02:08:19,051] [ADCS2606190208190445049] [INFO] 📤 HOÀN THÀNH: 422 (Mất 6.41ms)
+[2026-06-19 02:08:51,866] [ADCS2606190208518661183] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:08:51,875] [ADCS2606190208518661183] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công văn'
+[2026-06-19 02:08:52,027] [ADCS2606190208518661183] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:08:52,030] [ADCS2606190208518661183] [INFO] 📤 HOÀN THÀNH: 200 (Mất 164.51ms)
+[2026-06-19 02:08:53,937] [ADCS2606190208539373340] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:08:53,946] [ADCS2606190208539373340] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công văn'
+[2026-06-19 02:08:55,092] [ADCS2606190208539373340] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:08:55,093] [ADCS2606190208539373340] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1155.81ms)
+[2026-06-19 02:10:04,994] [ADCS2606190210049942719] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:10:04,997] [ADCS2606190210049942719] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='thủ tục thôi việc'
+[2026-06-19 02:10:05,070] [ADCS2606190210049942719] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:10:05,071] [ADCS2606190210049942719] [INFO] 📤 HOÀN THÀNH: 200 (Mất 76.80ms)
+[2026-06-19 02:10:24,982] [ADCS2606190210249825372] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:10:24,988] [ADCS2606190210249825372] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='lịch nghỉ lễ'
+[2026-06-19 02:10:25,066] [ADCS2606190210249825372] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:10:25,067] [ADCS2606190210249825372] [INFO] 📤 HOÀN THÀNH: 200 (Mất 84.65ms)
+[2026-06-19 02:10:33,115] [ADCS2606190210331158713] [INFO] 📥 BẮT ĐẦU: GET /api/documents/180/file
+[2026-06-19 02:10:33,116] [ADCS2606190210331158713] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=180
+[2026-06-19 02:10:33,245] [ADCS2606190210331158713] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=180
+[2026-06-19 02:10:33,245] [ADCS2606190210331158713] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1564/CV gửi các CSGD tăng cường QL HSSV dip Hè 2026.pdf
+[2026-06-19 02:10:33,245] [ADCS2606190210331158713] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:10:33,245] [ADCS2606190210331158713] [INFO] 📤 HOÀN THÀNH: 404 (Mất 130.46ms)
+[2026-06-19 02:11:03,192] [ADCS2606190211031923590] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:11:03,197] [ADCS2606190211031923590] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='ngày lễ'
+[2026-06-19 02:11:04,306] [ADCS2606190211031923590] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:11:04,306] [ADCS2606190211031923590] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1114.06ms)
+[2026-06-19 02:12:29,142] [ADCS2606190212291427936] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:12:29,147] [ADCS2606190212291427936] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='bhxh'
+[2026-06-19 02:12:29,196] [ADCS2606190212291427936] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:12:29,197] [ADCS2606190212291427936] [INFO] 📤 HOÀN THÀNH: 200 (Mất 55.09ms)
+[2026-06-19 02:12:32,521] [ADCS2606190212325216388] [INFO] 📥 BẮT ĐẦU: GET /api/documents/459/file
+[2026-06-19 02:12:32,522] [ADCS2606190212325216388] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=459
+[2026-06-19 02:12:32,555] [ADCS2606190212325216388] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=459
+[2026-06-19 02:12:32,555] [ADCS2606190212325216388] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1754/CV gui cac don vi ve gop y noi dung hop UBHH VN-BL 3.pdf
+[2026-06-19 02:12:32,555] [ADCS2606190212325216388] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:12:32,556] [ADCS2606190212325216388] [INFO] 📤 HOÀN THÀNH: 404 (Mất 34.66ms)
+[2026-06-19 02:12:43,603] [ADCS2606190212436021016] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:12:43,607] [ADCS2606190212436021016] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='bảo hiểm xã hội'
+[2026-06-19 02:12:44,739] [ADCS2606190212436021016] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:12:44,740] [ADCS2606190212436021016] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1137.09ms)
+[2026-06-19 02:13:23,194] [ADCS2606190213231941695] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:13:23,198] [ADCS2606190213231941695] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công văn'
+[2026-06-19 02:13:23,283] [ADCS2606190213231941695] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:13:23,284] [ADCS2606190213231941695] [INFO] 📤 HOÀN THÀNH: 200 (Mất 90.31ms)
+[2026-06-19 02:13:32,771] [ADCS2606190213327719122] [INFO] 📥 BẮT ĐẦU: GET /api/documents/408/file
+[2026-06-19 02:13:32,771] [ADCS2606190213327719122] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=408
+[2026-06-19 02:13:32,836] [ADCS2606190213327719122] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=408
+[2026-06-19 02:13:32,836] [ADCS2606190213327719122] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1899/01_HDanThamgiaCT2813_PL2-TChucTiemnang_v260519.pdf
+[2026-06-19 02:13:32,836] [ADCS2606190213327719122] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:13:32,836] [ADCS2606190213327719122] [INFO] 📤 HOÀN THÀNH: 404 (Mất 65.02ms)
+[2026-06-19 02:13:43,365] [ADCS2606190213433653842] [INFO] 📥 BẮT ĐẦU: GET /api/documents/390/file
+[2026-06-19 02:13:43,365] [ADCS2606190213433653842] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=390
+[2026-06-19 02:13:43,426] [ADCS2606190213433653842] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=390
+[2026-06-19 02:13:43,426] [ADCS2606190213433653842] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1967/CONG VAN DON DOC BAO CAO HE THONG BAO CAO CUA TTCP.15.6.2026.pdf
+[2026-06-19 02:13:43,427] [ADCS2606190213433653842] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:13:43,427] [ADCS2606190213433653842] [INFO] 📤 HOÀN THÀNH: 404 (Mất 61.85ms)
+[2026-06-19 02:13:51,551] [ADCS2606190213515508731] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:13:51,555] [ADCS2606190213515508731] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='KHCN'
+[2026-06-19 02:13:51,700] [ADCS2606190213515508731] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:13:51,702] [ADCS2606190213515508731] [INFO] 📤 HOÀN THÀNH: 200 (Mất 151.34ms)
+[2026-06-19 02:13:54,582] [ADCS2606190213545821023] [INFO] 📥 BẮT ĐẦU: GET /api/documents/48/file
+[2026-06-19 02:13:54,583] [ADCS2606190213545821023] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=48
+[2026-06-19 02:13:54,699] [ADCS2606190213545821023] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=48
+[2026-06-19 02:13:54,699] [ADCS2606190213545821023] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1704/KHTC - CV vv nhắc báo cáo kết quả rà soát bổ sung hoàn thiện định mức KTKT (lần 02).docx
+[2026-06-19 02:13:54,700] [ADCS2606190213545821023] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:13:54,700] [ADCS2606190213545821023] [INFO] 📤 HOÀN THÀNH: 404 (Mất 117.64ms)
+[2026-06-19 02:14:28,845] [ADCS2606190214288454139] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:14:28,850] [ADCS2606190214288454139] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='văn bản hướng dẫn cách tính lương khi làm thêm giờ vào ngày lễ'
+[2026-06-19 02:14:28,950] [ADCS2606190214288454139] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:14:28,954] [ADCS2606190214288454139] [INFO] 📤 HOÀN THÀNH: 200 (Mất 108.31ms)
+[2026-06-19 02:14:32,248] [ADCS2606190214322474395] [INFO] 📥 BẮT ĐẦU: GET /api/documents/138/file
+[2026-06-19 02:14:32,250] [ADCS2606190214322474395] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=138
+[2026-06-19 02:14:32,397] [ADCS2606190214322474395] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=138
+[2026-06-19 02:14:32,398] [ADCS2606190214322474395] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1619/161_2026_ND-CP_15052026-signed.pdf
+[2026-06-19 02:14:32,398] [ADCS2606190214322474395] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:14:32,398] [ADCS2606190214322474395] [INFO] 📤 HOÀN THÀNH: 404 (Mất 150.53ms)
+[2026-06-19 02:17:48,162] [ADCS2606190217481624289] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:17:48,167] [ADCS2606190217481624289] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='quy ddinnh khen thwong'
+[2026-06-19 02:17:51,300] [ADCS2606190217481624289] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:17:51,304] [ADCS2606190217481624289] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3141.58ms)
+[2026-06-19 02:18:06,675] [ADCS2606190218066753057] [INFO] 📥 BẮT ĐẦU: GET /api/documents/438/file
+[2026-06-19 02:18:06,675] [ADCS2606190218066753057] [INFO] Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id=438
+[2026-06-19 02:18:06,784] [ADCS2606190218066753057] [INFO] Lấy chi tiết tài liệu thành công trên Data Service. document_id=438
+[2026-06-19 02:18:06,784] [ADCS2606190218066753057] [INFO] get path: data/raw_docs/van_ban_den_da_xu_ly/doc_1923/Huong dan khen thuong_4879.pdf
+[2026-06-19 02:18:06,784] [ADCS2606190218066753057] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Không tìm thấy file vật lý trên máy chủ."}
+[2026-06-19 02:18:06,784] [ADCS2606190218066753057] [INFO] 📤 HOÀN THÀNH: 404 (Mất 109.44ms)
+[2026-06-19 02:19:13,633] [ADCS2606190219136329299] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:19:13,637] [ADCS2606190219136329299] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công văn quy định ngày nghỉ'
+[2026-06-19 02:19:13,757] [ADCS2606190219136329299] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:19:13,758] [ADCS2606190219136329299] [INFO] 📤 HOÀN THÀNH: 200 (Mất 125.60ms)
+[2026-06-19 02:20:15,640] [ADCS2606190220156401960] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:20:15,644] [ADCS2606190220156401960] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công tác sinh viên'
+[2026-06-19 02:20:15,772] [ADCS2606190220156401960] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:20:15,773] [ADCS2606190220156401960] [INFO] 📤 HOÀN THÀNH: 200 (Mất 132.58ms)
+[2026-06-19 02:21:11,410] [ADCS2606190221114107858] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:21:11,413] [ADCS2606190221114107858] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='quy định dành cho sinh viên'
+[2026-06-19 02:21:11,521] [ADCS2606190221114107858] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:21:11,522] [ADCS2606190221114107858] [INFO] 📤 HOÀN THÀNH: 200 (Mất 111.97ms)
+[2026-06-19 02:21:48,215] [ADCS2606190221482152059] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:21:48,223] [ADCS2606190221482152059] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công tác sinh viên'
+[2026-06-19 02:21:48,339] [ADCS2606190221482152059] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:21:48,340] [ADCS2606190221482152059] [INFO] 📤 HOÀN THÀNH: 200 (Mất 124.99ms)
+[2026-06-19 02:22:23,512] [ADCS2606190222235123219] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:22:23,517] [ADCS2606190222235123219] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='đầu tư hạ tầng'
+[2026-06-19 02:22:23,580] [ADCS2606190222235123219] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:22:23,584] [ADCS2606190222235123219] [INFO] 📤 HOÀN THÀNH: 200 (Mất 71.68ms)
+[2026-06-19 02:24:22,364] [ADCS2606190224223642892] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:24:22,368] [ADCS2606190224223642892] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='quy định cho giáo viên'
+[2026-06-19 02:24:22,461] [ADCS2606190224223642892] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:24:22,464] [ADCS2606190224223642892] [INFO] 📤 HOÀN THÀNH: 200 (Mất 99.93ms)
+[2026-06-19 02:25:19,295] [ADCS2606190225192946718] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:25:19,297] [ADCS2606190225192946718] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='pccc'
+[2026-06-19 02:25:19,364] [ADCS2606190225192946718] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:25:19,365] [ADCS2606190225192946718] [INFO] 📤 HOÀN THÀNH: 200 (Mất 70.27ms)
+[2026-06-19 02:25:31,046] [ADCS2606190225310469835] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:25:31,050] [ADCS2606190225310469835] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='hđld'
+[2026-06-19 02:25:31,256] [ADCS2606190225310469835] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:25:31,257] [ADCS2606190225310469835] [INFO] 📤 HOÀN THÀNH: 200 (Mất 210.67ms)
+[2026-06-19 02:27:18,465] [ADCS2606190227184659561] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:27:18,469] [ADCS2606190227184659561] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='hssv'
+[2026-06-19 02:27:18,632] [ADCS2606190227184659561] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:27:18,632] [ADCS2606190227184659561] [INFO] 📤 HOÀN THÀNH: 200 (Mất 167.15ms)
+[2026-06-19 02:27:56,825] [ADCS2606190227568258643] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:27:56,829] [ADCS2606190227568258643] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='pccc'
+[2026-06-19 02:27:56,960] [ADCS2606190227568258643] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:27:56,960] [ADCS2606190227568258643] [INFO] 📤 HOÀN THÀNH: 200 (Mất 135.24ms)
+[2026-06-19 02:29:43,825] [ADCS2606190229438259483] [INFO] 📥 BẮT ĐẦU: GET /api/documents/search
+[2026-06-19 02:29:43,828] [ADCS2606190229438259483] [INFO] Gửi yêu cầu tìm kiếm tới Data Service. query='công tác sinh viên'
+[2026-06-19 02:29:43,936] [ADCS2606190229438259483] [INFO] Tìm kiếm AI thành công.
+[2026-06-19 02:29:43,939] [ADCS2606190229438259483] [INFO] 📤 HOÀN THÀNH: 200 (Mất 114.74ms)
+[2026-06-19 03:03:20,990] [ADCS2606190303209892620] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-19 03:03:20,995] [ADCS2606190303209892620] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-19 03:03:20,995] [ADCS2606190303209892620] [INFO] 📤 HOÀN THÀNH: 404 (Mất 4.89ms)
+[2026-06-19 03:33:03,820] [ADCS2606190333038171365] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-19 03:33:05,330] [ADCS2606190333038171365] [INFO] 📤 HOÀN THÀNH: 200 (Mất 1510.42ms)
+[2026-06-19 03:33:07,335] [ADCS2606190333073358642] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-19 03:33:07,341] [ADCS2606190333073358642] [INFO] Fetching all departments
+[2026-06-19 03:33:07,359] [ADCS2606190333073358642] [INFO] Built department tree with 2 root nodes
+[2026-06-19 03:33:07,361] [ADCS2606190333073358642] [INFO] 📤 HOÀN THÀNH: 200 (Mất 25.73ms)
+[2026-06-19 03:34:34,325] [ADCS2606190334343251669] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-19 03:34:34,349] [ADCS2606190334343251669] [INFO] 📤 HOÀN THÀNH: 200 (Mất 24.38ms)
+[2026-06-19 09:27:36,325] [ADCS2606190927363234118] [INFO] 📥 BẮT ĐẦU: GET /api/env
+[2026-06-19 09:27:36,332] [ADCS2606190927363234118] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-19 09:27:36,332] [ADCS2606190927363234118] [INFO] 📤 HOÀN THÀNH: 404 (Mất 7.46ms)
+[2026-06-19 10:44:58,043] [ADCS2606191044580425675] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-19 10:44:58,044] [ADCS2606191044580425675] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-19 10:44:58,044] [ADCS2606191044580425675] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.35ms)
+[2026-06-19 14:27:49,653] [ADCS2606191427496537524] [INFO] 📥 BẮT ĐẦU: GET /api/v4/projects
+[2026-06-19 14:27:49,654] [ADCS2606191427496537524] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-19 14:27:49,655] [ADCS2606191427496537524] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.17ms)
+[2026-06-19 14:27:49,654] [ADCS2606191427496548054] [INFO] 📥 BẮT ĐẦU: GET /api/v4/snippets
+[2026-06-19 14:27:49,656] [ADCS2606191427496548054] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-19 14:27:49,656] [ADCS2606191427496548054] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.34ms)
+[2026-06-20 06:35:29,707] [ADCS2606200635297071576] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-20 06:35:29,710] [ADCS2606200635297071576] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 06:35:29,711] [ADCS2606200635297071576] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.35ms)
+[2026-06-20 08:02:06,513] [ADCS2606200802065138081] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-20 08:02:06,514] [ADCS2606200802065138081] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 08:02:06,514] [ADCS2606200802065138081] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.26ms)
+[2026-06-20 12:19:28,080] [ADCS2606201219280796294] [INFO] 📥 BẮT ĐẦU: GET /api/config
+[2026-06-20 12:19:28,081] [ADCS2606201219280796294] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:19:28,081] [ADCS2606201219280796294] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.14ms)
+[2026-06-20 12:32:29,929] [ADCS2606201232299281055] [INFO] 📥 BẮT ĐẦU: GET /api/v2/about
+[2026-06-20 12:32:29,930] [ADCS2606201232299281055] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:29,930] [ADCS2606201232299281055] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.58ms)
+[2026-06-20 12:32:31,153] [ADCS2606201232311521650] [INFO] 📥 BẮT ĐẦU: GET /api/v1/check-version
+[2026-06-20 12:32:31,153] [ADCS2606201232311521650] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:31,153] [ADCS2606201232311521650] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.97ms)
+[2026-06-20 12:32:32,549] [ADCS2606201232325493564] [INFO] 📥 BẮT ĐẦU: GET /api/server/version
+[2026-06-20 12:32:32,549] [ADCS2606201232325493564] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:32,549] [ADCS2606201232325493564] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.67ms)
+[2026-06-20 12:32:38,807] [ADCS2606201232388079424] [INFO] 📥 BẮT ĐẦU: GET /api/v1.0/environment
+[2026-06-20 12:32:38,808] [ADCS2606201232388079424] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:38,808] [ADCS2606201232388079424] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.60ms)
+[2026-06-20 12:32:40,078] [ADCS2606201232400786757] [INFO] 📥 BẮT ĐẦU: GET /api/v3/meta
+[2026-06-20 12:32:40,078] [ADCS2606201232400786757] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:40,078] [ADCS2606201232400786757] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.61ms)
+[2026-06-20 12:32:40,480] [ADCS2606201232404803056] [INFO] 📥 BẮT ĐẦU: GET /api/v1/version
+[2026-06-20 12:32:40,482] [ADCS2606201232404803056] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:40,482] [ADCS2606201232404803056] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.54ms)
+[2026-06-20 12:32:46,243] [ADCS2606201232462434605] [INFO] 📥 BẮT ĐẦU: GET /api/v1/info
+[2026-06-20 12:32:46,244] [ADCS2606201232462434605] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:46,244] [ADCS2606201232462434605] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.87ms)
+[2026-06-20 12:32:46,638] [ADCS2606201232466387145] [INFO] 📥 BẮT ĐẦU: GET /api/status
+[2026-06-20 12:32:46,639] [ADCS2606201232466387145] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:46,639] [ADCS2606201232466387145] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.54ms)
+[2026-06-20 12:32:49,487] [ADCS2606201232494872347] [INFO] 📥 BẮT ĐẦU: GET /api/v1/cluster/summary
+[2026-06-20 12:32:49,487] [ADCS2606201232494872347] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:49,487] [ADCS2606201232494872347] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.60ms)
+[2026-06-20 12:32:49,492] [ADCS2606201232494928917] [INFO] 📥 BẮT ĐẦU: GET /api/v2.0/systeminfo
+[2026-06-20 12:32:49,493] [ADCS2606201232494928917] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:49,493] [ADCS2606201232494928917] [INFO] 📤 HOÀN THÀNH: 404 (Mất 0.43ms)
+[2026-06-20 12:32:49,495] [ADCS2606201232494956635] [INFO] 📥 BẮT ĐẦU: GET /api/system/status
+[2026-06-20 12:32:49,498] [ADCS2606201232494956635] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 12:32:49,498] [ADCS2606201232494956635] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.30ms)
+[2026-06-20 13:55:59,505] [ADCS2606201355595059011] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-20 13:55:59,506] [ADCS2606201355595059011] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 13:55:59,506] [ADCS2606201355595059011] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.15ms)
+[2026-06-20 19:23:50,066] [ADCS2606201923500663413] [INFO] 📥 BẮT ĐẦU: GET /api/settings
+[2026-06-20 19:23:50,067] [ADCS2606201923500663413] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 19:23:50,067] [ADCS2606201923500663413] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.40ms)
+[2026-06-20 19:50:12,273] [ADCS2606201950122735506] [INFO] 📥 BẮT ĐẦU: GET /api/env
+[2026-06-20 19:50:12,275] [ADCS2606201950122735506] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 19:50:12,275] [ADCS2606201950122735506] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.39ms)
+[2026-06-20 20:25:21,350] [ADCS2606202025213508517] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-20 20:25:21,351] [ADCS2606202025213508517] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 20:25:21,352] [ADCS2606202025213508517] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.17ms)
+[2026-06-20 20:59:18,646] [ADCS2606202059186465048] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-20 20:59:18,647] [ADCS2606202059186465048] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-20 20:59:18,647] [ADCS2606202059186465048] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.21ms)
+[2026-06-21 02:11:09,116] [ADCS2606210211091166350] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-21 02:11:09,117] [ADCS2606210211091166350] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-21 02:11:09,117] [ADCS2606210211091166350] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.25ms)
+[2026-06-21 04:17:55,434] [ADCS2606210417554344986] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-21 04:17:55,437] [ADCS2606210417554344986] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-21 04:17:55,437] [ADCS2606210417554344986] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.12ms)
+[2026-06-21 09:25:36,983] [ADCS2606210925369833411] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-21 09:25:36,984] [ADCS2606210925369833411] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-21 09:25:36,984] [ADCS2606210925369833411] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.17ms)
+[2026-06-21 19:03:17,679] [ADCS2606211903176793508] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-21 19:03:17,680] [ADCS2606211903176793508] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-21 19:03:17,680] [ADCS2606211903176793508] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.15ms)
+[2026-06-21 20:50:04,577] [ADCS2606212050045777150] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-21 20:50:04,603] [ADCS2606212050045777150] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-21 20:50:04,603] [ADCS2606212050045777150] [INFO] 📤 HOÀN THÀNH: 404 (Mất 25.93ms)
+[2026-06-22 08:17:24,031] [ADCS2606220817240315188] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-22 08:17:24,032] [ADCS2606220817240315188] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 08:17:24,032] [ADCS2606220817240315188] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.16ms)
+[2026-06-22 11:35:39,715] [ADCS2606221135397155045] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-22 11:35:39,716] [ADCS2606221135397155045] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 11:35:39,716] [ADCS2606221135397155045] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.18ms)
+[2026-06-22 15:48:06,228] [ADCS2606221548062288359] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-22 15:48:06,229] [ADCS2606221548062288359] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 15:48:06,230] [ADCS2606221548062288359] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.62ms)
+[2026-06-22 18:30:28,662] [ADCS2606221830286625944] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-22 18:30:28,665] [ADCS2606221830286625944] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 18:30:28,665] [ADCS2606221830286625944] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.46ms)
+[2026-06-22 19:42:59,112] [ADCS2606221942591127013] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-22 19:42:59,115] [ADCS2606221942591127013] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 19:42:59,115] [ADCS2606221942591127013] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.35ms)
+[2026-06-22 21:46:30,584] [ADCS2606222146305837767] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-22 21:46:30,585] [ADCS2606222146305837767] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-22 21:46:30,585] [ADCS2606222146305837767] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.89ms)
+[2026-06-23 03:27:00,063] [ADCS2606230327000627010] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-23 03:27:00,064] [ADCS2606230327000627010] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 03:27:00,064] [ADCS2606230327000627010] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.16ms)
+[2026-06-23 06:30:43,036] [ADCS2606230630430362557] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-23 06:30:43,038] [ADCS2606230630430362557] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 06:30:43,038] [ADCS2606230630430362557] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.61ms)
+[2026-06-23 08:05:59,941] [ADCS2606230805599415517] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-23 08:05:59,942] [ADCS2606230805599415517] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 08:05:59,942] [ADCS2606230805599415517] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.14ms)
+[2026-06-23 08:06:00,523] [ADCS2606230806005234420] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-23 08:06:00,524] [ADCS2606230806005234420] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 08:06:00,524] [ADCS2606230806005234420] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.10ms)
+[2026-06-23 08:06:00,729] [ADCS2606230806007294237] [INFO] 📥 BẮT ĐẦU: GET /api/.env.local
+[2026-06-23 08:06:00,731] [ADCS2606230806007294237] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 08:06:00,731] [ADCS2606230806007294237] [INFO] 📤 HOÀN THÀNH: 404 (Mất 2.44ms)
+[2026-06-23 16:44:40,296] [ADCS2606231644402961850] [INFO] 📥 BẮT ĐẦU: GET /api/.git/config
+[2026-06-23 16:44:40,297] [ADCS2606231644402961850] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-23 16:44:40,297] [ADCS2606231644402961850] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.74ms)
+[2026-06-24 01:10:52,430] [ADCS2606240110524302491] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-24 01:10:52,431] [ADCS2606240110524302491] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-24 01:10:52,431] [ADCS2606240110524302491] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.17ms)
+[2026-06-24 02:43:49,268] [ADCS2606240243492689177] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:43:49,323] [ADCS2606240243492689177] [INFO] 📤 HOÀN THÀNH: 200 (Mất 54.83ms)
+[2026-06-24 02:45:09,095] [ADCS2606240245090956031] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-24 02:45:09,096] [ADCS2606240245090956031] [INFO] Fetching all departments
+[2026-06-24 02:45:09,103] [ADCS2606240245090956031] [INFO] Built department tree with 2 root nodes
+[2026-06-24 02:45:09,107] [ADCS2606240245090956031] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.56ms)
+[2026-06-24 02:46:22,826] [ADCS2606240246228257916] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-24 02:46:22,827] [ADCS2606240246228257916] [INFO] Fetching all departments
+[2026-06-24 02:46:22,839] [ADCS2606240246228257916] [INFO] Built department tree with 2 root nodes
+[2026-06-24 02:46:22,841] [ADCS2606240246228257916] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.34ms)
+[2026-06-24 02:46:42,324] [ADCS2606240246423241747] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:46:42,338] [ADCS2606240246423241747] [INFO] 📤 HOÀN THÀNH: 200 (Mất 13.34ms)
+[2026-06-24 02:46:56,511] [ADCS2606240246565119454] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:46:56,513] [ADCS2606240246565119454] [WARNING] ⚠️ CHI TIẾT LỖI (400): {"detail":"Region parameter must be 'north', 'south', or 'all'"}
+[2026-06-24 02:46:56,513] [ADCS2606240246565119454] [INFO] 📤 HOÀN THÀNH: 400 (Mất 1.80ms)
+[2026-06-24 02:47:14,086] [ADCS2606240247140867632] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:47:14,097] [ADCS2606240247140867632] [INFO] 📤 HOÀN THÀNH: 200 (Mất 10.85ms)
+[2026-06-24 02:48:13,136] [ADCS2606240248131367746] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:48:13,149] [ADCS2606240248131367746] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.78ms)
+[2026-06-24 02:49:01,362] [ADCS2606240249013624853] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:49:01,368] [ADCS2606240249013624853] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.11ms)
+[2026-06-24 02:55:07,954] [ADCS2606240255079546804] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 02:55:07,973] [ADCS2606240255079546804] [INFO] 📤 HOÀN THÀNH: 200 (Mất 18.76ms)
+[2026-06-24 03:02:19,338] [ADCS2606240302193383095] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 03:02:19,354] [ADCS2606240302193383095] [INFO] 📤 HOÀN THÀNH: 200 (Mất 16.07ms)
+[2026-06-24 03:02:20,489] [ADCS2606240302204886105] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 03:02:20,496] [ADCS2606240302204886105] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.31ms)
+[2026-06-24 03:02:45,033] [ADCS2606240302450332345] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 03:02:45,040] [ADCS2606240302450332345] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.58ms)
+[2026-06-24 03:02:45,253] [ADCS2606240302452531235] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 03:02:45,260] [ADCS2606240302452531235] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.57ms)
+[2026-06-24 03:03:04,670] [ADCS2606240303046691509] [INFO] 📥 BẮT ĐẦU: GET /api/departments/region
+[2026-06-24 03:03:04,682] [ADCS2606240303046691509] [INFO] 📤 HOÀN THÀNH: 200 (Mất 12.15ms)
+[2026-06-24 06:27:17,085] [ADCS2606240627170855181] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-24 06:27:17,086] [ADCS2606240627170855181] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-24 06:27:17,086] [ADCS2606240627170855181] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.20ms)
+[2026-06-24 06:35:56,317] [ADCS2606240635563172994] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-24 06:35:56,319] [ADCS2606240635563172994] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-24 06:35:56,319] [ADCS2606240635563172994] [INFO] 📤 HOÀN THÀNH: 404 (Mất 2.13ms)
+[2026-06-24 09:17:44,233] [ADCS2606240917442338843] [INFO] 📥 BẮT ĐẦU: GET /api/.env
+[2026-06-24 09:17:44,235] [ADCS2606240917442338843] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-24 09:17:44,235] [ADCS2606240917442338843] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.23ms)
+[2026-06-24 10:32:12,474] [ADCS2606241032124736019] [INFO] 📥 BẮT ĐẦU: GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+[2026-06-24 10:32:12,477] [ADCS2606241032124736019] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-24 10:32:12,477] [ADCS2606241032124736019] [INFO] 📤 HOÀN THÀNH: 404 (Mất 3.36ms)
+[2026-06-25 02:34:47,318] [ADCS2606250234473187310] [INFO] 📥 BẮT ĐẦU: GET /api/auth/sso/callback
+[2026-06-25 02:34:47,320] [ADCS2606250234473187310] [INFO] [PTIT_SSO] Request received with code
+[2026-06-25 02:34:47,561] [ADCS2606250234473187310] [INFO] [PTIT_SSO] Creating new user email=hiennv.b21cn047@stu.ptit.edu.vn
+[2026-06-25 02:34:47,907] [ADCS2606250234473187310] [INFO] [PTIT_SSO] Success user_id=1f3daa3c-5536-4e37-abc2-66eae60f4219
+[2026-06-25 02:34:47,910] [ADCS2606250234473187310] [INFO] 📤 HOÀN THÀNH: 200 (Mất 591.75ms)
+[2026-06-25 02:41:36,252] [ADCS2606250241362524404] [INFO] 📥 BẮT ĐẦU: POST /api/auth/register
+[2026-06-25 02:41:36,527] [ADCS2606250241362524404] [INFO] 📤 HOÀN THÀNH: 200 (Mất 274.53ms)
+[2026-06-25 02:41:50,031] [ADCS2606250241500316363] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-25 02:41:50,582] [ADCS2606250241500316363] [WARNING] ⚠️ CHI TIẾT LỖI (401): {"detail":"Email hoặc mật khẩu không chính xác!"}
+[2026-06-25 02:41:50,583] [ADCS2606250241500316363] [INFO] 📤 HOÀN THÀNH: 401 (Mất 551.35ms)
+[2026-06-25 02:41:57,811] [ADCS2606250241578116731] [INFO] 📥 BẮT ĐẦU: POST /api/auth/login
+[2026-06-25 02:41:58,338] [ADCS2606250241578116731] [INFO] 📤 HOÀN THÀNH: 200 (Mất 526.87ms)
+[2026-06-25 02:41:58,424] [ADCS2606250241584249679] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-25 02:41:58,426] [ADCS2606250241584262383] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-25 02:41:58,440] [ADCS2606250241584262383] [INFO] 📤 HOÀN THÀNH: 200 (Mất 13.99ms)
+[2026-06-25 02:41:58,445] [ADCS2606250241584249679] [INFO] 📤 HOÀN THÀNH: 200 (Mất 21.16ms)
+[2026-06-25 02:42:09,178] [ADCS2606250242091786944] [INFO] 📥 BẮT ĐẦU: POST /api/documents/upload
+[2026-06-25 02:42:09,193] [ADCS2606250242091786944] [INFO] 📤 HOÀN THÀNH: 200 (Mất 14.91ms)
+[2026-06-25 02:42:09,193] [ADCS2606250242091786944] [INFO] Bắt đầu tiến trình xử lý ngầm (Background Task) cho document_id=0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:09,193] [ADCS2606250242091786944] [INFO] Bắt đầu gửi file 'pdf_thường.pdf' tới AI Service (save_document=True)
+[2026-06-25 02:42:09,230] [ADCS2606250242092308873] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:09,279] [ADCS2606250242092308873] [INFO] 📤 HOÀN THÀNH: 200 (Mất 48.98ms)
+[2026-06-25 02:42:12,351] [ADCS2606250242123517158] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:12,368] [ADCS2606250242123517158] [INFO] 📤 HOÀN THÀNH: 200 (Mất 17.04ms)
+[2026-06-25 02:42:18,908] [ADCS2606250242189087200] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:18,912] [ADCS2606250242189087200] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.30ms)
+[2026-06-25 02:42:21,912] [ADCS2606250242219128726] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:21,915] [ADCS2606250242219128726] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.15ms)
+[2026-06-25 02:42:24,947] [ADCS2606250242249473335] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:24,950] [ADCS2606250242249473335] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.49ms)
+[2026-06-25 02:42:27,916] [ADCS2606250242279165482] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:27,919] [ADCS2606250242279165482] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.84ms)
+[2026-06-25 02:42:30,915] [ADCS2606250242309159732] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:30,919] [ADCS2606250242309159732] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.44ms)
+[2026-06-25 02:42:33,905] [ADCS2606250242339054704] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:33,912] [ADCS2606250242339054704] [INFO] 📤 HOÀN THÀNH: 200 (Mất 6.35ms)
+[2026-06-25 02:42:36,924] [ADCS2606250242369248735] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:36,927] [ADCS2606250242369248735] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.00ms)
+[2026-06-25 02:42:39,904] [ADCS2606250242399038349] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:39,909] [ADCS2606250242399038349] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.60ms)
+[2026-06-25 02:42:45,939] [ADCS2606250242459394072] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:45,942] [ADCS2606250242459394072] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.64ms)
+[2026-06-25 02:42:51,263] [ADCS2606250242091786944] [INFO] AI Service phản hồi thành công cho file 'pdf_thường.pdf'
+[2026-06-25 02:42:51,265] [ADCS2606250242091786944] [INFO] AI results: {'trang_thai': 'success', 'tom_tat': 'Văn bản là Quyết định số 591/QĐ-HV do Giám đốc Học viện Công nghệ Bưu chính Viễn thông ban hành vào ngày 28 tháng 4 năm 2023. Mục đích chính là ban hành Quy chế quản lý đề tài khoa học công nghệ cấp Học viện để thay thế các quy định cũ trước đây. Văn bản căn cứ vào các nghị quyết của Hội đồng học viện về tổ chức hoạt động và chiến lược phát triển khoa học công nghệ giai đoạn 2023-2025. Nội dung quyết định khẳng định việc áp dụng quy chế mới cho toàn bộ các hoạt động nghiên cứu khoa học trong Học viện. Hiệu lực của quyết định được tính từ ngày ký và thay thế các Quyết định số 628/QĐ-QLKHCN năm 2008 và số 338/QĐ-HV năm 2020. Trách nhiệm thi hành được giao cho Chánh Văn phòng, Phó Giám đốc phụ trách Cơ sở TP.HCM, các trưởng phòng ban chức năng, trưởng khoa, viện trưởng và các đơn vị liên quan. Văn bản yêu cầu các đơn vị nêu trên nghiêm túc thực hiện và chịu trách nhiệm về việc triển khai quy chế. Quyết định này được ban hành nhằm chuẩn hóa công tác quản lý khoa học công nghệ và nâng cao hiệu quả hoạt động nghiên cứu.', 'key_points': ['Ban hành Quy chế quản lý đề tài khoa học công nghệ cấp Học viện.', 'Quyết định thay thế hai văn bản cũ: số 628/QĐ-QLKHCN và số 338/QĐ-HV.', 'Hiệu lực thi hành kể từ ngày ký ban hành.', 'Giao trách nhiệm thi hành cho các trưởng phòng, khoa, viện và đơn vị liên quan.', 'Căn cứ vào Nghị quyết về chiến lược phát triển KHCN giai đoạn 2023-2025.'], 'loai_van_ban': {'nhan': 'quyet_dinh', 'diem_tin_cay': 0.95}, 'extracted_fields': {'so_hieu_van_ban': '591/QĐ-HV', 'ngay_ban_hanh': '28 tháng 4 năm 2023', 'co_quan_ban_hanh': 'Học viện Công nghệ Bưu chính Viễn thông', 'nguoi_ky': None, 'chuc_vu_nguoi_ky': 'Giám đốc Học viện Công nghệ Bưu chính Viễn thông', 'noi_nhan': ['Chánh Văn phòng Học viện', 'Phó Giám đốc Học viện phụ trách Cơ sở Học viện tại thành phố Hồ Chí Minh', 'Trưởng các phòng, Trung tâm chức năng', 'Trưởng các Khoa đào tạo', 'Viện trưởng các Viện nghiên cứu', 'Giám đốc các Trung tâm đào tạo', 'Trưởng các đơn vị và các cá nhân có liên quan'], 'trich_yeu': 'Ban hành Quy chế Quản lý đề tài khoa học công nghệ cấp Học viện.', 'can_cu_phap_ly': ['Nghị quyết số 22/NQ-HĐHV ngày 12 tháng 4 năm 2021 của Hội đồng học viện', 'Nghị quyết số 100/NQ-HĐHV ngày 24 tháng 4 năm 2023 của Hội đồng học viện', 'Nghị định số 109/2022/NĐ-CP ngày 30 tháng 12 năm 2022 của Chính phủ'], 'yeu_cau_hanh_dong': 'Chịu trách nhiệm thi hành Quyết định này.', 'do_khan': None}, 'de_xuat_thoi_han_xu_ly': {'so_ngay_de_xuat': 4, 'muc_uu_tien': 'bình thường', 'ly_do': 'Văn bản là Quyết định về ban hành quy chế nội bộ (quyet_dinh), thuộc loại cần thời gian để rà soát và triển khai quy trình mới cho các đơn vị liên quan. Không có yếu tố khẩn cấp (thường/khan) được ghi rõ trong văn bản nên áp dụng mức mặc định 3-5 ngày.'}, 'goi_y_phong_ban': {'_buoc_1_tu_khoa_chuc_nang': ['quản lý đề tài khoa học công nghệ', 'quy chế', 'nghiên cứu khoa học', 'hợp tác quốc tế', 'triển khai quy định'], '_buoc_2_ung_vien': ['Phòng Quản lý Khoa học công nghệ & HTQT — phù hợp vì trực tiếp phụ trách công tác quản lý đề tài KHCN và hợp tác quốc tế theo đề nghị của Trưởng phòng.', 'Văn phòng — phù hợp vì là đầu mối tiếp nhận và phối hợp thi hành quyết định của Giám đốc.', 'Phòng Giáo vụ — loại vì chức năng chính là quản lý đào tạo và sinh viên, không trực tiếp quản lý đề tài KHCN.'], '_buoc_3_ket_luan': "Chọn Phòng Quản lý Khoa học công nghệ & HTQT vì văn bản trực tiếp đề cập đến 'Quy chế quản lý đề tài khoa học công nghệ' và căn cứ vào đề nghị của Trưởng phòng này.", 'phong_ban': 'PLKH', 'id_phong_ban': None, 'ten_hien_thi': 'Phòng Quản lý Khoa học công nghệ & HTQT', 'nguoi_xu_ly_de_xuat': 'Trưởng phòng Quản lý Khoa học công nghệ và Hợp tác quốc tế', 'ly_do': 'Văn bản được ban hành theo đề nghị của Trưởng phòng này và nội dung quy chế hoàn toàn thuộc chức năng quản lý khoa học công nghệ của phòng.', 'diem_tin_cay': 0.92}, 'diem_tin_cay': 0.92, 'muc_tin_cay': 'high', 'total_chunks_processed': 1, 'source_pages': 1, 'storage_info': {'save_document': True, 'num_chunks': 0, 'chunk_types': {}, 'total_chars': 0, 'message': 'Data Service không phản hồi: All connection attempts failed', 'stored': False}, 'related_documents': [], 'processing_time': 42.047}
+[2026-06-25 02:42:51,269] [ADCS2606250242091786944] [INFO] Tiến hành parse kết quả AI và lưu DB cho document_id=0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:51,309] [ADCS2606250242091786944] [INFO] Đã lưu thành công dữ liệu phân tích AI vào DB. document_id=0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:51,309] [ADCS2606250242091786944] [INFO] Đã đóng phiên Session DB cho tiến trình ngầm document_id=0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:51,903] [ADCS2606250242519031390] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:42:51,906] [ADCS2606250242519031390] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.17ms)
+[2026-06-25 02:54:14,277] [ADCS2606250254142771331] [INFO] 📥 BẮT ĐẦU: GET /api/documents/0f7c06f3-30ec-4893-81f7-f11c6234ae11
+[2026-06-25 02:54:14,280] [ADCS2606250254142771331] [INFO] 📤 HOÀN THÀNH: 200 (Mất 2.75ms)
+[2026-06-25 03:00:25,304] [ADCS2606250300253041164] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:00:25,305] [ADCS2606250300253041164] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:00:25,310] [ADCS2606250300253041164] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.94ms)
+[2026-06-25 03:14:44,340] [ADCS2606250314443406389] [INFO] 📥 BẮT ĐẦU: POST /api/translations/upload
+[2026-06-25 03:14:44,358] [ADCS2606250314443406389] [INFO] Bắt đầu xử lý upload 1 file dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:14:44,373] [ADCS2606250314443406389] [INFO] Đã tạo bản ghi dịch thuật: e3de6f83-1d8b-492e-8526-2167499bd56d cho file Gxb2UkKW0AAMwML.jpeg
+[2026-06-25 03:14:44,373] [ADCS2606250314443406389] [INFO] Hoàn tất upload cho user_id 474052fc-1970-4948-886b-c4be63f833cb. Thành công: 1, Trùng lặp: 0
+[2026-06-25 03:14:44,373] [ADCS2606250314443406389] [INFO] 📤 HOÀN THÀNH: 200 (Mất 33.16ms)
+[2026-06-25 03:14:44,374] [ADCS2606250314443406389] [INFO] [Background Task] Bắt đầu xử lý dịch thuật cho log_id: e3de6f83-1d8b-492e-8526-2167499bd56d (Gxb2UkKW0AAMwML.jpeg)
+[2026-06-25 03:14:44,390] [ADCS2606250314443406389] [INFO] [Background Task] Đang gửi Gxb2UkKW0AAMwML.jpeg sang Data Service...
+[2026-06-25 03:14:44,429] [ADCS2606250314444294262] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:14:44,430] [ADCS2606250314444294262] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:14:44,434] [ADCS2606250314444294262] [INFO] 📤 HOÀN THÀNH: 200 (Mất 5.05ms)
+[2026-06-25 03:14:53,579] [ADCS2606250314535799823] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:14:53,583] [ADCS2606250314535799823] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:14:53,590] [ADCS2606250314535799823] [INFO] 📤 HOÀN THÀNH: 200 (Mất 11.09ms)
+[2026-06-25 03:14:56,652] [ADCS2606250314566522207] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:14:56,653] [ADCS2606250314566522207] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:14:56,665] [ADCS2606250314566522207] [INFO] 📤 HOÀN THÀNH: 200 (Mất 13.69ms)
+[2026-06-25 03:14:59,722] [ADCS2606250314597223978] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:14:59,723] [ADCS2606250314597223978] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:14:59,727] [ADCS2606250314597223978] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.90ms)
+[2026-06-25 03:15:00,957] [ADCS2606250314443406389] [INFO] [Background Task] Data Service trả về file nhị phân (application/vnd.openxmlformats-officedocument.wordprocessingml.document). Đang lưu file...
+[2026-06-25 03:15:00,966] [ADCS2606250314443406389] [INFO] [Background Task] Hoàn tất dịch thuật log_id: e3de6f83-1d8b-492e-8526-2167499bd56d. Trạng thái: success
+[2026-06-25 03:15:02,753] [ADCS2606250315027535577] [INFO] 📥 BẮT ĐẦU: GET /api/translations/
+[2026-06-25 03:15:02,755] [ADCS2606250315027535577] [INFO] Truy vấn danh sách dịch thuật cho user_id: 474052fc-1970-4948-886b-c4be63f833cb
+[2026-06-25 03:15:02,758] [ADCS2606250315027535577] [INFO] 📤 HOÀN THÀNH: 200 (Mất 4.60ms)
+[2026-06-25 03:15:09,306] [ADCS2606250315093061960] [INFO] 📥 BẮT ĐẦU: GET /api/translations/e3de6f83-1d8b-492e-8526-2167499bd56d/download
+[2026-06-25 03:15:09,313] [ADCS2606250315093061960] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.35ms)
+[2026-06-25 03:33:44,571] [ADCS2606250333445715447] [INFO] 📥 BẮT ĐẦU: GET /api/auth/validate-sso
+[2026-06-25 03:33:44,573] [ADCS2606250333445715447] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-25 03:33:44,573] [ADCS2606250333445715447] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.83ms)
+[2026-06-25 05:46:28,317] [ADCS2606250546283173031] [INFO] 📥 BẮT ĐẦU: GET /api/auth/sso/callback
+[2026-06-25 05:46:28,319] [ADCS2606250546283173031] [INFO] [PTIT_SSO] Request received with code
+[2026-06-25 05:46:28,573] [ADCS2606250546283173031] [INFO] [PTIT_SSO] Success user_id=1f3daa3c-5536-4e37-abc2-66eae60f4219
+[2026-06-25 05:46:28,574] [ADCS2606250546283173031] [INFO] 📤 HOÀN THÀNH: 200 (Mất 256.97ms)

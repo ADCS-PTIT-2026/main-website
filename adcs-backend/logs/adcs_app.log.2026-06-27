@@ -1,0 +1,37 @@
+[2026-06-27 07:36:18,709] [ADCS2606270736187086497] [INFO] 📥 BẮT ĐẦU: GET /api/vip/i18n/api/v2/translation/products/vRNIUI/versions/1
+[2026-06-27 07:36:18,713] [ADCS2606270736187086497] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-27 07:36:18,713] [ADCS2606270736187086497] [INFO] 📤 HOÀN THÀNH: 404 (Mất 4.37ms)
+[2026-06-27 07:36:29,698] [ADCS2606270736296989946] [INFO] 📥 BẮT ĐẦU: GET /api/v2.0/systeminfo
+[2026-06-27 07:36:29,700] [ADCS2606270736296989946] [WARNING] ⚠️ CHI TIẾT LỖI (404): {"detail":"Not Found"}
+[2026-06-27 07:36:29,700] [ADCS2606270736296989946] [INFO] 📤 HOÀN THÀNH: 404 (Mất 1.40ms)
+[2026-06-27 12:27:33,414] [ADCS2606271227334149970] [INFO] 📥 BẮT ĐẦU: GET /api/auth/sso/callback
+[2026-06-27 12:27:33,417] [ADCS2606271227334149970] [INFO] [PTIT_SSO] Request received with code
+[2026-06-27 12:27:33,652] [ADCS2606271227334149970] [INFO] [PTIT_SSO] Creating new user email=longth.b23cn510@stu.ptit.edu.vn
+[2026-06-27 12:27:33,930] [ADCS2606271227334149970] [INFO] [PTIT_SSO] Success user_id=dddd3768-0504-495e-baf9-6cd516aae031
+[2026-06-27 12:27:33,931] [ADCS2606271227334149970] [INFO] 📤 HOÀN THÀNH: 200 (Mất 517.20ms)
+[2026-06-27 12:27:33,961] [ADCS2606271227339619425] [INFO] 📥 BẮT ĐẦU: GET /api/documents/stats
+[2026-06-27 12:27:33,962] [ADCS2606271227339628225] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-27 12:27:33,969] [ADCS2606271227339619425] [INFO] 📤 HOÀN THÀNH: 200 (Mất 7.99ms)
+[2026-06-27 12:27:33,971] [ADCS2606271227339628225] [INFO] 📤 HOÀN THÀNH: 200 (Mất 9.08ms)
+[2026-06-27 12:27:43,950] [ADCS2606271227439505303] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-27 12:27:43,952] [ADCS2606271227439505303] [INFO] Fetching all departments
+[2026-06-27 12:27:43,964] [ADCS2606271227439505303] [INFO] Built department tree with 2 root nodes
+[2026-06-27 12:27:43,966] [ADCS2606271227439505303] [INFO] 📤 HOÀN THÀNH: 200 (Mất 15.95ms)
+[2026-06-27 12:28:14,906] [ADCS2606271228149069154] [INFO] 📥 BẮT ĐẦU: GET /api/documents
+[2026-06-27 12:28:14,910] [ADCS2606271228149069154] [INFO] 📤 HOÀN THÀNH: 200 (Mất 3.90ms)
+[2026-06-27 12:28:20,625] [ADCS2606271228206259824] [INFO] 📥 BẮT ĐẦU: GET /api/departments
+[2026-06-27 12:28:20,626] [ADCS2606271228206259824] [INFO] Fetching all departments
+[2026-06-27 12:28:20,639] [ADCS2606271228206259824] [INFO] Built department tree with 2 root nodes
+[2026-06-27 12:28:20,641] [ADCS2606271228206259824] [INFO] 📤 HOÀN THÀNH: 200 (Mất 16.20ms)
+[2026-06-27 12:28:21,034] [ADCS2606271228210341842] [INFO] 📥 BẮT ĐẦU: GET /api/history
+[2026-06-27 12:28:21,043] [ADCS2606271228210341842] [INFO] Đang gọi Data Service lấy lịch sử. Bộ lọc (Params): {'limit': 100, 'time_filter': '7 ngày qua'}
+[2026-06-27 12:28:21,101] [ADCS2606271228210341842] [ERROR] Lỗi HTTP khi gọi Data Service: 500 - {"detail":"(psycopg2.errors.UndefinedColumn) column upload_history.action_type does not exist\nLINE 2: ...ry.error_message AS upload_history_error_message, upload_his...\n                                                             ^\n\n[SQL: SELECT count(*) AS count_1 \nFROM (SELECT upload_history.id AS upload_history_id, upload_history.filename AS upload_history_filename, upload_history.file_type AS upload_history_file_type, upload_history.status_llm AS upload_history_status_llm, upload_history.status_save_file AS upload_history_status_save_file, upload_history.status_save_vector AS upload_history_status_save_vector, upload_history.summary AS upload_history_summary, upload_history.document_type AS upload_history_document_type, upload_history.suggested_department AS upload_history_suggested_department, upload_history.document_id AS upload_history_document_id, upload_history.attachment_id AS upload_history_attachment_id, upload_history.error_message AS upload_history_error_message, upload_history.action_type AS upload_history_action_type, upload_history.request_id AS upload_history_request_id, upload_history.created_at AS upload_history_created_at \nFROM upload_history) AS anon_1]\n(Background on this error at: https://sqlalche.me/e/20/f405)"}
+Traceback (most recent call last):
+  File "/app/app/services/history_service.py", line 37, in fetch_processing_history
+    response.raise_for_status()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'https://dataservice.ptitai.org/api/v1/history?limit=100&time_filter=7+ng%C3%A0y+qua'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+[2026-06-27 12:28:21,104] [ADCS2606271228210341842] [WARNING] ⚠️ CHI TIẾT LỖI (500): {"detail":"Máy chủ dữ liệu trả về lỗi."}
+[2026-06-27 12:28:21,104] [ADCS2606271228210341842] [INFO] 📤 HOÀN THÀNH: 500 (Mất 70.03ms)

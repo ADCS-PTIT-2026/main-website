@@ -11,5 +11,5 @@ wheels/
 
 .env
 
-app/logs
+app/logs/
 app/static

@@ -15,7 +15,8 @@ from app.services.department_service import (
     create_department_service,
     update_department_service,
     delete_department_service,
-    get_departments_by_region_service
+    get_departments_by_region_service,
+    get_mock_departments_by_region_service
 )
 
 router = APIRouter()
@@ -56,3 +57,10 @@ def search_departments_by_region(
     db: Session = Depends(get_db)
 ):
     return get_departments_by_region_service(db, region)
+
+
+@router.get("/mock_region", response_model=RegionSearchResponse | list[RegionSearchResponse])
+def search_mock_departments_by_region(
+    region: str = Query("all", description="Filter by region: 'north', 'south', or 'all'")
+):
+    return get_mock_departments_by_region_service(region)
