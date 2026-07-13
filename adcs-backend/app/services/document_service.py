@@ -15,6 +15,7 @@ from app.db.session import SessionLocal
 from app.models.document import Document
 from app.core.document_websocket import manager
 from app.models.department import Department
+from app.models.human_resource import HumanResource
 
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
@@ -47,6 +48,107 @@ async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: b
     except Exception as e:
         logger.error(f"Lỗi kết nối httpx tới AI Service: {str(e)}", exc_info=True)
         return None
+
+async def send_document_to_qlvb(db: Session, doc: Document, file_content: bytes, filename: str):
+    """Gửi file raw và kết quả phân tích sang hệ thống QLVB (test.qlvb.ript.vn)"""
+    qlvb_api_key = os.getenv("QLVB_API_KEY", "REDACTED_LEAKED_SECRET")
+    qlvb_base_url = os.getenv("QLVB_BASE_URL", "https://test.qlvb.ript.vn")
+    url = f"{qlvb_base_url}/api/qlvb/van-ban-den"
+    
+    headers = {
+        "x-gw-api-key": qlvb_api_key
+    }
+    
+    # 1. Định dạng ngày tháng
+    # ngay_van_ban: YYYY-MM-DD
+    ngay_van_ban_str = None
+    if doc.ngay_van_ban:
+        if isinstance(doc.ngay_van_ban, str):
+            ngay_van_ban_str = doc.ngay_van_ban
+        else:
+            ngay_van_ban_str = doc.ngay_van_ban.strftime('%Y-%m-%d')
+            
+    # ngay_den: YYYY-MM-DD
+    ngay_den_str = None
+    if doc.ngay_den:
+        if isinstance(doc.ngay_den, str):
+            ngay_den_str = doc.ngay_den[:10]
+        else:
+            ngay_den_str = doc.ngay_den.strftime('%Y-%m-%d')
+    else:
+        ngay_den_str = datetime.now().strftime('%Y-%m-%d')
+        
+    # han_van_ban: DD/MM/YYYY
+    han_van_ban_str = None
+    if doc.ngay_het_han:
+        if isinstance(doc.ngay_het_han, str):
+            han_van_ban_str = doc.ngay_het_han
+        else:
+            han_van_ban_str = doc.ngay_het_han.strftime('%d/%m/%Y')
+
+    # 2. Lấy thông tin lãnh đạo được trình từ bảng human_resources
+    lanh_dao_duoc_trinh = []
+    try:
+        leader = db.query(HumanResource).filter(HumanResource.is_role_qlvb == True).first()
+        if leader:
+            lanh_dao_duoc_trinh.append({
+                "name": leader.name,
+                "ma_can_bo": leader.ma_can_bo or ""
+            })
+    except Exception as e:
+        logger.error(f"Lỗi lấy thông tin lãnh đạo từ human_resources: {str(e)}")
+        
+    # 3. Xây dựng payload
+    payload = {
+        "so_ky_hieu": doc.so_ky_hieu or "",
+        "trich_yeu": doc.trich_yeu or "",
+        "ngay_van_ban": ngay_van_ban_str,
+        "ngay_den": ngay_den_str,
+        "han_van_ban": han_van_ban_str,
+        "signer": doc.nguoi_ky or "",
+        "van_ban_loai": "thuong",
+        "so_den": doc.so_den or "",
+        "don_vi_gui": doc.don_vi_ban_hanh or "",
+        "don_vi_phat_hanh": doc.don_vi_ban_hanh or "",
+        "loai_van_ban": doc.loai_van_ban_text or "",
+        "do_khan": doc.do_khan or "",
+        "do_mat": "Thường",
+        "so_van_ban": f"Sổ văn bản đến {datetime.now().year}",
+        "don_vi_tao": {
+            "name": "Học viện Công nghệ BCVT",
+            "ma_don_vi": "HVCNBCVT"
+        },
+        "lanh_dao_duoc_trinh": lanh_dao_duoc_trinh
+    }
+    
+    # Xác định content-type cho file đính kèm
+    content_type = "application/octet-stream"
+    if filename.lower().endswith(".pdf"):
+        content_type = "application/pdf"
+    elif filename.lower().endswith(".docx"):
+        content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif filename.lower().endswith(".doc"):
+        content_type = "application/msword"
+        
+    files = {
+        "attachments": (filename, file_content, content_type)
+    }
+    
+    data = {
+        "payload": json.dumps(payload, ensure_ascii=False)
+    }
+    
+    logger.info(f"Đang gửi dữ liệu văn bản sang QLVB (Endpoint: {url})...")
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(url, data=data, files=files, headers=headers)
+            response.raise_for_status()
+            logger.info(f"Gửi văn bản sang QLVB thành công! Response: {response.text}")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Lỗi HTTP khi gửi sang QLVB ({e.response.status_code}): {e.response.text}")
+    except Exception as e:
+        logger.error(f"Lỗi kết nối khi gửi sang QLVB: {str(e)}", exc_info=True)
+
 
 async def process_document_background(
     document_id: str, 
@@ -134,6 +236,11 @@ async def process_document_background(
             
             db.commit()
             logger.info(f"Đã lưu thành công dữ liệu phân tích AI vào DB. document_id={document_id}")
+
+            try:
+                await send_document_to_qlvb(db, doc, file_content, filename)
+            except Exception as qlvb_err:
+                logger.error(f"Lỗi khi gửi văn bản sang hệ thống QLVB: {str(qlvb_err)}", exc_info=True)
 
             await manager.send_personal_message({
                 "type": "DOCUMENT_PROCESSED",
