@@ -1,7 +1,9 @@
 import os
 import json
 import httpx
-from datetime import datetime
+import re
+from datetime import datetime, date
+from typing import Optional, Any
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -21,6 +23,103 @@ AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
 DATA_SERVICE_SEARCH_URL = f"{DATA_SERVICE_URL}/api/v1/search/documents"
 DATA_SERVICE_DOCUMENT_URL = f"{DATA_SERVICE_URL}/api/v1/documents"
+
+
+def parse_date_string(date_str: Any) -> Optional[date]:
+    """
+    Parse chuỗi ngày tháng từ nhiều định dạng khác nhau sang datetime.date.
+    Hỗ trợ:
+      - YYYY-MM-DD
+      - DD/MM/YYYY, DD-MM-YYYY, DD/MM/YY, DD-MM-YY
+      - "ngày DD tháng MM năm YYYY" hoặc "DD tháng MM năm YYYY" (có thể có khoảng trắng thừa)
+    Trả về None nếu không parse được hoặc giá trị không hợp lệ.
+    """
+    if not date_str:
+        return None
+        
+    if isinstance(date_str, datetime):
+        return date_str.date()
+    if isinstance(date_str, date):
+        return date_str
+        
+    if not isinstance(date_str, str):
+        return None
+        
+    date_str = date_str.strip().lower()
+    
+    # 1. Thử parse định dạng ISO YYYY-MM-DD
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        pass
+
+    # 2. Thử parse định dạng DD/MM/YYYY hoặc DD-MM-YYYY
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d/%m/%y", "%d-%m-%y"):
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except ValueError:
+            pass
+            
+    # 3. Thử parse dạng tiếng Việt: "ngày 28 tháng 2 năm 2017" hoặc "28 tháng 2 năm 2017"
+    match = re.search(r'(?:ngày\s+)?(\d+)\s+tháng\s+(\d+)\s+năm\s+(\d+)', date_str)
+    if match:
+        day = int(match.group(1))
+        month = int(match.group(2))
+        year = int(match.group(3))
+        try:
+            return date(year, month, day)
+        except ValueError:
+            pass
+            
+    return None
+
+
+def repair_truncated_json(json_str: str) -> str:
+    """
+    Sửa các chuỗi JSON bị cắt cụt do LLM trả về, ví dụ thiếu dấu ngoặc kép hoặc ngoặc nhọn.
+    """
+    json_str = json_str.strip()
+    if not json_str:
+        return "{}"
+        
+    temp_str = json_str.replace('\\"', '')
+    quote_count = temp_str.count('"')
+    
+    if quote_count % 2 != 0:
+        json_str += '"'
+        
+    json_str = json_str.rstrip()
+    if json_str.endswith(','):
+        json_str = json_str[:-1].rstrip()
+        
+    bracket_stack = []
+    in_string = False
+    escaped = False
+    for char in json_str:
+        if char == '"' and not escaped:
+            in_string = not in_string
+        elif char == '\\' and in_string:
+            escaped = not escaped
+        else:
+            escaped = False
+            
+        if not in_string:
+            if char in ('{', '['):
+                bracket_stack.append(char)
+            elif char in ('}', ']'):
+                if bracket_stack:
+                    top = bracket_stack[-1]
+                    if (char == '}' and top == '{') or (char == ']' and top == '['):
+                        bracket_stack.pop()
+                        
+    while bracket_stack:
+        top = bracket_stack.pop()
+        if top == '{':
+            json_str += '}'
+        elif top == '[':
+            json_str += ']'
+            
+    return json_str
 
 
 async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
@@ -65,6 +164,20 @@ async def process_document_background(
         ai_res = await send_to_ai_service(file_content, filename, is_save_file)
         logger.info(f"AI results: {ai_res}")
         
+        # Thử sửa lỗi và parse key_information nếu AI Service trả về chuỗi JSON lỗi
+        if ai_res and "key_information" in ai_res and isinstance(ai_res["key_information"], str):
+            try:
+                info_dict = json.loads(ai_res["key_information"])
+                ai_res.update(info_dict)
+            except json.JSONDecodeError:
+                repaired_json = repair_truncated_json(ai_res["key_information"])
+                try:
+                    info_dict = json.loads(repaired_json)
+                    logger.info(f"Đã sửa đổi và parse thành công key_information bị cắt cụt: {info_dict}")
+                    ai_res.update(info_dict)
+                except Exception as parse_err:
+                    logger.warning(f"Không thể parse key_information kể cả sau khi sửa: {str(parse_err)}")
+
         doc = db.query(Document).filter(Document.document_id == document_id).first()
         if not doc:
             logger.warning(f"Không tìm thấy tài liệu trong DB để cập nhật. document_id={document_id}")
@@ -85,6 +198,7 @@ async def process_document_background(
             ext = ai_res.get("extracted_fields", {})
             doc.so_ky_hieu = ext.get("so_hieu_van_ban")
             doc.don_vi_ban_hanh = ext.get("co_quan_ban_hanh")
+            doc.ngay_van_ban = parse_date_string(ext.get("ngay_ban_hanh"))
             doc.trich_yeu = ext.get("trich_yeu")
             doc.do_khan = ext.get("do_khan")
             doc.nguoi_ky = ext.get("nguoi_ky")
@@ -109,12 +223,6 @@ async def process_document_background(
             else:
                 doc.assigned_department_id = None
             
-            if ext.get("ngay_ban_hanh"):
-                try:
-                    doc.ngay_van_ban = datetime.strptime(ext["ngay_ban_hanh"], "%Y-%m-%d").date()
-                except (ValueError, TypeError): 
-                    pass
-
             if ai_res.get("loai_van_ban"):
                 doc.loai_van_ban_text = ai_res.get("loai_van_ban", {}).get("nhan")
 

@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -200,4 +202,36 @@ def get_departments_by_region_service(db: Session, region: str):
     if region != 'all' and len(results) == 1:
         return results[0]
         
+    return results
+
+
+def get_mock_departments_by_region_service(region: str):
+    region = region.lower()
+    if region not in ['north', 'south', 'all']:
+        raise HTTPException(status_code=400, detail="Region parameter must be 'north', 'south', or 'all'")
+
+    current_dir = Path(__file__).parent
+    mockdata_dir = current_dir.parent / "mockdata"
+
+    results = []
+
+    if region in ['north', 'all']:
+        north_file = mockdata_dir / "mock_north.json"
+        try:
+            with open(north_file, "r", encoding="utf-8") as f:
+                results.append(json.load(f))
+        except FileNotFoundError:
+            raise HTTPException(status_code=500, detail="Mock data for north region not found")
+
+    if region in ['south', 'all']:
+        south_file = mockdata_dir / "mock_south.json"
+        try:
+            with open(south_file, "r", encoding="utf-8") as f:
+                results.append(json.load(f))
+        except FileNotFoundError:
+            raise HTTPException(status_code=500, detail="Mock data for south region not found")
+
+    if region != 'all' and len(results) == 1:
+        return results[0]
+
     return results

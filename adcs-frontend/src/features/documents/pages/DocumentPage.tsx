@@ -34,7 +34,9 @@ const DocumentPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<Partial<DocumentResponse>>({});
-  
+
+  const [isDragging, setIsDragging] = useState(false);
+
   // Khôi phục lại document_id từ sessionStorage khi vừa vào trang
   useEffect(() => {
     const savedDocId = sessionStorage.getItem('lastActiveDocumentId');
@@ -57,19 +59,22 @@ const DocumentPage: React.FC = () => {
         try {
           const doc = await getDocument(activeDocumentId);
           setDocumentDetail(doc);
-          
+
           if (doc.status === 'processed' || doc.status === 'success') {
             console.log("Văn bản đã được AI xử lý xong:", doc);
             clearInterval(interval);
             toast.success("AI đã phân tích xong văn bản!");
           } else if (doc.status === 'failed') {
             clearInterval(interval);
-            toast.error("Xử lý AI thất bại.");
+            const errDetail = (doc as any).error_message || (doc as any).error || "Chất lượng hình ảnh/tệp tin quá thấp hoặc cấu trúc văn bản không hợp lệ.";
+            toast.error(`Xử lý AI thất bại: ${errDetail}. Vui lòng kiểm tra lại chất lượng tệp tin.`, {
+              duration: 10000
+            });
           }
         } catch (e) {
           console.error("Lỗi khi polling:", e);
         }
-      }, 3000); 
+      }, 3000);
     }
 
     return () => clearInterval(interval);
@@ -92,14 +97,13 @@ const DocumentPage: React.FC = () => {
       setActiveDocumentId(documentId);
 
       if (doc.local_path) {
-        const backendBaseUrl = "http://localhost:8000"; 
+        const backendBaseUrl = "http://localhost:8000";
         const fileUrl = doc.local_path.startsWith('http') ? doc.local_path : `${backendBaseUrl}${doc.local_path}`;
-        
+
         setPreviewUrl(fileUrl);
         const ext = doc.local_path.split('.').pop()?.toLowerCase() || 'pdf';
         setFileType(ext);
       } else {
-        // CHỈ CẦN setPreviewUrl NHƯ THẾ NÀY, BỎ setFileType ĐI
         setPreviewUrl((currentUrl) => {
           if (currentUrl && currentUrl.startsWith('blob:')) {
             return currentUrl;
@@ -110,7 +114,7 @@ const DocumentPage: React.FC = () => {
 
     } catch (e: any) {
       setError(e?.message || "Không thể tải dữ liệu văn bản");
-      sessionStorage.removeItem('lastActiveDocumentId'); 
+      sessionStorage.removeItem('lastActiveDocumentId');
     } finally {
       setLoading(false);
     }
@@ -124,13 +128,59 @@ const DocumentPage: React.FC = () => {
 
     const objectUrl = URL.createObjectURL(file);
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    
+
     setPreviewUrl(objectUrl);
     setFileType(ext);
     setPendingFile(file);
 
     handleConfirmUpload(true, file, ext);
     e.target.value = "";
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (uploading) return;
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (uploading) return;
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!allowedExtensions.includes(ext)) {
+      toast.error(`Định dạng file "${ext.toUpperCase()}" không được hỗ trợ! Vui lòng chỉ tải lên các tệp: ${allowedExtensions.join(', ').toUpperCase()}`, {
+        duration: 8000
+      });
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+
+    setPreviewUrl(objectUrl);
+    setFileType(ext);
+    setPendingFile(file);
+
+    handleConfirmUpload(true, file, ext);
   };
 
   const handleConfirmUpload = async (is_save_file: boolean, fileToUpload?: File, fileExt?: string) => {
@@ -143,20 +193,23 @@ const DocumentPage: React.FC = () => {
 
     const currentFileType = fileExt || fileType || '';
     const isImage = ['pdf', 'png', 'jpg', 'jpeg'].includes(currentFileType);
-    
+
     if (isImage) {
       toast("Đang tải lên, AI sẽ mất vài chục giây để xử lý OCR...", { icon: "⏳", duration: 4000 });
     }
-    
+
     try {
       const res = await uploadDocument(file, is_save_file);
-      await loadDocument(res.document_id); 
+      await loadDocument(res.document_id);
       toast.success("Đã gửi văn bản sang AI xử lý!");
     } catch (e: any) {
-      setError(e?.message || "Upload thất bại");
+      const friendlyError = `Xử lý tài liệu ${file.name} lỗi do server đang lỗi, vui lòng thử lại sau`;
+      setError(friendlyError);
       setPreviewUrl(null);
       setFileType(null);
-      toast.error("Tải lên thất bại");
+      toast.error(friendlyError, {
+        duration: 10000
+      });
     } finally {
       setUploading(false);
       setPendingFile(null);
@@ -188,10 +241,10 @@ const DocumentPage: React.FC = () => {
         toast.success("Gửi thông báo Telegram thành công!", { id: toastId });
       } else if (teleStatus?.startsWith("error")) {
         toast.success(`Gửi thông báo thành công nhưng Telegram báo lỗi.`, { id: toastId, icon: '⚠️' });
-        
+
       } else if (teleStatus === "bot_not_found" || teleStatus === "not_configured") {
         toast.error(
-          "Chưa kết nối Telegram!\n\nVui lòng sang trang Cấu hình để kết nối. Bạn có thể rời trang này, văn bản của bạn đã được lưu tự động.", 
+          "Chưa kết nối Telegram!\n\nVui lòng sang trang Cấu hình để kết nối. Bạn có thể rời trang này, văn bản của bạn đã được lưu tự động.",
           { id: toastId, duration: 6000 }
         );
       } else {
@@ -243,7 +296,7 @@ const DocumentPage: React.FC = () => {
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
-      {/* CSS Nhúng cho hiệu ứng tia quét */}
+      {/* hiệu ứng tia quét */}
       <style>{`
         @keyframes scan-line {
           0% { transform: translateY(-100%); }
@@ -266,7 +319,15 @@ const DocumentPage: React.FC = () => {
 
           <div
             onClick={handleChooseFile}
-            className={`group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-10 text-center hover:border-primary hover:bg-primary/10 transition-all cursor-pointer ${uploading ? 'pointer-events-none' : ''}`}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-all cursor-pointer 
+              ${uploading ? 'pointer-events-none' : ''} 
+              ${isDragging
+                ? 'border-primary bg-primary/20 scale-[1.02] shadow-md'
+                : 'border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10'}`}
           >
             {uploading ? (
               // Giao diện khi đang tải lên
@@ -285,7 +346,9 @@ const DocumentPage: React.FC = () => {
                 <div className="mb-4 rounded-full bg-primary/10 p-4 text-primary group-hover:scale-110 transition-transform">
                   <span className="material-symbols-outlined text-4xl">cloud_upload</span>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Kéo và thả tệp tại đây</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  {isDragging ? "Thả file của bạn vào đây" : "Kéo và thả tệp tại đây"}
+                </h3>
                 <p className="mt-1 text-sm text-slate-500">Hoặc click để chọn tệp từ thiết bị của bạn</p>
               </>
             )}
@@ -326,19 +389,19 @@ const DocumentPage: React.FC = () => {
               </span>
               Chi tiết xử lý AI
             </h2>
-            
+
             <div className="flex items-center gap-3">
               {loading && (
-                 <span className="text-sm text-primary font-medium flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm animate-spin">sync</span> Đang tải dữ liệu...
-                 </span>
+                <span className="text-sm text-primary font-medium flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm animate-spin">sync</span> Đang tải dữ liệu...
+                </span>
               )}
-              
+
               {isPending && !loading && (
-                 <span className="text-sm text-amber-600 bg-amber-100 px-3 py-1 rounded-full font-bold flex items-center gap-2 animate-pulse">
-                    <span className="material-symbols-outlined text-sm animate-spin">data_exploration</span> 
-                    AI đang bóc tách nội dung OCR...
-                 </span>
+                <span className="text-sm text-amber-600 bg-amber-100 px-3 py-1 rounded-full font-bold flex items-center gap-2 animate-pulse">
+                  <span className="material-symbols-outlined text-sm animate-spin">data_exploration</span>
+                  AI đang bóc tách nội dung OCR...
+                </span>
               )}
             </div>
           </div>
@@ -346,25 +409,25 @@ const DocumentPage: React.FC = () => {
           {/* Document Preview với Hiệu ứng Scanner */}
           <div className="relative aspect-[4/5] md:aspect-[4/3] w-full rounded-xl border border-primary/10 bg-white dark:bg-slate-800 shadow-sm overflow-hidden flex items-center justify-center">
             {previewUrl && fileType ? (
-               <>
-                 <DocumentPreview url={previewUrl} type={fileType} />
-                 
-                 {/* LỚP PHỦ SCANNER KHI AI ĐANG XỬ LÝ */}
-                 {isPending && (
-                   <div className="absolute inset-0 bg-amber-900/10 dark:bg-black/40 z-10 overflow-hidden pointer-events-none">
-                     {/* Tia quét */}
-                     <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-transparent via-amber-400/20 to-amber-400/50 border-b-2 border-amber-400 animate-scan-line shadow-[0_4px_15px_rgba(251,191,36,0.5)]"></div>
-                     
-                     {/* Box thông báo giữa màn hình (Tuỳ chọn: nếu thấy che mất text có thể bỏ) */}
-                     <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
-                       <div className="bg-white/90 dark:bg-slate-800/90 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-amber-200">
-                         <span className="material-symbols-outlined text-amber-500 animate-spin">radar</span>
-                         <span className="font-semibold text-amber-600">Đang quét trích xuất (OCR)...</span>
-                       </div>
-                     </div>
-                   </div>
-                 )}
-               </>
+              <>
+                <DocumentPreview url={previewUrl} type={fileType} />
+
+                {/* LỚP PHỦ SCANNER KHI AI ĐANG XỬ LÝ */}
+                {isPending && (
+                  <div className="absolute inset-0 bg-amber-900/10 dark:bg-black/40 z-10 overflow-hidden pointer-events-none">
+                    {/* Tia quét */}
+                    <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-transparent via-amber-400/20 to-amber-400/50 border-b-2 border-amber-400 animate-scan-line shadow-[0_4px_15px_rgba(251,191,36,0.5)]"></div>
+
+                    {/* Box thông báo giữa màn hình (Tuỳ chọn: nếu thấy che mất text có thể bỏ) */}
+                    <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
+                      <div className="bg-white/90 dark:bg-slate-800/90 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-amber-200">
+                        <span className="material-symbols-outlined text-amber-500 animate-spin">radar</span>
+                        <span className="font-semibold text-amber-600">Đang quét trích xuất (OCR)...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center text-slate-400 p-6">
                 {activeDocumentId ? (
@@ -393,16 +456,16 @@ const DocumentPage: React.FC = () => {
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-white">Tóm tắt văn bản</h3>
                 {!isPending && documentDetail && (
-                   <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase">Đã phân tích</span>
+                  <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase">Đã phân tích</span>
                 )}
               </div>
-              
+
               {isEditing ? (
-                 <textarea
-                   className="w-full h-24 p-2 text-sm border rounded-lg focus:ring-1 focus:ring-primary outline-none"
-                   value={editedData?.summary || ""}
-                   onChange={(e) => handleFieldChange("summary", e.target.value)}
-                 />
+                <textarea
+                  className="w-full h-24 p-2 text-sm border rounded-lg focus:ring-1 focus:ring-primary outline-none"
+                  value={editedData?.summary || ""}
+                  onChange={(e) => handleFieldChange("summary", e.target.value)}
+                />
               ) : isPending ? (
                 // SKELETON LOADING CHO TÓM TẮT
                 <div className="space-y-3 animate-pulse">
@@ -420,7 +483,7 @@ const DocumentPage: React.FC = () => {
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     {documentDetail?.summary ?? "Không có tóm tắt."}
                   </p>
-                  
+
                   {documentDetail?.key_points && documentDetail.key_points.length > 0 && (
                     <div className="mt-3 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                       <p className="text-xs font-bold text-slate-500 uppercase mb-2">Điểm chính (Key Points):</p>
@@ -467,14 +530,14 @@ const DocumentPage: React.FC = () => {
                           <td className="px-4 py-3 text-sm font-medium text-slate-700 w-1/3">{row.label}</td>
                           <td className="px-4 py-3 text-sm text-slate-900">
                             {isEditing && row.field ? (
-                               <input
-                                 type={row.type || "text"}
-                                 value={row.value as string}
-                                 onChange={(e) => handleFieldChange(row.field!, e.target.value, row.isArray)}
-                                 className="w-full bg-transparent border-b border-primary/30 focus:border-primary outline-none px-1 py-0.5"
-                               />
+                              <input
+                                type={row.type || "text"}
+                                value={row.value as string}
+                                onChange={(e) => handleFieldChange(row.field!, e.target.value, row.isArray)}
+                                className="w-full bg-transparent border-b border-primary/30 focus:border-primary outline-none px-1 py-0.5"
+                              />
                             ) : (
-                               row.value
+                              row.value
                             )}
                           </td>
                         </tr>
@@ -489,7 +552,7 @@ const DocumentPage: React.FC = () => {
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm mt-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg text-primary">link</span> 
+                    <span className="material-symbols-outlined text-lg text-primary">link</span>
                     Văn bản liên quan (Semantic Search)
                   </h3>
                   <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-full">
@@ -517,14 +580,14 @@ const DocumentPage: React.FC = () => {
                         {/* Hiển thị phần trăm độ chính xác (Similarity Score) */}
                         <div className="shrink-0 flex flex-col items-end">
                           <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold
-                            ${docItem.similarity >= 0.85 ? 'bg-emerald-100 text-emerald-700' : 
+                            ${docItem.similarity >= 0.85 ? 'bg-emerald-100 text-emerald-700' :
                               docItem.similarity >= 0.75 ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'}`}>
                             <span className="material-symbols-outlined text-[12px] mr-1">target</span>
                             {(docItem.similarity * 100).toFixed(1)}%
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Trích đoạn nội dung khớp (Matched Chunk) */}
                       {docItem.matched_chunk && (
                         <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-slate-100 dark:border-slate-700">
