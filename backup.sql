@@ -35,24 +35,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
-
---
--- TOC entry 3 (class 3079 OID 36522)
--- Name: vector; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
-
-
---
--- TOC entry 5281 (class 0 OID 0)
--- Dependencies: 3
--- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;

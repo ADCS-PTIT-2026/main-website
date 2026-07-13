@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import axiosClient from '../../api/axiosClient';
 import { 
   uploadTranslationFiles, 
   getTranslations, 
-  updateTranslationComment, 
+  updateTranslationComment,
+  deleteTranslation,
+  downloadAllTranslationsZip,
   type TranslationFile 
 } from '../../api/translation';
 
@@ -12,10 +15,12 @@ const TranslationPage: React.FC = () => {
   const [files, setFiles] = useState<TranslationFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const fetchFiles = async () => {
+    if (!userId) return; 
     try {
-      const data = await getTranslations();
+      const data = await getTranslations(userId);
       setFiles(data);
     } catch (error) {
       console.error("Lỗi tải danh sách dịch:", error);
@@ -23,8 +28,23 @@ const TranslationPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchFiles();
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.id) {
+          setUserId(parsedUser.id);
+        }
+      } catch (error) {
+        console.error('Lỗi khi đọc thông tin người dùng:', error);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    fetchFiles();
+  }, [userId]);
 
   useEffect(() => {
     const hasActiveTasks = files.some(f => f.status === 'pending' || f.status === 'translating');
@@ -83,6 +103,74 @@ const TranslationPage: React.FC = () => {
       toast.success(`Đã lưu nhận xét cho tệp ${fileName}`);
     } catch (error) {
       toast.error("Không thể lưu nhận xét");
+    }
+  };
+
+  const handleDownloadFile = async (id: string, originalFileName: string) => {
+    const toastId = toast.loading("Đang chuẩn bị file tải về...");
+    try {
+      const response: any = await axiosClient.get(`/translations/${id}/download`, { 
+        responseType: 'blob' 
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response]));
+      
+      const link = document.createElement('a');
+      link.href = url;
+
+      const safeName = originalFileName.includes('.') 
+        ? originalFileName.substring(0, originalFileName.lastIndexOf('.'))
+        : originalFileName;
+        
+      link.setAttribute('download', `Translated_${safeName}.docx`);
+
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Tải xuống thành công!", { id: toastId });
+    } catch (error) {
+      console.error("Lỗi tải file:", error);
+      toast.error("Không thể tải file lúc này. Vui lòng thử lại.", { id: toastId });
+    }
+  };
+
+  const handleDownloadAllZip = async () => {
+    const toastId = toast.loading("Đang nén toàn bộ tài liệu thành file ZIP...");
+    try {
+      const response: any = await downloadAllTranslationsZip();
+
+      const url = window.URL.createObjectURL(new Blob([response], { type: 'application/zip' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Tat_ca_ban_dich_PTIT.zip`);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Tải file ZIP thành công!", { id: toastId });
+    } catch (error) {
+      console.error("Lỗi tải file ZIP:", error);
+      toast.error("Không thể tải file lúc này. Vui lòng thử lại.", { id: toastId });
+    }
+  };
+
+  const handleDeleteFile = async (id: string, fileName: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa bản dịch "${fileName}" không?`)) {
+      return;
+    }
+
+    try {
+      await deleteTranslation(id);
+      toast.success(`Đã xóa tệp ${fileName}`);
+      setFiles(files.filter(f => f.id !== id));
+    } catch (error) {
+      toast.error("Không thể xóa tệp lúc này");
+      console.error(error);
     }
   };
 
@@ -161,8 +249,9 @@ const TranslationPage: React.FC = () => {
         <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Danh sách xử lý</h2>
           <button 
+            onClick={handleDownloadAllZip}
             disabled={files.length === 0 || !files.some(f => f.status === 'success')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#ed1d23]/10 text-[#ed1d23] rounded-lg text-xs font-bold hover:bg-[#ed1d23]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-[#ed1d23]/10 text-[#ed1d23] rounded-lg text-xs font-bold hover:bg-[#ed1d23]/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed outline-none"
           >
             <span className="material-symbols-outlined text-sm">download_for_offline</span>
             Tải tất cả .zip
@@ -232,19 +321,29 @@ const TranslationPage: React.FC = () => {
 
                     <td className="px-6 py-4 text-right">
                       {file.status === 'success' && file.result_file_url ? (
-                        <a 
-                          href={file.result_file_url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline cursor-pointer"
-                        >
-                          Tải về (.docx)
-                        </a>
+                        <div className="flex items-center justify-end gap-2">
+                          
+                          <button 
+                            onClick={() => handleDownloadFile(file.id, file.filename)}
+                            className="text-[10px] font-black text-[#ed1d23] uppercase hover:underline cursor-pointer outline-none"
+                          >
+                            Tải về (.docx)
+                          </button>
+                          
+                          <button 
+                            onClick={() => handleDeleteFile(file.id, file.filename)}
+                            className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors outline-none"
+                            title="Xóa tệp"
+                          >
+                            <span className="material-symbols-outlined text-lg">delete</span>
+                          </button>
+                        </div>
                       ) : (
+                        /* NÚT XÓA KHI ĐANG PENDING/LỖI */
                         <button 
-                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors disabled:opacity-30"
-                          title="Chức năng xóa tạm thời ẩn"
-                          disabled
+                          onClick={() => handleDeleteFile(file.id, file.filename)}
+                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors"
+                          title="Xóa tệp"
                         >
                           <span className="material-symbols-outlined text-lg">delete</span>
                         </button>

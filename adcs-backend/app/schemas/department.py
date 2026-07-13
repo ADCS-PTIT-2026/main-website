@@ -51,3 +51,15 @@ DepartmentTreeResponse.model_rebuild()
 
 class MessageResponse(BaseModel):
     message: str
+
+class RegionUnitResponse(BaseModel):
+    ma_don_vi: Optional[str] = None
+    id: Optional[int] = None
+    ten_hien_thi: Optional[str] = None
+    nhom: Optional[str] = None
+    mo_ta: Optional[str] = None
+
+class RegionSearchResponse(BaseModel):
+    region: str
+    label: str
+    units: List[RegionUnitResponse] = []
