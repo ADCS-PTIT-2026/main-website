@@ -1,0 +1,340 @@
+# QLVB - Tiếp nhận Văn bản đến (Incoming Document API)
+
+## Tổng quan
+
+API dùng để tiếp nhận văn bản đến vào hệ thống **QLVB (Quản lý Văn bản)**.
+
+Sau khi tiếp nhận thành công, văn bản được lưu ở trạng thái:
+
+```text
+dang_ky_van_ban
+```
+
+(chờ tiếp nhận/đăng ký).
+
+---
+
+# Authentication
+
+Tất cả request đều phải gửi API Key trong Header.
+
+| Header       | Value                      |
+| ------------ | -------------------------- |
+| x-gw-api-key | `wAdThZMb2W0McduUyMrHiXGS` |
+
+Ví dụ
+
+```http
+x-gw-api-key: wAdThZMb2W0McduUyMrHiXGS
+```
+
+Lưu ý
+
+* API sử dụng authentication `x_gw_api_key`
+* Không đăng nhập user
+* Server xử lý bằng `sudo()`
+* API Key phải trùng với cấu hình `x_gw_api_key` trong `odoo.conf`
+
+---
+
+# Base URL
+
+```
+https://test.qlvb.ript.vn
+```
+
+---
+
+# Quy tắc tự động tạo dữ liệu tham chiếu
+
+Các trường tham chiếu sẽ **được tự động tạo nếu chưa tồn tại**, bao gồm:
+
+* đơn vị gửi
+* đơn vị phát hành
+* loại văn bản
+* độ khẩn
+* độ mật
+* sổ văn bản
+* đơn vị tạo
+* lãnh đạo được trình
+
+Các trường này có thể truyền dưới một trong ba dạng:
+
+### ID
+
+```json
+12
+```
+
+### Name
+
+```json
+"Công văn"
+```
+
+### Object
+
+```json
+{
+    "id": 12
+}
+```
+
+hoặc
+
+```json
+{
+    "name": "Bộ Giáo dục và Đào tạo",
+    "ma_don_vi": "BGDDT"
+}
+```
+
+---
+
+# Quy định tài liệu đính kèm
+
+**Bắt buộc phải có ít nhất một file.**
+
+Có hai cách gửi file.
+
+## Cách 1: JSON + Base64
+
+```json
+"attachments": [
+    {
+        "filename": "...",
+        "data": "<base64>",
+        "mo_ta": "..."
+    }
+]
+```
+
+---
+
+## Cách 2: multipart/form-data
+
+Body gồm
+
+| Field       | Kiểu |
+| ----------- | ---- |
+| payload     | JSON |
+| attachments | File |
+
+Có thể gửi nhiều file.
+
+---
+
+# Biến sử dụng
+
+| Biến          | Ý nghĩa                   |
+| ------------- | ------------------------- |
+| base_url      | URL hệ thống Odoo         |
+| x_gw_api_key  | API Key                   |
+| doc_id        | ID văn bản sau khi Submit |
+| attachment_id | ID file đính kèm          |
+
+---
+
+# Danh sách API
+
+| Method | Endpoint                                | Mô tả                 |
+| ------ | --------------------------------------- | --------------------- |
+| POST   | `/api/qlvb/van-ban-den`                 | Tiếp nhận văn bản đến |
+| GET    | `/api/qlvb/van-ban-den/{id}`            | Lấy chi tiết văn bản  |
+| GET    | `/api/qlvb/van-ban-den/attachment/{id}` | Tải file đính kèm     |
+
+---
+
+# API: Tiếp nhận văn bản đến
+
+## Endpoint
+
+```http
+POST /api/qlvb/van-ban-den
+```
+
+## URL
+
+```
+https://test.qlvb.ript.vn/api/qlvb/van-ban-den
+```
+
+---
+
+## Headers
+
+| Header       | Value            |
+| ------------ | ---------------- |
+| Content-Type | application/json |
+| x-gw-api-key | API Key          |
+
+---
+
+## Request Body
+
+```json
+{
+  "so_ky_hieu": "123/QĐ-BGDĐT",
+  "trich_yeu": "V/v hướng dẫn triển khai công tác năm học 2026",
+  "ngay_van_ban": "2026-07-01",
+  "ngay_den": "2026-07-05",
+  "han_van_ban": "20/07/2026",
+  "signer": "Nguyễn Văn A",
+  "van_ban_loai": "thuong",
+  "so_den": "45",
+  "don_vi_gui": {
+    "name": "Bộ Giáo dục và Đào tạo",
+    "ma_don_vi": "BGDDT"
+  },
+  "don_vi_phat_hanh": "Văn phòng Bộ",
+  "loai_van_ban": "Công văn",
+  "do_khan": "Khẩn",
+  "do_mat": "Mật",
+  "so_van_ban": "Sổ văn bản đến 2026",
+  "don_vi_tao": {
+    "name": "Học viện Công nghệ BCVT",
+    "ma_don_vi": "HVCNBCVT"
+  },
+  "lanh_dao_duoc_trinh": [
+    {
+      "name": "Trần Thị B",
+      "ma_can_bo": "CB001"
+    }
+  ],
+  "attachments": [
+    {
+      "filename": "cong-van-123.pdf",
+      "data": "<base64>",
+      "mo_ta": "File gốc"
+    }
+  ]
+}
+```
+
+---
+
+## Ý nghĩa các trường
+
+| Trường              | Kiểu             | Mô tả                   |
+| ------------------- | ---------------- | ----------------------- |
+| so_ky_hieu          | string           | Số ký hiệu văn bản      |
+| trich_yeu           | string           | Trích yếu               |
+| ngay_van_ban        | date             | Ngày ban hành           |
+| ngay_den            | date             | Ngày tiếp nhận          |
+| han_van_ban         | date             | Hạn xử lý               |
+| signer              | string           | Người ký                |
+| van_ban_loai        | string           | Loại văn bản            |
+| so_den              | string           | Số đến                  |
+| don_vi_gui          | object/string/id | Đơn vị gửi              |
+| don_vi_phat_hanh    | object/string/id | Đơn vị phát hành        |
+| loai_van_ban        | object/string/id | Loại văn bản            |
+| do_khan             | object/string/id | Độ khẩn                 |
+| do_mat              | object/string/id | Độ mật                  |
+| so_van_ban          | object/string/id | Sổ văn bản              |
+| don_vi_tao          | object/string/id | Đơn vị tạo              |
+| lanh_dao_duoc_trinh | array            | Danh sách lãnh đạo      |
+| attachments         | array            | Danh sách file đính kèm |
+
+---
+
+## Response
+
+API trả về thông tin văn bản vừa tạo.
+
+Các giá trị thường được sử dụng:
+
+```json
+{
+    "data": {
+        "id": 123,
+        "attachments": [
+            {
+                "id": 456
+            }
+        ]
+    }
+}
+```
+
+Trong đó:
+
+* `data.id` → dùng cho API lấy chi tiết
+* `data.attachments[].id` → dùng cho API tải file
+
+---
+
+# API: Lấy chi tiết văn bản
+
+## Endpoint
+
+```http
+GET /api/qlvb/van-ban-den/{id}
+```
+
+Ví dụ
+
+```
+GET /api/qlvb/van-ban-den/123
+```
+
+## Headers
+
+```
+x-gw-api-key
+```
+
+## Mục đích
+
+Lấy toàn bộ thông tin của văn bản sau khi đã tiếp nhận để đối soát.
+
+---
+
+# API: Tải file đính kèm
+
+## Endpoint
+
+```http
+GET /api/qlvb/van-ban-den/attachment/{id}
+```
+
+Ví dụ
+
+```
+GET /api/qlvb/van-ban-den/attachment/456
+```
+
+Trong đó
+
+```
+456 = attachment_id
+```
+
+được lấy từ response của API Submit.
+
+---
+
+# Error
+
+## Thiếu file đính kèm
+
+### Request
+
+```json
+{
+    "so_ky_hieu": "NO-FILE-01",
+    "trich_yeu": "Không có tài liệu -> phải lỗi 400"
+}
+```
+
+### Response
+
+```
+HTTP 400
+```
+
+```json
+{
+    "code": "attachment_required",
+    "message": "Tài liệu đính kèm là bắt buộc."
+}
+```

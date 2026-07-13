@@ -1,0 +1,111 @@
+{
+  "region": "south",
+  "label": "Học viện - Cơ sở phía Nam",
+  "units": [
+    {
+      "ma_don_vi": "BGD2",
+      "id": 44,
+      "ten_hien_thi": "Lãnh đạo Học viện",
+      "nhom": "LÃNH ĐẠO",
+      "mo_ta": "chỉ đạo cơ sở phía Nam, ký ban hành văn bản hành chính cơ sở, điều hành hoạt động đào tạo và nghiên cứu tại miền Nam"
+    },
+    {
+      "ma_don_vi": "PDT2",
+      "id": 15,
+      "ten_hien_thi": "Phòng Đào tạo và Khoa học công nghệ",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "tuyển sinh đại học/sau đại học, chương trình đào tạo, lịch thi, cấp phát văn bằng, quản lý hoạt động nghiên cứu khoa học cơ sở phía Nam"
+    },
+    {
+      "ma_don_vi": "PGV2",
+      "id": 14,
+      "ten_hien_thi": "Phòng Giáo vụ",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "quản lý điểm học tập, đăng ký môn học, kết quả học vụ, học bổng, hồ sơ sinh viên, xếp lớp học, xử lý thôi học/nghỉ học phía Nam"
+    },
+    {
+      "ma_don_vi": "PKT2",
+      "id": 16,
+      "ten_hien_thi": "Phòng Kinh tế Tài chính",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "thu chi học phí, quyết toán ngân sách cơ sở, lương thưởng phụ cấp, kế hoạch tài chính, quản lý hóa đơn chứng từ kế toán phía Nam"
+    },
+    {
+      "ma_don_vi": "PSV2",
+      "id": 13,
+      "ten_hien_thi": "Phòng Công tác Sinh viên",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "hoạt động ngoại khóa Đoàn Hội, quản lý ký túc xá, khen thưởng kỷ luật sinh viên, an ninh trật tự học đường, hỗ trợ chính sách sinh viên phía Nam"
+    },
+    {
+      "ma_don_vi": "PTC2",
+      "id": 17,
+      "ten_hien_thi": "Phòng Tổ chức Hành chính",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "tổ chức nhân sự cơ sở, tuyển dụng, ký hợp đồng lao động, văn thư lưu trữ, quản lý con dấu hành chính, lễ tân khánh tiết, lịch họp phía Nam"
+    },
+    {
+      "ma_don_vi": "PTH2",
+      "id": 239,
+      "ten_hien_thi": "Phòng Tổ chức - Hành chính - Quản trị",
+      "nhom": "PHÒNG / BAN CHỨC NĂNG",
+      "mo_ta": "công tác nhân sự cán bộ, hành chính lưu trữ, quản trị cơ sở vật chất, sửa chữa xây dựng cơ sở hạ tầng, hậu cần giảng đường cơ sở phía Nam"
+    },
+    {
+      "ma_don_vi": "KCB2",
+      "id": 11,
+      "ten_hien_thi": "Khoa Cơ bản 2",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy các môn học đại cương, toán học, vật lý, triết học, ngoại ngữ tiếng Anh cơ bản, thể chất quốc phòng phía Nam"
+    },
+    {
+      "ma_don_vi": "KCN2",
+      "id": 10,
+      "ten_hien_thi": "Khoa Công nghệ thông tin 2",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy ngành công nghệ thông tin, khoa học máy tính, lập trình phần mềm, hệ thống thông tin, cơ sở dữ liệu, học thuật khoa CNTT miền Nam"
+    },
+    {
+      "ma_don_vi": "KDT2",
+      "id": 9,
+      "ten_hien_thi": "Khoa Kỹ thuật điện tử 2",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy kỹ thuật điện tử, vi mạch bán dẫn, thiết kế phần cứng, IoT Internet of Things, tự động hóa robot cơ sở phía Nam"
+    },
+    {
+      "ma_don_vi": "KQT2",
+      "id": 8,
+      "ten_hien_thi": "Khoa Quản trị kinh doanh 2",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy ngành quản trị kinh doanh, marketing, thương mại điện tử, kinh tế học ứng dụng, khởi nghiệp kinh doanh phía Nam"
+    },
+    {
+      "ma_don_vi": "KVT2",
+      "id": 7,
+      "ten_hien_thi": "Khoa Viễn thông 2",
+      "nhom": "KHỐI KHOA",
+      "mo_ta": "giảng dạy kỹ thuật viễn thông, mạng truyền thông, truyền thông vô tuyến, xử lý tín hiệu, công nghệ 5G/6G di động cơ sở phía Nam"
+    },
+    {
+      "ma_don_vi": "TKT2",
+      "id": 12,
+      "ten_hien_thi": "Trung tâm Khảo thí và Đảm bảo chất lượng giáo dục",
+      "nhom": "TRUNG TÂM",
+      "mo_ta": "tổ chức thi học kỳ, chấm thi, ngân hàng đề thi, đảm bảo chất lượng, khảo sát ý kiến sinh viên, kiểm định chất lượng giáo dục cơ sở phía Nam"
+    },
+    {
+      "ma_don_vi": "VCN2",
+      "id": 238,
+      "ten_hien_thi": "Viện Công nghệ thông tin và Truyền thông 2",
+      "nhom": "VIỆN NGHIÊN CỨU",
+      "mo_ta": "nghiên cứu khoa học kỹ thuật CNTT-TT, tư vấn giải pháp chuyển đổi số, phát triển và chuyển giao công nghệ ứng dụng, hợp đồng R&D phía Nam"
+    },
+    {
+      "ma_don_vi": "TT2",
+      "id": 83,
+      "ten_hien_thi": "Các trung tâm phía Nam",
+      "nhom": "KHÁC",
+      "mo_ta": "quản lý hoạt động thực hành thực nghiệm, dịch vụ phục vụ sinh viên, đào tạo ngắn hạn, các dự án liên kết doanh nghiệp phía Nam"
+    }
+  ]
+}
