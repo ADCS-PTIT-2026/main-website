@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_email, create_user, get_user_by_id
 from app.models.user import User
+from app.models.role_permission import Role
 from app.core.security import verify_password, create_access_token, create_refresh_token
 from fastapi import HTTPException, status
 from jose import jwt, JWTError
@@ -32,6 +33,12 @@ def login(db: Session, email: str, password: str):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Tài khoản chưa được kích hoạt hoặc bị khóa!")
 
+    role_name = None
+    if user.role_id:
+        role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
+        if role:
+            role_name = role.name
+
     # Tạo cả 2 token
     access_token = create_access_token({"sub": str(user.user_id)})
     refresh_token = create_refresh_token({"sub": str(user.user_id)})
@@ -42,7 +49,10 @@ def login(db: Session, email: str, password: str):
         "user": {
             "id": str(user.user_id),
             "email": user.email,
-            "name": user.username
+            "name": user.username,
+            "role": role_name,
+            "is_telegram_connected": bool(user.telegram_chat_id),
+            "telegram_chat_id": user.telegram_chat_id
         }
     }
 
@@ -142,8 +152,21 @@ def ptit_sso_login(db: Session, code: str):
 
     logger.info(f"[PTIT_SSO] Success user_id={user.user_id}")
 
+    role_name = None
+    if user.role_id:
+        role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
+        if role:
+            role_name = role.name
+
     return {
         "access_token": create_access_token({"sub": str(user.user_id)}),
         "refresh_token": create_refresh_token({"sub": str(user.user_id)}),
-        "user": {"id": str(user.user_id), "email": user.email, "name": user.username}
+        "user": {
+            "id": str(user.user_id),
+            "email": user.email,
+            "name": user.username,
+            "role": role_name,
+            "is_telegram_connected": bool(user.telegram_chat_id),
+            "telegram_chat_id": user.telegram_chat_id
+        }
     }

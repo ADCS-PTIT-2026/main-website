@@ -50,9 +50,31 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI()
 
+def init_telegram_webhook():
+    import requests
+    from app.db.session import SessionLocal
+    from app.models.telegram_bot import Bot
+    try:
+        db = SessionLocal()
+        bot = db.query(Bot).filter(Bot.name == "ptit_adcs_bot").first()
+        if bot and bot.token:
+            webhook_url = "https://adcs.ptitai.org/api/telegram/webhook"
+            info_url = f"https://api.telegram.org/bot{bot.token}/getWebhookInfo"
+            resp = requests.get(info_url, timeout=5).json()
+            if resp.get("ok") and resp.get("result", {}).get("url") != webhook_url:
+                set_url = f"https://api.telegram.org/bot{bot.token}/setWebhook?url={webhook_url}"
+                set_resp = requests.get(set_url, timeout=5).json()
+                logger.info(f"Đã tự động cấu hình Telegram webhook: {set_resp}")
+            else:
+                logger.info(f"Telegram webhook đã sẵn sàng: {resp.get('result', {}).get('url')}")
+        db.close()
+    except Exception as e:
+        logger.warning(f"Không thể khởi tạo Telegram webhook lúc khởi động: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     http_client.client = httpx.AsyncClient(timeout=300.0)
+    init_telegram_webhook()
 
 app.add_middleware(
     CORSMiddleware,

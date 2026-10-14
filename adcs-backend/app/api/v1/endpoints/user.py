@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.user import (
     UserResponse, UserCreate, UserUpdate, 
-    UserAssign, UserStatus, ActionResponse
+    UserAssign, UserStatus, ActionResponse,
+    TelegramStatusResponse
 )
 from app.models.user import User
 from app.core.dependency import RoleChecker, get_current_user
@@ -18,7 +19,9 @@ from app.services.user_service import (
     assign_user_role_dept_service,
     change_user_status_service,
     delete_user_account_service,
-    get_telegram_link_service
+    get_telegram_link_service,
+    get_telegram_status_service,
+    disconnect_telegram_service
 )
 
 router = APIRouter(prefix="")
@@ -62,3 +65,21 @@ def get_telegram_link(
 ):
     """Tạo link Deep Linking đến Telegram Bot kèm theo user_id."""
     return get_telegram_link_service(db, current_user)
+
+# 8. Lấy trạng thái Telegram của người dùng hiện tại
+@router.get("/telegram_status", response_model=TelegramStatusResponse)
+def get_telegram_status(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Kiểm tra trạng thái liên kết Telegram của người dùng hiện tại."""
+    return get_telegram_status_service(db, current_user)
+
+# 9. Hủy liên kết Telegram (cho phép kết nối lại hoặc đổi tài khoản khác)
+@router.post("/disconnect_telegram")
+def disconnect_telegram(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Hủy liên kết Telegram của tài khoản hiện tại."""
+    return disconnect_telegram_service(db, current_user)
