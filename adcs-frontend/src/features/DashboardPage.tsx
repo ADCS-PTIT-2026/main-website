@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
-import axiosClient from '../api/axiosClient';
+import { userApi } from '../api/user';
+import toast from 'react-hot-toast';
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
@@ -9,11 +10,35 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // State quản lý trạng thái nút Telegram
+  // State quản lý trạng thái Telegram
   const [isConnectingTelegram, setIsConnectingTelegram] = useState(false);
+  const [isTelegramConnected, setIsTelegramConnected] = useState<boolean>(false);
+  const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
+  const [isDisconnectingTelegram, setIsDisconnectingTelegram] = useState(false);
 
   const [userName, setUserName] = useState<string>('Người dùng');
   const navigate = useNavigate();
+
+  const fetchTelegramStatus = async () => {
+    try {
+      const res = await userApi.getTelegramStatus();
+      setIsTelegramConnected(Boolean(res.is_connected));
+      setTelegramChatId(res.telegram_chat_id || null);
+
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          parsed.is_telegram_connected = Boolean(res.is_connected);
+          parsed.telegram_chat_id = res.telegram_chat_id;
+          if (localStorage.getItem('user')) localStorage.setItem('user', JSON.stringify(parsed));
+          if (sessionStorage.getItem('user')) sessionStorage.setItem('user', JSON.stringify(parsed));
+        } catch (_) {}
+      }
+    } catch (err) {
+      console.error('Lỗi khi kiểm tra trạng thái Telegram:', err);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
@@ -31,11 +56,23 @@ const DashboardPage: React.FC = () => {
         if (parsedUser && parsedUser.name) {
           setUserName(parsedUser.name);
         }
+        if (parsedUser && parsedUser.is_telegram_connected) {
+          setIsTelegramConnected(true);
+          setTelegramChatId(parsedUser.telegram_chat_id || null);
+        }
       } catch (error) {
         console.error('Lỗi khi đọc thông tin người dùng:', error);
       }
     }
-  }, []);
+
+    fetchTelegramStatus();
+
+    const onFocus = () => {
+      fetchTelegramStatus();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [navigate]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -59,21 +96,47 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const handleConnectTelegram = async () => {
+  const handleConnectTelegram = async (isReconnect = false) => {
     setIsConnectingTelegram(true);
     try {
-      const response: any = await axiosClient.get('/users/connect_to_telegram');
+      const response = await userApi.getTelegramLink();
 
       if (response && response.link) {
         window.open(response.link, '_blank');
+        if (isReconnect) {
+          toast.success('Đã mở Telegram! Vui lòng nhấn "Bắt đầu" (Start) trên tài khoản mới để chuyển đổi.', { duration: 5000 });
+        } else {
+          toast.success('Đã mở Telegram! Vui lòng nhấn "Bắt đầu" (Start) để hoàn tất kết nối.', { duration: 5000 });
+        }
       } else {
-        alert('Không tìm thấy link kết nối. Vui lòng kiểm tra lại cấu hình Bot.');
+        toast.error('Không tìm thấy link kết nối. Vui lòng kiểm tra lại cấu hình Bot.');
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.detail || 'Không thể lấy thông tin kết nối Telegram lúc này.');
+      toast.error(err.response?.data?.detail || 'Không thể lấy thông tin kết nối Telegram lúc này.');
     } finally {
       setIsConnectingTelegram(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    const confirmed = window.confirm(
+      'Bạn có chắc chắn muốn hủy liên kết tài khoản Telegram này không? Bạn có thể kết nối lại hoặc đổi sang tài khoản Telegram khác bất cứ lúc nào.'
+    );
+    if (!confirmed) return;
+
+    setIsDisconnectingTelegram(true);
+    try {
+      await userApi.disconnectTelegram();
+      setIsTelegramConnected(false);
+      setTelegramChatId(null);
+      toast.success('Đã ngắt kết nối Telegram thành công.');
+      fetchTelegramStatus();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Không thể ngắt kết nối Telegram lúc này.');
+    } finally {
+      setIsDisconnectingTelegram(false);
     }
   };
 
@@ -111,25 +174,65 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="p-8 space-y-8">
       {/* Welcome Message */}
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Xin chào, {userName}</h1>
           <p className="text-slate-500 mt-1">Dưới đây là thống kê hoạt động của hệ thống AI trong 24h qua.</p>
         </div>
         
         {/* ACTION BUTTONS */}
-        <div className="flex items-center gap-3">
-          {/* Nút Kết nối Telegram */}
-          <button 
-            onClick={handleConnectTelegram}
-            disabled={isConnectingTelegram}
-            className="bg-[#2AABEE] hover:bg-[#229ED9] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#2AABEE]/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            <span className={`material-symbols-outlined text-lg ${isConnectingTelegram ? 'animate-spin' : ''}`}>
-              {isConnectingTelegram ? 'progress_activity' : 'send'}
-            </span>
-            {isConnectingTelegram ? 'Đang lấy link...' : 'Kết nối Telegram'}
-          </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Nút Kết nối Telegram / Trạng thái Telegram */}
+          {isTelegramConnected ? (
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-lg shadow-sm p-1 gap-1">
+              {/* Badge Đã kết nối */}
+              <div 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-semibold text-xs cursor-default select-none"
+                title={`Đã kết nối Telegram (Chat ID: ${telegramChatId || 'Hoạt động'})`}
+              >
+                <span className="material-symbols-outlined text-base text-emerald-600 dark:text-emerald-400">
+                  check_circle
+                </span>
+                <span>Đã kết nối Telegram</span>
+              </div>
+
+              {/* Nút Đổi tài khoản / Kết nối lại */}
+              <button
+                onClick={() => handleConnectTelegram(true)}
+                disabled={isConnectingTelegram}
+                title="Kết nối lại hoặc đổi sang tài khoản Telegram khác"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors disabled:opacity-50"
+              >
+                <span className={`material-symbols-outlined text-sm text-[#2AABEE] ${isConnectingTelegram ? 'animate-spin' : ''}`}>
+                  {isConnectingTelegram ? 'progress_activity' : 'swap_horiz'}
+                </span>
+                <span>{isConnectingTelegram ? 'Đang mở...' : 'Đổi tài khoản'}</span>
+              </button>
+
+              {/* Nút Ngắt kết nối */}
+              <button
+                onClick={handleDisconnectTelegram}
+                disabled={isDisconnectingTelegram}
+                title="Hủy liên kết Telegram"
+                className="flex items-center justify-center p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors disabled:opacity-50"
+              >
+                <span className={`material-symbols-outlined text-base ${isDisconnectingTelegram ? 'animate-spin' : ''}`}>
+                  {isDisconnectingTelegram ? 'progress_activity' : 'link_off'}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => handleConnectTelegram(false)}
+              disabled={isConnectingTelegram}
+              className="bg-[#2AABEE] hover:bg-[#229ED9] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#2AABEE]/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <span className={`material-symbols-outlined text-lg ${isConnectingTelegram ? 'animate-spin' : ''}`}>
+                {isConnectingTelegram ? 'progress_activity' : 'send'}
+              </span>
+              {isConnectingTelegram ? 'Đang lấy link...' : 'Kết nối Telegram'}
+            </button>
+          )}
 
           {/* Nút Tải tài liệu */}
           <button 

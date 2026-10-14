@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 from uuid import UUID
 
 class LoginRequest(BaseModel):
@@ -9,6 +10,9 @@ class UserResponse(BaseModel):
     id: UUID
     email: str
     name: str
+    role: Optional[str] = None
+    is_telegram_connected: bool = False
+    telegram_chat_id: Optional[str] = None
 
 class LoginResponse(BaseModel):
     access_token: str

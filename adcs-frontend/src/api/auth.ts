@@ -7,6 +7,9 @@ export interface LoginResponse {
     id: string;
     email: string;
     name: string;
+    role?: string | null;
+    is_telegram_connected?: boolean;
+    telegram_chat_id?: string | null;
   };
 }
 

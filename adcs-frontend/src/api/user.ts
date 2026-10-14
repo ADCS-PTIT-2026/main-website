@@ -7,6 +7,8 @@ export interface ApiUser {
   role_id?: string | null;
   department_id?: string | null;
   is_active: boolean;
+  telegram_chat_id?: string | null;
+  is_telegram_connected?: boolean;
 }
 
 export interface UserCreatePayload {
@@ -29,6 +31,13 @@ export interface UserStatusPayload {
   is_active: boolean;
 }
 
+export interface TelegramStatusResponse {
+  is_connected: boolean;
+  telegram_chat_id?: string | null;
+  bot_name: string;
+  link: string;
+}
+
 export const userApi = {
   getAll: (): Promise<ApiUser[]> => axiosClient.get('/users'),
 
@@ -39,5 +48,11 @@ export const userApi = {
 
   changeStatus: (id: string, payload: UserStatusPayload): Promise<ApiUser> => axiosClient.put(`/users/${id}/status`, payload),
 
-  remove: (id: string): Promise<{ message: string }> => axiosClient.delete(`/users/${id}`)
+  remove: (id: string): Promise<{ message: string }> => axiosClient.delete(`/users/${id}`),
+
+  getTelegramStatus: (): Promise<TelegramStatusResponse> => axiosClient.get('/users/telegram_status'),
+
+  getTelegramLink: (): Promise<{ bot_name: string; link: string; is_connected: boolean; telegram_chat_id?: string | null }> => axiosClient.get('/users/connect_to_telegram'),
+
+  disconnectTelegram: (): Promise<{ message: string; is_connected: boolean }> => axiosClient.post('/users/disconnect_telegram')
 };

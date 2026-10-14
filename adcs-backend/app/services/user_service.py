@@ -145,10 +145,44 @@ def get_telegram_link_service(db: Session, current_user: User):
         logger.info(f"Tạo Deep Link thành công cho user ID: {current_user.user_id}")
         return {
             "bot_name": bot.name,
-            "link": deep_link
+            "link": deep_link,
+            "is_connected": bool(current_user.telegram_chat_id),
+            "telegram_chat_id": current_user.telegram_chat_id
         }
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Lỗi hệ thống khi tạo link Telegram cho user {current_user.user_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Lỗi hệ thống khi khởi tạo liên kết Telegram")
+
+def get_telegram_status_service(db: Session, current_user: User):
+    """Lấy trạng thái kết nối Telegram của người dùng hiện tại"""
+    try:
+        bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
+        bot_name = bot.name if bot else "ptit_adcs_bot"
+        deep_link = f"https://t.me/{bot_name}?start={current_user.user_id}"
+        return {
+            "is_connected": bool(current_user.telegram_chat_id),
+            "telegram_chat_id": current_user.telegram_chat_id,
+            "bot_name": bot_name,
+            "link": deep_link
+        }
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy trạng thái Telegram user {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi lấy trạng thái Telegram")
+
+def disconnect_telegram_service(db: Session, current_user: User):
+    """Hủy liên kết Telegram của người dùng hiện tại để kết nối lại hoặc đổi tài khoản khác"""
+    try:
+        current_user.telegram_chat_id = None
+        db.commit()
+        db.refresh(current_user)
+        logger.info(f"Đã hủy liên kết Telegram cho user {current_user.email}")
+        return {
+            "message": "Đã ngắt kết nối Telegram thành công",
+            "is_connected": False
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi hủy liên kết Telegram user {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi hủy liên kết Telegram")
