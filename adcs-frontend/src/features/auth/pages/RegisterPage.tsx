@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import logo from '../../../assets/ptit-logo.png';
 import { authAPI } from '../../../api/auth';
 
 const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -31,22 +32,22 @@ const RegisterPage: React.FC = () => {
     }
 
     // Validate Mật khẩu
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongPasswordRegex.test(formData.password)) {
-      setErrorMsg('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&).');
+      setErrorMsg('Mật khẩu phải từ 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số.');
       return;
     }
 
     setIsLoading(true);
     try {
-      await authAPI.register(formData.name, formData.email, formData.password);
-      alert('Yêu cầu cấp tài khoản đã được gửi! Vui lòng chờ phê duyệt hoặc đăng nhập.');
-      navigate('/login');
+      const res: any = await authAPI.register(formData.name, formData.email, formData.password);
+      setSuccessMessage(res?.message || 'Đăng ký thành công! Tài khoản của bạn đang chờ Quản trị viên phê duyệt.');
+      setIsSuccess(true);
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.detail) {
          setErrorMsg(error.response.data.detail);
       } else {
-         setErrorMsg('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+         setErrorMsg('Đã có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại sau.');
       }
     } finally {
       setIsLoading(false);
@@ -67,21 +68,51 @@ const RegisterPage: React.FC = () => {
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-[440px] bg-white dark:bg-slate-900 shadow-xl rounded-xl border border-primary/5 overflow-hidden">
           <div className="p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight mb-2">
-                Tạo tài khoản mới
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-base">
-                Điền thông tin để tham gia hệ thống
-              </p>
-            </div>
-
-            {errorMsg && (
-              <div className="mb-6 flex gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50">
-                <span className="material-symbols-outlined text-red-600 dark:text-red-400">warning</span>
-                <p className="text-sm text-red-800 dark:text-red-200">{errorMsg}</p>
+            {isSuccess ? (
+              <div className="text-center py-4 space-y-4">
+                <div className="size-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-4xl">check_circle</span>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Đăng ký thành công!
+                </h2>
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg text-amber-900 dark:text-amber-200 text-sm leading-relaxed text-left">
+                  <p className="font-semibold mb-1 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[18px]">info</span>
+                    Chờ kích hoạt tài khoản
+                  </p>
+                  {successMessage}
+                </div>
+                <p className="text-slate-500 text-xs">
+                  Vui lòng liên hệ với Quản trị viên hệ thống để được phê duyệt và cấp quyền phòng ban.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    to="/login"
+                    className="w-full inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all gap-2"
+                  >
+                    <span>Quay lại trang Đăng nhập</span>
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </Link>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="text-center mb-8">
+                  <h1 className="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight mb-2">
+                    Tạo tài khoản mới
+                  </h1>
+                  <p className="text-slate-500 dark:text-slate-400 text-base">
+                    Điền thông tin để tham gia hệ thống
+                  </p>
+                </div>
+
+                {errorMsg && (
+                  <div className="mb-6 flex gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50">
+                    <span className="material-symbols-outlined text-red-600 dark:text-red-400">warning</span>
+                    <p className="text-sm text-red-800 dark:text-red-200">{errorMsg}</p>
+                  </div>
+                )}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
@@ -137,6 +168,8 @@ const RegisterPage: React.FC = () => {
                 Đăng nhập ngay
               </Link>
             </p>
+          </>
+        )}
           </div>
         </div>
       </main>

@@ -7,6 +7,8 @@ import {
   type DocumentResponse,
 } from "../../../api/document";
 import { DocumentPreview } from "../components/DocumentPreview";
+import { Authorized } from "../../../components/common/Authorized";
+import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from "../../../api/department";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "—";
@@ -34,8 +36,54 @@ const DocumentPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<Partial<DocumentResponse>>({});
+  const [flatDepartments, setFlatDepartments] = useState<DepartmentResponse[]>([]);
 
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const tree = await departmentApi.getAll();
+        const flatten = (nodes: DepartmentTreeResponse[]): DepartmentResponse[] => {
+          let list: DepartmentResponse[] = [];
+          nodes.forEach(node => {
+            const { children, ...rest } = node;
+            list.push(rest);
+            if (children && children.length > 0) list = list.concat(flatten(children));
+          });
+          return list;
+        };
+        setFlatDepartments(flatten(tree));
+      } catch (err) {
+        console.error("Không thể tải danh sách phòng ban:", err);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  const getDepartmentName = (deptId?: string | null) => {
+    if (!deptId) return "Chưa phân bổ";
+    const found = flatDepartments.find(d => d.department_id === deptId || String(d.id) === String(deptId) || d.code === deptId);
+    return found ? (found.ten_hien_thi || found.name) : deptId;
+  };
+
+  const handleSelectSuggestedDepartment = (deptCode?: string, deptName?: string) => {
+    let targetDeptId: string | null = null;
+    if (deptCode) {
+      const match = flatDepartments.find(d => d.code === deptCode || String(d.id) === deptCode);
+      if (match) targetDeptId = match.department_id;
+    }
+    if (!targetDeptId && deptName) {
+      const match = flatDepartments.find(d => d.name.toLowerCase().includes(deptName.toLowerCase()) || (d.ten_hien_thi && d.ten_hien_thi.toLowerCase().includes(deptName.toLowerCase())));
+      if (match) targetDeptId = match.department_id;
+    }
+    const finalId = targetDeptId || deptCode || deptName || "";
+    setEditedData(prev => ({
+      ...prev,
+      assigned_department_id: finalId
+    }));
+    toast.success(`Đã chọn phòng ban: ${deptName || deptCode}`);
+  };
 
   // Khôi phục lại document_id từ sessionStorage khi vừa vào trang
   useEffect(() => {
@@ -53,8 +101,9 @@ const DocumentPage: React.FC = () => {
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
+    const isWorking = documentDetail?.status === 'pending' || documentDetail?.status === 'queued' || documentDetail?.status === 'processing';
 
-    if (activeDocumentId && documentDetail?.status === 'pending') {
+    if (activeDocumentId && isWorking) {
       interval = setInterval(async () => {
         try {
           const doc = await getDocument(activeDocumentId);
@@ -281,6 +330,29 @@ const DocumentPage: React.FC = () => {
       { label: "Số ký hiệu", value: getValue(data?.so_ky_hieu), field: "so_ky_hieu" },
       { label: "Ngày ban hành", value: isEditing ? (data?.ngay_van_ban || "") : formatDate(data?.ngay_van_ban), field: "ngay_van_ban", type: "date" },
       { label: "Loại văn bản", value: getValue(data?.loai_van_ban_text), field: "loai_van_ban_text" },
+      { 
+        label: "Phòng ban xử lý", 
+        value: isEditing ? (
+          <select 
+            value={data?.assigned_department_id || ""} 
+            onChange={(e) => handleFieldChange("assigned_department_id", e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">-- Chọn phòng ban --</option>
+            {flatDepartments.map((d: DepartmentResponse) => (
+              <option key={d.department_id} value={d.department_id}>
+                {d.name} {d.code ? `(${d.code})` : ''}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="font-semibold text-primary">
+            {getDepartmentName(data?.assigned_department_id)}
+          </span>
+        ), 
+        field: "assigned_department_id",
+        isCustom: true
+      },
       { label: "Trích yếu", value: getValue(data?.trich_yeu), field: "trich_yeu" },
       { label: "Đơn vị ban hành", value: getValue(data?.don_vi_ban_hanh), field: "don_vi_ban_hanh" },
       { label: "Người ký", value: getValue(data?.nguoi_ky), field: "nguoi_ky" },
@@ -290,9 +362,11 @@ const DocumentPage: React.FC = () => {
       { label: "Căn cứ pháp lý", value: getArrayValue(data?.can_cu_phap_ly), field: "can_cu_phap_ly", isArray: true },
       { label: "Yêu cầu hành động", value: getValue(data?.yeu_cau_hanh_dong), field: "yeu_cau_hanh_dong" },
     ];
-  }, [documentDetail, editedData, isEditing]);
+  }, [documentDetail, editedData, isEditing, flatDepartments]);
 
-  const isPending = documentDetail?.status === 'pending';
+  const isQueued = documentDetail?.status === 'queued';
+  const isProcessing = documentDetail?.status === 'processing' || documentDetail?.status === 'pending';
+  const isPending = isQueued || isProcessing;
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
@@ -365,9 +439,18 @@ const DocumentPage: React.FC = () => {
                   <p className="text-xs text-slate-500">Mã file: {activeDocumentId}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                      ${isPending ? 'bg-amber-100 text-amber-800 animate-pulse border border-amber-200' : 'bg-emerald-100 text-emerald-800'}`}>
-                      {isPending && <span className="material-symbols-outlined text-[14px] mr-1 animate-spin">sync</span>}
-                      {isPending ? "Đang AI phân tích..." : "Xử lý hoàn tất"}
+                      ${isQueued ? 'bg-amber-100 text-amber-800 animate-pulse border border-amber-200' :
+                        isProcessing ? 'bg-blue-100 text-blue-800 animate-pulse border border-blue-200' :
+                        documentDetail?.status === 'failed' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                        'bg-emerald-100 text-emerald-800'}`}>
+                      {isQueued && <span className="material-symbols-outlined text-[14px] mr-1">hourglass_top</span>}
+                      {isProcessing && <span className="material-symbols-outlined text-[14px] mr-1 animate-spin">sync</span>}
+                      {documentDetail?.status === 'failed' && <span className="material-symbols-outlined text-[14px] mr-1">error</span>}
+                      {!isPending && documentDetail?.status !== 'failed' && <span className="material-symbols-outlined text-[14px] mr-1">check_circle</span>}
+                      {isQueued ? "Đang trong hàng đợi AI..." :
+                       isProcessing ? "Đang AI phân tích..." :
+                       documentDetail?.status === 'failed' ? "Phân tích thất bại" :
+                       "Xử lý hoàn tất"}
                     </span>
                   </div>
                 </div>
@@ -602,44 +685,148 @@ const DocumentPage: React.FC = () => {
               </div>
             )}
 
-            {/* Khối Gợi ý và Đề xuất từ AI */}
-            {!isPending && documentDetail && (documentDetail.de_xuat_xu_ly || documentDetail.goi_y_phong_ban) && (
-              <div className="grid grid-cols-2 gap-4">
-                {documentDetail.de_xuat_xu_ly && (
-                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 p-4 shadow-sm">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">schedule</span> Đề xuất xử lý
-                    </p>
-                    <p className="text-sm font-semibold text-slate-900 mb-1">{documentDetail.de_xuat_xu_ly.so_ngay_de_xuat} ngày - Mức: <span className="text-primary capitalize">{documentDetail.de_xuat_xu_ly.muc_uu_tien}</span></p>
-                    <p className="text-xs text-slate-500 line-clamp-3">{documentDetail.de_xuat_xu_ly.ly_do}</p>
+            {/* Khối Gợi ý Top-3 Phòng ban & Đề xuất Cán bộ từ AI (W9) */}
+            {!isPending && documentDetail && (
+              <div className="space-y-4">
+                {/* 1. Top-3 Phòng ban gợi ý */}
+                {((documentDetail.suggested_departments && documentDetail.suggested_departments.length > 0) || documentDetail.goi_y_phong_ban) && (
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm text-primary">psychology</span> Top phòng ban gợi ý phân luồng
+                      </p>
+                      <span className="text-[11px] text-slate-400 italic">Click để áp dụng</span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {(() => {
+                        const suggestions = (documentDetail.suggested_departments && documentDetail.suggested_departments.length > 0)
+                          ? documentDetail.suggested_departments
+                          : documentDetail.goi_y_phong_ban
+                          ? [{
+                              department_code: "",
+                              department_name: documentDetail.goi_y_phong_ban.ten_hien_thi || documentDetail.goi_y_phong_ban.phong_ban || "",
+                              confidence_score: documentDetail.goi_y_phong_ban.diem_tin_cay || documentDetail.confidence || 0.88,
+                              reasoning: documentDetail.goi_y_phong_ban.ly_do || "Văn bản phù hợp với nhiệm vụ của phòng ban này."
+                            }]
+                          : [];
+
+                        return suggestions.map((item, idx) => {
+                          const score = item.confidence_score ? (item.confidence_score > 1 ? item.confidence_score : item.confidence_score * 100) : 85;
+                          const currentAssigned = isEditing ? editedData.assigned_department_id : documentDetail.assigned_department_id;
+                          const isSelected = currentAssigned && (
+                            currentAssigned === item.department_code || 
+                            getDepartmentName(currentAssigned).toLowerCase().includes((item.department_name || "").toLowerCase())
+                          );
+
+                          return (
+                            <div 
+                              key={idx}
+                              onClick={() => handleSelectSuggestedDepartment(item.department_code, item.department_name)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary' 
+                                  : 'border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                    idx === 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                  }`}>
+                                    #{idx + 1}
+                                  </span>
+                                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                    {item.department_name} {item.department_code ? `(${item.department_code})` : ''}
+                                  </h4>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                                    score >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                    score >= 60 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                                    'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                  }`}>
+                                    {score.toFixed(1)}% tin cậy
+                                  </span>
+                                  {isSelected ? (
+                                    <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+                                  ) : (
+                                    <button 
+                                      type="button" 
+                                      className="text-xs text-primary hover:underline font-semibold"
+                                    >
+                                      Chọn
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              {item.reasoning && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                                  {item.reasoning}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
                   </div>
                 )}
-                {documentDetail.goi_y_phong_ban && (
-                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 p-4 shadow-sm">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">domain</span> Đề xuất phòng ban
+
+                {/* 2. Cán bộ đề xuất xử lý (Proposed Assignees) */}
+                {documentDetail.proposed_assignees && documentDetail.proposed_assignees.length > 0 && (
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm text-primary">person_search</span> Đề xuất cán bộ xử lý
                     </p>
-                    <p className="text-sm font-semibold text-slate-900 mb-1">{documentDetail.goi_y_phong_ban.ten_hien_thi}</p>
-                    <p className="text-xs text-slate-500 line-clamp-3">{documentDetail.goi_y_phong_ban.ly_do}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {documentDetail.proposed_assignees.map((assignee, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                            {assignee.name ? assignee.name.charAt(0).toUpperCase() : "CB"}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{assignee.name}</p>
+                            <p className="text-[11px] text-slate-500 truncate">{assignee.position || "Cán bộ chuyên trách"}</p>
+                            {assignee.email && <p className="text-[10px] text-slate-400 truncate">{assignee.email}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Đề xuất thời hạn xử lý */}
+                {documentDetail.de_xuat_xu_ly && (
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">schedule</span> Đề xuất thời hạn xử lý
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                      {documentDetail.de_xuat_xu_ly.so_ngay_de_xuat} ngày - Mức: <span className="text-primary capitalize">{documentDetail.de_xuat_xu_ly.muc_uu_tien}</span>
+                    </p>
+                    <p className="text-xs text-slate-500 line-clamp-2">{documentDetail.de_xuat_xu_ly.ly_do}</p>
                   </div>
                 )}
               </div>
             )}
             {/* Nút hành động */}
-            <div className="grid grid-cols-1 gap-2 mt-4">
-              <button
-                onClick={handleApprove}
-                disabled={!activeDocumentId || saving || isPending}
-                className={`w-full font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 
-                  ${isPending ? 'bg-amber-100 text-amber-400 cursor-not-allowed shadow-none' : 'bg-primary text-white hover:bg-primary/90'} 
-                  ${saving ? 'opacity-70' : ''}`}
-              >
-                <span className={`material-symbols-outlined text-xl ${isPending ? 'animate-spin' : ''}`}>
-                  {isPending ? 'hourglass_top' : 'check_circle'}
-                </span>
-                {saving ? "Đang lưu..." : isPending ? "Đang chờ AI phân tích..." : "Gửi thông báo tới tài khoản telegram"}
-              </button>
-            </div>
+            <Authorized permission="doc:approve">
+              <div className="grid grid-cols-1 gap-2 mt-4">
+                <button
+                  onClick={handleApprove}
+                  disabled={!activeDocumentId || saving || isPending}
+                  className={`w-full font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 
+                    ${isPending ? 'bg-amber-100 text-amber-400 cursor-not-allowed shadow-none' : 'bg-primary text-white hover:bg-primary/90'} 
+                    ${saving ? 'opacity-70' : ''}`}
+                >
+                  <span className={`material-symbols-outlined text-xl ${isPending ? 'animate-spin' : ''}`}>
+                    {isPending ? 'hourglass_top' : 'check_circle'}
+                  </span>
+                  {saving ? "Đang lưu..." : isQueued ? "Đang chờ trong hàng đợi AI..." : isProcessing ? "Đang chờ AI phân tích..." : "Gửi thông báo tới tài khoản telegram"}
+                </button>
+              </div>
+            </Authorized>
           </aside>
         </div>
       </div>

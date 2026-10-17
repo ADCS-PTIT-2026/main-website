@@ -10,26 +10,76 @@ const AIConfigurationPage: React.FC = () => {
   
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const data = await systemParameterAPI.getAll(); 
-        
-        if (data.promptTemplate) setPromptTemplate(data.promptTemplate);
-        if (data.temperature) setTemperature(parseFloat(data.temperature));
-        if (data.maxTokens) setMaxTokens(parseInt(data.maxTokens, 10));
-        if (data.topP) setTopP(parseFloat(data.topP));
-        if (data.topK) setTopK(parseInt(data.topK, 10));
-        
-      } catch (error) {
-        console.error("Lỗi khi tải cấu hình:", error);
-      }
-    };
+  const [initialData, setInitialData] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const fetchConfig = async () => {
+    try {
+      const data = await systemParameterAPI.getAll(); 
+      setInitialData(data);
+      if (data.promptTemplate) setPromptTemplate(data.promptTemplate);
+      if (data.temperature) setTemperature(parseFloat(data.temperature));
+      if (data.maxTokens) setMaxTokens(parseInt(data.maxTokens, 10));
+      if (data.topP) setTopP(parseFloat(data.topP));
+      if (data.topK) setTopK(parseInt(data.topK, 10));
+    } catch (error) {
+      console.error("Lỗi khi tải cấu hình:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchConfig();
   }, []);
 
+  const handleResetDefaults = () => {
+    if (window.confirm("Bạn có chắc muốn khôi phục về các giá trị cấu hình AI mặc định an toàn?")) {
+      setTemperature(0.7);
+      setMaxTokens(2048);
+      setTopP(0.9);
+      setTopK(40);
+      setErrorMessage(null);
+    }
+  };
+
+  const handleCancelChanges = () => {
+    if (initialData) {
+      if (initialData.promptTemplate) setPromptTemplate(initialData.promptTemplate);
+      if (initialData.temperature) setTemperature(parseFloat(initialData.temperature));
+      if (initialData.maxTokens) setMaxTokens(parseInt(initialData.maxTokens, 10));
+      if (initialData.topP) setTopP(parseFloat(initialData.topP));
+      if (initialData.topK) setTopK(parseInt(initialData.topK, 10));
+      setErrorMessage(null);
+      setSuccessMessage(null);
+    }
+  };
+
   const handleUpdateSystem = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    // Client validation
+    if (temperature < 0 || temperature > 1) {
+      setErrorMessage("Temperature phải nằm trong khoảng từ 0.0 đến 1.0");
+      return;
+    }
+    if (topP < 0 || topP > 1) {
+      setErrorMessage("Top P phải nằm trong khoảng từ 0.0 đến 1.0");
+      return;
+    }
+    if (maxTokens < 256 || maxTokens > 8192) {
+      setErrorMessage("Max Tokens phải nằm trong khoảng từ 256 đến 8192");
+      return;
+    }
+    if (topK < 1 || topK > 100) {
+      setErrorMessage("Top K phải nằm trong khoảng từ 1 đến 100");
+      return;
+    }
+    if (promptTemplate.trim().length > 0 && promptTemplate.trim().length < 10) {
+      setErrorMessage("System prompt phải có độ dài tối thiểu 10 ký tự");
+      return;
+    }
+
     setIsLoading(true);
     
     const configData = {
@@ -42,10 +92,13 @@ const AIConfigurationPage: React.FC = () => {
 
     try {
       await systemParameterAPI.update(configData);
-      alert('Đã cập nhật hệ thống thành công');
-    } catch (error) {
+      setSuccessMessage('Đã cập nhật cấu hình hệ thống AI thành công!');
+      setTimeout(() => setSuccessMessage(null), 4000);
+      fetchConfig();
+    } catch (error: any) {
       console.error('Lỗi khi cập nhật:', error);
-      alert('Cập nhật thất bại. Vui lòng thử lại!');
+      const detail = error?.response?.data?.detail || 'Cập nhật thất bại. Vui lòng thử lại!';
+      setErrorMessage(detail);
     } finally {
       setIsLoading(false);
     }
@@ -161,12 +214,26 @@ const AIConfigurationPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Messages Banner */}
+                {errorMessage && (
+                  <div className="mt-4 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-lg flex items-center gap-2.5 text-xs text-rose-700 dark:text-rose-300 animate-fade-in">
+                    <span className="material-symbols-outlined text-[18px]">error</span>
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="mt-4 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-lg flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300 animate-fade-in">
+                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    <span>{successMessage}</span>
+                  </div>
+                )}
+
                 {/* Warning Message Box */}
                 <div className="mt-auto pt-6">
                   <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800/30">
                     <span className="material-symbols-outlined text-amber-600 dark:text-amber-500 text-xl">info</span>
                     <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                      Lưu ý: Các tham số này ảnh hưởng trực tiếp đến chất lượng phản hồi và chi phí sử dụng API.
+                      Lưu ý: Các tham số này ảnh hưởng trực tiếp đến chất lượng phản hồi, độ dài sinh văn bản và chi phí sử dụng API.
                     </p>
                   </div>
                 </div>
@@ -175,31 +242,43 @@ const AIConfigurationPage: React.FC = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 rounded-b-xl flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 rounded-b-xl flex flex-wrap items-center justify-between gap-3">
               <button 
                 type="button"
-                className="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg transition-colors outline-none"
+                onClick={handleResetDefaults}
+                className="px-4 py-2 text-xs font-semibold text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800/40 transition-colors flex items-center gap-1.5 outline-none"
               >
-                Hủy thay đổi
+                <span className="material-symbols-outlined text-[16px]">restart_alt</span>
+                Khôi phục mặc định
               </button>
-              <button 
-                type="button"
-                onClick={handleUpdateSystem}
-                disabled={isLoading}
-                className="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all outline-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px]">save</span>
-                    Cập nhật hệ thống
-                  </>
-                )}
-              </button>
+
+              <div className="flex items-center gap-3">
+                <button 
+                  type="button"
+                  onClick={handleCancelChanges}
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg transition-colors outline-none"
+                >
+                  Hủy thay đổi
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleUpdateSystem}
+                  disabled={isLoading}
+                  className="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all outline-none disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                      Đang lưu...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      Cập nhật hệ thống
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>

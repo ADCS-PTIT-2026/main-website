@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: Optional[str] = None
+    permissions: list[str] = []
     is_telegram_connected: bool = False
     telegram_chat_id: Optional[str] = None
 

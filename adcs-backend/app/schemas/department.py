@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
@@ -20,13 +20,13 @@ class DepartmentBase(BaseModel):
     parent_id: Optional[int] = None
 
 class DepartmentCreateRequest(DepartmentBase):
-    pass
+    description: str = Field(..., min_length=10, description="Mô tả chức năng nhiệm vụ bắt buộc phục vụ AI phân luồng")
 
 class DepartmentUpdateRequest(BaseModel):
     name: Optional[str] = None
     id: Optional[int] = None
     code: Optional[str] = None
-    description: Optional[str] = None
+    description: Optional[str] = Field(None, min_length=10, description="Mô tả chức năng nhiệm vụ")
     ten_viet_tat: Optional[str] = None
     ten_hien_thi: Optional[str] = None
     loai_don_vi: Optional[str] = None

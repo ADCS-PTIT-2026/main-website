@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
 from app.core.logger import logger, request_id_var
-from app.core.document_websocket import department_list
+from app.services.department_service import get_active_departments_for_ai
 from app.crud.document import get_document_by_id, update_document_metadata, get_document_stats, get_documents
 from app.core.http_client import http_client
 from app.db.session import SessionLocal
@@ -18,6 +18,7 @@ from app.models.document import Document
 from app.core.document_websocket import manager
 from app.models.department import Department
 from app.models.human_resource import HumanResource
+from app.models.user import User
 
 load_dotenv()
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL")
@@ -123,20 +124,67 @@ def repair_truncated_json(json_str: str) -> str:
     return json_str
 
 
-async def send_to_ai_service(file_content: bytes, filename: str, is_save_file: bool):
-    """Gửi file sang AI Service"""
+async def send_to_ai_service(
+    file_content: bytes, 
+    filename: str, 
+    is_save_file: bool, 
+    timeout: float = 300.0,
+    db: Session = None,
+    document_id: str = None,
+    page_count: int = None
+):
+    """Gửi file sang AI Service với danh mục phòng ban động từ CSDL và timeout linh hoạt"""
     req_id = request_id_var.get()
-    logger.info(f"Bắt đầu gửi file '{filename}' tới AI Service (save_document={is_save_file})")
+    logger.info(f"Bắt đầu gửi file '{filename}' tới AI Service (save_document={is_save_file}, timeout={timeout:.1f}s, document_id={document_id})")
     
+    # Lấy danh mục phòng ban động từ CSDL
+    if db:
+        departments_payload = get_active_departments_for_ai(db)
+    else:
+        temp_db = SessionLocal()
+        try:
+            departments_payload = get_active_departments_for_ai(temp_db)
+        finally:
+            temp_db.close()
+
     files = {"file": (filename, file_content)}
     data = {
         "save_document": "true" if is_save_file else "false", 
-        "department_list": json.dumps(department_list, ensure_ascii=False)
+        "department_list": json.dumps(departments_payload, ensure_ascii=False)
     }
+    if document_id:
+        data["document_id"] = str(document_id)
+    if page_count:
+        data["page_count"] = str(page_count)
+
+    # Lấy cấu hình tham số AI từ CSDL (W13)
+    try:
+        from app.crud import system_parameter as crud_sysparam
+        if db:
+            ai_config = crud_sysparam.get_all_parameters(db)
+        else:
+            temp_db_param = SessionLocal()
+            try:
+                ai_config = crud_sysparam.get_all_parameters(temp_db_param)
+            finally:
+                temp_db_param.close()
+
+        ai_params = {
+            "temperature": float(ai_config.get("temperature", 0.7)),
+            "max_tokens": int(ai_config.get("maxTokens", 2048)),
+            "top_p": float(ai_config.get("topP", 0.9)),
+            "top_k": int(ai_config.get("topK", 40)),
+            "system_prompt": ai_config.get("promptTemplate", "")
+        }
+        data["ai_parameters"] = json.dumps(ai_params, ensure_ascii=False)
+        logger.info(f"Đã nạp ai_parameters vào payload gửi AI: {ai_params}")
+    except Exception as cfg_err:
+        logger.warning(f"Không thể nạp cấu hình ai_parameters từ DB, dùng mặc định: {cfg_err}")
+
     headers = {"X-Request-ID": req_id}
     
     try:
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
             response.raise_for_status()
             logger.info(f"AI Service phản hồi thành công cho file '{filename}'")
@@ -311,19 +359,74 @@ async def process_document_background(
 
             goi_y_pb = ai_res.get("goi_y_phong_ban", {})
             doc.goi_y_phong_ban = goi_y_pb
-            ten_phong_ban_ai_de_xuat = goi_y_pb.get("ten_hien_thi")
+            
+            suggested_code = None
+            suggested_name = None
+            if isinstance(goi_y_pb, dict):
+                suggested_code = goi_y_pb.get("department_code") or goi_y_pb.get("code") or goi_y_pb.get("ma_phong_ban")
+                suggested_name = goi_y_pb.get("ten_hien_thi") or goi_y_pb.get("name") or goi_y_pb.get("ten_phong_ban")
 
-            if ten_phong_ban_ai_de_xuat:
+            suggested_list = ai_res.get("suggested_departments", [])
+            if suggested_list and isinstance(suggested_list, list) and len(suggested_list) > 0:
+                first_pick = suggested_list[0]
+                if isinstance(first_pick, dict):
+                    suggested_code = suggested_code or first_pick.get("department_code") or first_pick.get("code")
+                    suggested_name = suggested_name or first_pick.get("department_name") or first_pick.get("name")
+
+            department = None
+            if suggested_code:
+                department = db.query(Department).filter(Department.code == str(suggested_code).strip()).first()
+                if not department and str(suggested_code).isdigit():
+                    department = db.query(Department).filter(Department.id == int(suggested_code)).first()
+
+            if not department and suggested_name:
                 department = db.query(Department).filter(
-                    Department.name.ilike(f"%{ten_phong_ban_ai_de_xuat}%")
+                    (Department.name.ilike(f"%{suggested_name}%")) | 
+                    (Department.ten_hien_thi.ilike(f"%{suggested_name}%"))
                 ).first()
-                
-                if department:
-                    doc.assigned_department_id = str(department.department_id)
-                else:
-                    doc.assigned_department_id = None 
+
+            if department:
+                doc.assigned_department_id = str(department.department_id)
             else:
                 doc.assigned_department_id = None
+            
+            # Top-3 Suggested Departments
+            if not suggested_list and (department or goi_y_pb):
+                pb_name = (department.name if department else suggested_name) or "Phòng ban chuyên trách"
+                pb_code = (department.code if department else suggested_code) or ""
+                pb_score = doc.confidence or 0.88
+                pb_reason = goi_y_pb.get("ly_do") or goi_y_pb.get("reasoning") or f"Văn bản phù hợp với chức năng nhiệm vụ tiếp nhận và xử lý của {pb_name}."
+                suggested_list = [{
+                    "department_code": pb_code,
+                    "department_name": pb_name,
+                    "confidence_score": pb_score,
+                    "reasoning": pb_reason
+                }]
+            doc.suggested_departments = suggested_list
+
+            # Proposed Assignees
+            proposed_assignees = ai_res.get("proposed_assignees", [])
+            if not proposed_assignees and department and department.id:
+                try:
+                    from app.models.human_resource import HumanResource
+                    hr_list = db.query(HumanResource).filter(
+                        HumanResource.department_id == department.id,
+                        HumanResource.active == True
+                    ).limit(3).all()
+                    if hr_list:
+                        proposed_assignees = [
+                            {
+                                "name": hr.ten_hien_thi or hr.name,
+                                "position": hr.chuc_danh or "Cán bộ chuyên môn",
+                                "department_code": department.code or str(department.id),
+                                "email": hr.email,
+                                "reasoning": f"Cán bộ chuyên trách thuộc {department.name}"
+                            }
+                            for hr in hr_list
+                        ]
+                except Exception as hr_err:
+                    logger.warning(f"Lỗi tìm cán bộ đề xuất: {hr_err}")
+            doc.proposed_assignees = proposed_assignees
             
             if ai_res.get("loai_van_ban"):
                 doc.loai_van_ban_text = ai_res.get("loai_van_ban", {}).get("nhan")
@@ -408,14 +511,14 @@ def update_ai_result(db: Session, document_id: str, payload: dict):
             detail="Lỗi cơ sở dữ liệu khi cập nhật thông tin từ AI!"
         )
     
-def get_dashboard_stats_service(db: Session):
-    return get_document_stats(db)
+def get_dashboard_stats_service(db: Session, user: Optional[User] = None):
+    return get_document_stats(db, user=user)
 
-def get_recent_documents_service(db: Session, limit: int=5):
-    return get_documents(db, limit=limit)
+def get_recent_documents_service(db: Session, limit: int = 5, user: Optional[User] = None):
+    return get_documents(db, limit=limit, user=user)
 
-def get_all_documents(db: Session):
-    return get_documents(db)
+def get_all_documents(db: Session, user: Optional[User] = None):
+    return get_documents(db, user=user)
 
 
 async def search_in_data_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
@@ -497,3 +600,92 @@ async def get_detail_document_in_data_service(document_id: str):
     except Exception as e:
         logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
         return {"error": "Không thể kết nối đến Data Service"}
+
+
+def search_documents_combined_service(
+    db: Session,
+    current_user: User,
+    query: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    department_id: Optional[str] = None,
+    document_type: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 20,
+    sort_by: Optional[str] = "newest"
+):
+    from app.crud.document import build_document_scope_query
+    from sqlalchemy import or_, func
+    import math
+
+    db_query = build_document_scope_query(db, current_user)
+
+    # Lọc theo từ khóa
+    if query and query.strip():
+        q_term = f"%{query.strip()}%"
+        db_query = db_query.filter(
+            or_(
+                Document.trich_yeu.ilike(q_term),
+                Document.so_ky_hieu.ilike(q_term),
+                Document.don_vi_ban_hanh.ilike(q_term),
+                Document.original_filename.ilike(q_term),
+                Document.summary.ilike(q_term),
+                Document.nguoi_ky.ilike(q_term)
+            )
+        )
+
+    # Lọc theo khoảng ngày (ngay_van_ban hoặc created_at)
+    if start_date:
+        try:
+            s_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            db_query = db_query.filter(
+                or_(
+                    Document.ngay_van_ban >= s_date,
+                    func.date(Document.created_at) >= s_date
+                )
+            )
+        except Exception:
+            pass
+
+    if end_date:
+        try:
+            e_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            db_query = db_query.filter(
+                or_(
+                    Document.ngay_van_ban <= e_date,
+                    func.date(Document.created_at) <= e_date
+                )
+            )
+        except Exception:
+            pass
+
+    # Lọc theo phòng ban
+    if department_id and department_id.strip():
+        db_query = db_query.filter(Document.assigned_department_id == department_id.strip())
+
+    # Lọc theo loại văn bản
+    if document_type and document_type.strip() and document_type.lower() != "all":
+        db_query = db_query.filter(Document.loai_van_ban_text.ilike(f"%{document_type.strip()}%"))
+
+    total = db_query.count()
+
+    # Sắp xếp
+    if sort_by == "confidence":
+        db_query = db_query.order_by(Document.confidence.desc().nullslast(), Document.created_at.desc())
+    else:
+        db_query = db_query.order_by(Document.created_at.desc())
+
+    # Phân trang
+    offset = (page - 1) * page_size
+    items = db_query.offset(offset).limit(page_size).all()
+    total_pages = math.ceil(total / page_size) if total > 0 else 1
+
+    return {
+        "status": "success",
+        "query": query or "",
+        "data": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }

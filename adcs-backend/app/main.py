@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import httpx
 import time
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -48,6 +49,28 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
         finally:
             request_id_var.reset(token)
 
+MAX_ACTIVE_CONCURRENCY = int(os.getenv("MAX_ACTIVE_CONCURRENCY", 500))
+active_requests_count = 0
+
+class LoadSheddingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        global active_requests_count
+        if request.url.path in ["/health", "/docs", "/openapi.json"]:
+            return await call_next(request)
+
+        if active_requests_count >= MAX_ACTIVE_CONCURRENCY:
+            logger.warning(f"⚠️ Quá tải hệ thống ({active_requests_count}/{MAX_ACTIVE_CONCURRENCY} requests). Từ chối request.")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Hệ thống đang quá tải do lượng truy cập cao. Vui lòng thử lại sau giây lát."}
+            )
+
+        active_requests_count += 1
+        try:
+            return await call_next(request)
+        finally:
+            active_requests_count = max(0, active_requests_count - 1)
+
 app = FastAPI()
 
 def init_telegram_webhook():
@@ -75,6 +98,8 @@ def init_telegram_webhook():
 async def startup_event():
     http_client.client = httpx.AsyncClient(timeout=300.0)
     init_telegram_webhook()
+    from app.services.document_queue_service import document_queue
+    document_queue.start()
 
 app.add_middleware(
     CORSMiddleware,
@@ -83,7 +108,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(LoadSheddingMiddleware)
 app.add_middleware(RequestTrackingMiddleware)
+
+@app.get("/health")
+def health_check():
+    from app.db.session import engine
+    from sqlalchemy import text
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "disconnected", "error": str(e)}
+        )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user.router, prefix="/api/users", tags=["Users"])
@@ -105,4 +146,6 @@ async def validation_exception_handler(request, exc):
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    from app.services.document_queue_service import document_queue
+    await document_queue.stop()
     await http_client.client.aclose()

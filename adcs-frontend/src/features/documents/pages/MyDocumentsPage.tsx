@@ -1,0 +1,696 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import {
+  getMyDocuments,
+  retryDocument,
+  cancelDocument,
+  deleteDocument,
+  uploadDocument,
+  type MyDocumentItem,
+} from '../../../api/document';
+
+const formatFileSize = (bytes?: number | null) => {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+interface UploadingFile {
+  id: string;
+  file: File;
+  status: 'uploading' | 'success' | 'error';
+  errorMessage?: string;
+}
+
+const MyDocumentsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Danh sách tài liệu
+  const [documents, setDocuments] = useState<MyDocumentItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(15);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Kéo thả & Upload nhiều file
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<UploadingFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Modal xác nhận xóa
+  const [deleteTarget, setDeleteTarget] = useState<MyDocumentItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Modal xem lỗi
+  const [errorDetailTarget, setErrorDetailTarget] = useState<MyDocumentItem | null>(null);
+
+  // Tải danh sách tài liệu
+  const fetchMyDocuments = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
+    try {
+      const res = await getMyDocuments({
+        page,
+        page_size: pageSize,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchQuery || undefined,
+      });
+      setDocuments(res.items || []);
+      setTotal(res.total || 0);
+      setTotalPages(res.total_pages || 1);
+    } catch (error: any) {
+      if (!isSilent) {
+        toast.error('Không thể tải danh sách văn bản của bạn.');
+      }
+    } finally {
+      if (!isSilent) setIsLoading(false);
+    }
+  }, [page, pageSize, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchMyDocuments();
+  }, [fetchMyDocuments]);
+
+  // Polling tự động nếu có tài liệu đang queued hoặc processing
+  useEffect(() => {
+    const hasPending = documents.some(
+      (d: MyDocumentItem) => d.status === 'queued' || d.status === 'processing' || d.status === 'pending'
+    );
+    if (!hasPending) return;
+
+    const interval = setInterval(() => {
+      fetchMyDocuments(true);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [documents, fetchMyDocuments]);
+
+  // Tìm kiếm với Enter
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setSearchQuery(searchInput.trim());
+  };
+
+  // Upload tệp tin tuần tự
+  const processUploadQueue = async (files: File[]) => {
+    if (!files.length) return;
+    setIsUploading(true);
+
+    const newQueue: UploadingFile[] = files.map((f) => ({
+      id: `${f.name}-${Date.now()}-${Math.random()}`,
+      file: f,
+      status: 'uploading',
+    }));
+    setUploadQueue(newQueue);
+
+    let successCount = 0;
+    for (let i = 0; i < newQueue.length; i++) {
+      const item = newQueue[i];
+      try {
+        await uploadDocument(item.file, true);
+        setUploadQueue((prev: UploadingFile[]) =>
+          prev.map((q: UploadingFile, idx: number) => (idx === i ? { ...q, status: 'success' } : q))
+        );
+        successCount++;
+      } catch (err: any) {
+        const msg = err.response?.data?.detail || 'Không thể tải tệp lên';
+        setUploadQueue((prev: UploadingFile[]) =>
+          prev.map((q: UploadingFile, idx: number) =>
+            idx === i ? { ...q, status: 'error', errorMessage: msg } : q
+          )
+        );
+      }
+    }
+
+    setIsUploading(false);
+    if (successCount > 0) {
+      toast.success(`Đã thêm ${successCount} văn bản vào hàng đợi xử lý!`);
+      fetchMyDocuments();
+    }
+  };
+
+  const handleFilesSelected = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const filesArray = Array.from(fileList);
+    processUploadQueue(filesArray);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesSelected(e.dataTransfer.files);
+    }
+  };
+
+  // Thử lại văn bản lỗi
+  const handleRetry = async (doc: MyDocumentItem) => {
+    const toastId = toast.loading(`Đang đưa "${doc.original_filename}" vào lại hàng đợi...`);
+    try {
+      await retryDocument(doc.document_id);
+      toast.success('Đã đưa văn bản vào hàng đợi xử lý lại!', { id: toastId });
+      fetchMyDocuments(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Không thể thực hiện lại';
+      toast.error(`Thất bại: ${msg}`, { id: toastId });
+    }
+  };
+
+  // Hủy văn bản đang chờ
+  const handleCancel = async (doc: MyDocumentItem) => {
+    const toastId = toast.loading(`Đang hủy văn bản "${doc.original_filename}"...`);
+    try {
+      await cancelDocument(doc.document_id);
+      toast.success('Đã hủy văn bản khỏi hàng đợi!', { id: toastId });
+      fetchMyDocuments(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Không thể hủy';
+      toast.error(`Thất bại: ${msg}`, { id: toastId });
+    }
+  };
+
+  // Xóa văn bản
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const toastId = toast.loading('Đang xóa văn bản...');
+    try {
+      await deleteDocument(deleteTarget.document_id);
+      toast.success('Đã xóa văn bản thành công!', { id: toastId });
+      setDeleteTarget(null);
+      fetchMyDocuments();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Không thể xóa văn bản';
+      toast.error(`Xóa thất bại: ${msg}`, { id: toastId });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Xem chi tiết văn bản
+  const handleViewDetail = (doc: MyDocumentItem) => {
+    sessionStorage.setItem('lastActiveDocumentId', doc.document_id);
+    navigate(`/documents?id=${doc.document_id}`);
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 md:p-8 font-display">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header trang */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-3xl">folder_shared</span>
+              Văn bản của tôi
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Theo dõi danh sách văn bản bạn đã gửi, vị trí hàng đợi và tiến trình trích xuất AI.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchMyDocuments()}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors shadow-sm"
+              title="Làm mới danh sách"
+            >
+              <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>
+                refresh
+              </span>
+              Làm mới
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-lg shadow-md shadow-primary/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-[20px]">upload_file</span>
+              Tải lên tệp mới
+            </button>
+          </div>
+        </div>
+
+        {/* Khung kéo thả Upload nhiều tệp */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+          className="hidden"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilesSelected(e.target.files)}
+        />
+
+        <div
+          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+            isDragging
+              ? 'border-primary bg-primary/10 scale-[1.01]'
+              : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-primary/60 hover:bg-primary/5'
+          }`}
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl">cloud_upload</span>
+            </div>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-base">
+              Kéo và thả nhiều tệp vào đây, hoặc click để chọn tệp
+            </h3>
+            <p className="text-xs text-slate-500">
+              Hỗ trợ PDF, DOCX, PNG, JPG (Tối đa 50MB, tối đa 100 trang/tệp). Hệ thống tự động xếp hàng và xử lý ngầm.
+            </p>
+          </div>
+        </div>
+
+        {/* Tiến trình Upload nếu đang có file tải lên */}
+        {uploadQueue.length > 0 && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-base">cloud_sync</span>
+                Tiến trình tải tệp ({uploadQueue.filter((q) => q.status === 'success').length}/{uploadQueue.length})
+              </span>
+              {!isUploading && (
+                <button
+                  onClick={() => setUploadQueue([])}
+                  className="text-xs text-slate-400 hover:text-slate-600 font-semibold"
+                >
+                  Đóng
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {uploadQueue.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="material-symbols-outlined text-slate-400 text-base">description</span>
+                    <span className="truncate font-medium text-slate-700 dark:text-slate-300" title={item.file.name}>
+                      {item.file.name}
+                    </span>
+                    <span className="text-slate-400">({formatFileSize(item.file.size)})</span>
+                  </div>
+                  <div>
+                    {item.status === 'uploading' && (
+                      <span className="text-primary flex items-center gap-1 font-semibold">
+                        <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                        Đang đẩy...
+                      </span>
+                    )}
+                    {item.status === 'success' && (
+                      <span className="text-emerald-600 flex items-center gap-1 font-semibold">
+                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                        Đã xếp hàng
+                      </span>
+                    )}
+                    {item.status === 'error' && (
+                      <span className="text-rose-600 flex items-center gap-1 font-semibold" title={item.errorMessage}>
+                        <span className="material-symbols-outlined text-sm">error</span>
+                        Lỗi
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Thanh Tabs lọc trạng thái và Tìm kiếm */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+            {[
+              { id: 'all', label: 'Tất cả' },
+              { id: 'queued', label: 'Chờ xử lý' },
+              { id: 'processing', label: 'Đang phân tích' },
+              { id: 'processed', label: 'Hoàn tất' },
+              { id: 'failed', label: 'Thất bại' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setStatusFilter(tab.id);
+                  setPage(1);
+                }}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  statusFilter === tab.id
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Ô tìm kiếm */}
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+            <div className="relative flex-1 md:w-72">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Tìm tên tệp, số hiệu, trích yếu..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-primary transition-all text-slate-900 dark:text-white"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+            >
+              Tìm
+            </button>
+          </form>
+        </div>
+
+        {/* Bảng danh sách văn bản */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">Tệp văn bản</th>
+                  <th className="py-3 px-4">Trích xuất nhanh</th>
+                  <th className="py-3 px-4">Thời gian</th>
+                  <th className="py-3 px-4">Trạng thái xử lý</th>
+                  <th className="py-3 px-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {isLoading && documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-3xl animate-spin mb-2 block">sync</span>
+                      Đang tải danh sách văn bản...
+                    </td>
+                  </tr>
+                ) : documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-4xl mb-2 opacity-50 block">inbox</span>
+                      Không có văn bản nào phù hợp.
+                    </td>
+                  </tr>
+                ) : (
+                  documents.map((doc) => {
+                    const isQueued = doc.status === 'queued';
+                    const isProcessing = doc.status === 'processing' || doc.status === 'pending';
+                    const isCompleted = doc.status === 'processed' || doc.status === 'success' || doc.status === 'approved';
+                    const isFailed = doc.status === 'failed' || doc.status === 'error';
+
+                    return (
+                      <tr
+                        key={doc.document_id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                      >
+                        {/* Cột 1: Tệp */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                              <span className="material-symbols-outlined text-[20px]">description</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p
+                                onClick={() => handleViewDetail(doc)}
+                                className="font-semibold text-slate-900 dark:text-white truncate max-w-xs hover:text-primary cursor-pointer transition-colors"
+                                title={doc.original_filename}
+                              >
+                                {doc.original_filename}
+                              </p>
+                              <div className="flex items-center gap-2 text-slate-400 text-[11px] mt-0.5">
+                                <span>{formatFileSize(doc.file_size_bytes)}</span>
+                                {doc.page_count && <span>• {doc.page_count} trang</span>}
+                                <span>• ID: {doc.document_id.slice(0, 8)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Cột 2: Trích xuất nhanh */}
+                        <td className="py-3.5 px-4 max-w-xs">
+                          {doc.so_ky_hieu || doc.trich_yeu || doc.don_vi_ban_hanh ? (
+                            <div className="space-y-0.5">
+                              {doc.so_ky_hieu && (
+                                <p className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                                  Số: {doc.so_ky_hieu}
+                                </p>
+                              )}
+                              {doc.don_vi_ban_hanh && (
+                                <p className="text-slate-500 truncate text-[11px]">{doc.don_vi_ban_hanh}</p>
+                              )}
+                              {doc.trich_yeu && (
+                                <p className="text-slate-600 dark:text-slate-400 line-clamp-1 italic text-[11px]">
+                                  {doc.trich_yeu}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic text-[11px]">Chưa trích xuất</span>
+                          )}
+                        </td>
+
+                        {/* Cột 3: Thời gian */}
+                        <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                          {formatDate(doc.created_at)}
+                        </td>
+
+                        {/* Cột 4: Trạng thái */}
+                        <td className="py-3.5 px-4">
+                          {isQueued && (
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                <span className="material-symbols-outlined text-[13px] animate-pulse">hourglass_top</span>
+                                Chờ trong hàng đợi
+                              </span>
+                              {doc.queue_position && (
+                                <p className="text-[10px] text-amber-700 font-medium">
+                                  Vị trí #{doc.queue_position} trong hàng đợi
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {isProcessing && (
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 animate-pulse">
+                                <span className="material-symbols-outlined text-[13px] animate-spin">sync</span>
+                                Đang AI phân tích...
+                              </span>
+                              <p className="text-[10px] text-blue-600 font-medium">OCR & Semantic Chunking</p>
+                            </div>
+                          )}
+
+                          {isCompleted && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                              Đã xử lý xong
+                            </span>
+                          )}
+
+                          {isFailed && (
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => setErrorDetailTarget(doc)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">error</span>
+                                Lỗi xử lý (Xem)
+                              </button>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Cột 5: Nút thao tác */}
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Nút Xem */}
+                            <button
+                              onClick={() => handleViewDetail(doc)}
+                              className="p-1.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              title="Xem chi tiết kết quả"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+
+                            {/* Nút Thử lại (chỉ khi failed) */}
+                            {isFailed && (
+                              <button
+                                onClick={() => handleRetry(doc)}
+                                className="p-1.5 text-amber-600 hover:bg-amber-100/70 rounded-lg transition-colors"
+                                title="Thử lại xử lý"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">replay</span>
+                              </button>
+                            )}
+
+                            {/* Nút Hủy (chỉ khi queued) */}
+                            {isQueued && (
+                              <button
+                                onClick={() => handleCancel(doc)}
+                                className="p-1.5 text-rose-500 hover:bg-rose-100/70 rounded-lg transition-colors"
+                                title="Hủy hàng đợi"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                              </button>
+                            )}
+
+                            {/* Nút Xóa */}
+                            <button
+                              onClick={() => setDeleteTarget(doc)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Xóa văn bản"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Phân trang */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-800 text-xs">
+              <span className="text-slate-500">
+                Hiển thị trang {page} / {totalPages} (Tổng cộng {total} văn bản)
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-2.5 py-1.5 border rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Trước
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-2.5 py-1.5 border rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Xác nhận Xóa */}
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3 text-rose-600 mb-3">
+                <span className="material-symbols-outlined text-3xl">warning</span>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Xác nhận xóa văn bản</h3>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+                Bạn có chắc chắn muốn xóa văn bản <strong>"{deleteTarget.original_filename}"</strong>? Hành động này sẽ loại bỏ tệp và kết quả phân tích AI liên quan.
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  disabled={isDeleting}
+                  onClick={() => setDeleteTarget(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-md transition-all flex items-center gap-1.5"
+                >
+                  {isDeleting ? 'Đang xóa...' : 'Xóa văn bản'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Xem chi tiết lỗi */}
+        {errorDetailTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-rose-600">
+                  <span className="material-symbols-outlined text-2xl">error</span>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Chi tiết lỗi xử lý AI</h3>
+                </div>
+                <button
+                  onClick={() => setErrorDetailTarget(null)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-slate-400">Tệp: </span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {errorDetailTarget.original_filename}
+                  </span>
+                </div>
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg text-rose-900 dark:text-rose-200 font-mono whitespace-pre-wrap">
+                  {errorDetailTarget.error_message || 'Không có mô tả lỗi cụ thể từ máy chủ AI.'}
+                </div>
+                <p className="text-slate-500 text-[11px]">
+                  Gợi ý: Kiểm tra lại xem tệp có bị khóa mật khẩu không, chất lượng ảnh quét OCR hoặc thử bấm nút "Thử lại" sau ít phút.
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    const doc = errorDetailTarget;
+                    setErrorDetailTarget(null);
+                    handleRetry(doc);
+                  }}
+                  className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">replay</span>
+                  Thử lại ngay
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default MyDocumentsPage;

@@ -44,3 +44,25 @@ class TelegramStatusResponse(BaseModel):
     telegram_chat_id: Optional[str] = None
     bot_name: str
     link: str
+
+class UserProfileResponse(BaseModel):
+    user_id: str
+    email: EmailStr
+    username: str
+    role_id: Optional[str] = None
+    role_name: Optional[str] = None
+    department_id: Optional[str] = None
+    department_name: Optional[str] = None
+    is_active: bool
+    is_telegram_connected: bool
+    telegram_chat_id: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UserProfileUpdate(BaseModel):
+    username: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str

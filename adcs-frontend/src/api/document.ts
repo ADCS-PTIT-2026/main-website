@@ -17,6 +17,8 @@ export type DocumentResponse = {
   summary?: string | null;
   status?: string | null;
   updated_at?: string | null;
+  original_filename?: string | null;
+  so_den?: string | null;
 
   loai_van_ban_text?: string | null;
   trich_yeu?: string | null;
@@ -47,6 +49,21 @@ export type DocumentResponse = {
     ly_do?: string;
     diem_tin_cay?: number;
   } | null;
+
+  suggested_departments?: {
+    department_code?: string;
+    department_name?: string;
+    confidence_score?: number;
+    reasoning?: string;
+  }[] | null;
+
+  proposed_assignees?: {
+    name?: string;
+    position?: string;
+    department_code?: string;
+    email?: string;
+    reasoning?: string;
+  }[] | null;
 
   related_documents?: {
     document_id: string | number;
@@ -83,10 +100,12 @@ export interface SearchParams {
   start_date?: string; 
   end_date?: string;
   department_id?: string;
+  document_type?: string;
   document_type_ids?: string[];
   sort_by?: 'confidence' | 'newest';
   page?: number;
   limit?: number;
+  page_size?: number;
 }
 
 export interface SearchAIResponse {
@@ -94,6 +113,8 @@ export interface SearchAIResponse {
   query: string;
   data: DocumentResponse[];
   total?: number;
+  page?: number;
+  page_size?: number;
   total_pages?: number;
 }
 
@@ -127,21 +148,76 @@ export async function getAllDocuments(): Promise<DocumentResponse[]> {
   return axiosClient.get(`/documents/all`);
 }
 
-export async function deleteDocument(documentId: string): Promise<{ message: string }> {
-  return axiosClient.delete(`/documents/${documentId}`);
+export async function deleteDocument(documentId: string, force: boolean = false): Promise<{ message: string }> {
+  return axiosClient.delete(`/documents/${documentId}${force ? '?force=true' : ''}`);
 }
 
-// Tìm kiếm tài liệu
+// Tìm kiếm tài liệu kết hợp (W10)
 export async function searchDocuments(params: SearchParams): Promise<SearchAIResponse> {
   const query = new URLSearchParams();
   
   if (params.query) query.append('query', params.query);
   if (params.start_date) query.append('start_date', params.start_date);
   if (params.end_date) query.append('end_date', params.end_date);
+  if (params.department_id) query.append('department_id', params.department_id);
+  if (params.document_type) query.append('document_type', params.document_type);
+  if (params.sort_by) query.append('sort_by', params.sort_by);
+  if (params.page) query.append('page', String(params.page));
+  if (params.page_size || params.limit) query.append('page_size', String(params.page_size || params.limit));
   
   if (params.document_type_ids && params.document_type_ids.length > 0) {
     params.document_type_ids.forEach(id => query.append('document_type_ids', id));
   }
 
   return axiosClient.get(`/documents/search?${query.toString()}`);
+}
+
+export type MyDocumentItem = {
+  document_id: string;
+  original_filename: string;
+  file_size_bytes?: number | null;
+  page_count?: number | null;
+  status: string;
+  queue_position?: number | null;
+  priority: number;
+  retry_count: number;
+  error_message?: string | null;
+  so_ky_hieu?: string | null;
+  trich_yeu?: string | null;
+  don_vi_ban_hanh?: string | null;
+  loai_van_ban_text?: string | null;
+  summary?: string | null;
+  confidence?: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MyDocumentsResponse = {
+  items: MyDocumentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+};
+
+export async function getMyDocuments(params?: {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  search?: string;
+}): Promise<MyDocumentsResponse> {
+  const query = new URLSearchParams();
+  if (params?.page) query.append("page", String(params.page));
+  if (params?.page_size) query.append("page_size", String(params.page_size));
+  if (params?.status) query.append("status", params.status);
+  if (params?.search) query.append("search", params.search);
+  return axiosClient.get(`/documents/my?${query.toString()}`);
+}
+
+export async function retryDocument(documentId: string): Promise<{ message: string; document_id: string; status: string }> {
+  return axiosClient.post(`/documents/${documentId}/retry`);
+}
+
+export async function cancelDocument(documentId: string): Promise<{ message: string; document_id: string; status: string }> {
+  return axiosClient.post(`/documents/${documentId}/cancel`);
 }

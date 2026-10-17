@@ -13,7 +13,8 @@ export default {
         "background-dark": "#1f1313",
       },
       fontFamily: {
-        "display": ["Montserrat", "sans-serif"],
+        "display": ["Montserrat", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        "montserrat": ["Montserrat", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
     },
   },

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import logo from '../../../assets/ptit-logo.png';
 import { authAPI } from '../../../api/auth';
@@ -8,8 +8,20 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      if (errorParam === 'sso_failed') {
+        setErrorMsg('Đăng nhập bằng SSO PTIT không thành công hoặc phiên đăng nhập đã hết hạn.');
+      } else {
+        setErrorMsg(decodeURIComponent(errorParam));
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     if (token) {
       navigate('/dashboard', { replace: true });

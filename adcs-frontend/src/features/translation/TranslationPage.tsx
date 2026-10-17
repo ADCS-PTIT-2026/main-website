@@ -174,9 +174,27 @@ const TranslationPage: React.FC = () => {
     }
   };
 
+  const [sourceLang, setSourceLang] = useState<string>('vi');
+  const [targetLang, setTargetLang] = useState<string>('en');
+
+  const LANGUAGES = [
+    { code: 'vi', label: 'Tiếng Việt' },
+    { code: 'en', label: 'Tiếng Anh (US)' },
+    { code: 'zh', label: 'Tiếng Trung' },
+    { code: 'fr', label: 'Tiếng Pháp' },
+    { code: 'ru', label: 'Tiếng Nga' },
+  ];
+
+  const handleSwapLanguages = () => {
+    if (sourceLang === 'auto') return;
+    const temp = sourceLang;
+    setSourceLang(targetLang);
+    setTargetLang(temp);
+  };
+
   const getIconForType = (type: string) => {
-    switch (type) {
-      case 'pdf': return <span className="material-symbols-outlined text-red-500">picture_as_pdf</span>;
+    switch (type.toLowerCase()) {
+      case 'pdf': return <span className="material-symbols-outlined text-red-600">picture_as_pdf</span>;
       case 'docx': case 'doc': return <span className="material-symbols-outlined text-blue-700">description</span>;
       case 'png': case 'jpg': case 'jpeg': return <span className="material-symbols-outlined text-blue-500">image</span>;
       default: return <span className="material-symbols-outlined text-slate-500">draft</span>;
@@ -188,22 +206,51 @@ const TranslationPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 className="text-2xl font-bold text-slate-900">Dịch văn bản</h2>
+            <p className="text-xs text-slate-500 mt-1">Dịch thuật tài liệu đa ngôn ngữ với công nghệ AI</p>
         </div>
       </div>
       
       {/* Configuration Bar */}
-      <section className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 bg-slate-50 rounded border border-slate-200 flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-colors">
+      <section className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Ngôn ngữ nguồn */}
+          <div className="px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase text-slate-400">Từ:</span>
-            <span className="text-xs font-bold text-[#ed1d23]">Tiếng Việt</span>
-            <span className="material-symbols-outlined text-xs">expand_more</span>
+            <select 
+              value={sourceLang} 
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold text-primary focus:ring-0 p-0 outline-none cursor-pointer"
+            >
+              <option value="auto">Tự động nhận diện</option>
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
           </div>
-          <span className="material-symbols-outlined text-slate-300">trending_flat</span>
-          <div className="px-3 py-1.5 bg-slate-50 rounded border border-slate-200 flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-colors">
+
+          {/* Nút hoán đổi */}
+          <button 
+            type="button"
+            onClick={handleSwapLanguages}
+            disabled={sourceLang === 'auto'}
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-primary hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed outline-none"
+            title="Hoán đổi ngôn ngữ"
+          >
+            <span className="material-symbols-outlined text-base">swap_horiz</span>
+          </button>
+
+          {/* Ngôn ngữ đích */}
+          <div className="px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase text-slate-400">Đến:</span>
-            <span className="text-xs font-bold text-slate-800">Tiếng Anh (US)</span>
-            <span className="material-symbols-outlined text-xs">expand_more</span>
+            <select 
+              value={targetLang} 
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold text-slate-800 focus:ring-0 p-0 outline-none cursor-pointer"
+            >
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
           </div>
         </div>
       </section>
@@ -290,7 +337,17 @@ const TranslationPage: React.FC = () => {
                         <span className="px-2.5 py-1 bg-green-50 text-green-600 text-[10px] font-black rounded uppercase">Hoàn tất</span>
                       )}
                       {file.status === 'failed' && (
-                        <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded uppercase">Lỗi xử lý</span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="px-2.5 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded uppercase">Lỗi xử lý</span>
+                          {file.error_message && (
+                            <span 
+                              className="text-[11px] text-red-500 font-medium max-w-[200px] truncate cursor-help"
+                              title={file.error_message}
+                            >
+                              {file.error_message}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {file.status === 'translating' && (
                         <div className="flex items-center gap-2">

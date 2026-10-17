@@ -38,6 +38,8 @@ class DocumentResponse(BaseModel):
     
     de_xuat_xu_ly: Optional[Dict[str, Any]] = None
     goi_y_phong_ban: Optional[Dict[str, Any]] = None
+    suggested_departments: Optional[List[Dict[str, Any]]] = None
+    proposed_assignees: Optional[List[Dict[str, Any]]] = None
     
     priority: int = 0
     is_chua_doc: bool
@@ -82,6 +84,8 @@ class AIResultUpdateRequest(BaseModel):
     
     de_xuat_xu_ly: Optional[Dict[str, Any]] = None
     goi_y_phong_ban: Optional[Dict[str, Any]] = None
+    suggested_departments: Optional[List[Dict[str, Any]]] = None
+    proposed_assignees: Optional[List[Dict[str, Any]]] = None
 
     updated_at: datetime = None
 
@@ -112,6 +116,8 @@ class DocumentAIResultResponse(BaseModel):
     confidence: Optional[float] = None
     status: Optional[str] = None
     thong_tin_ky_so: Optional[Any] = None
+    suggested_departments: Optional[List[Dict[str, Any]]] = None
+    proposed_assignees: Optional[List[Dict[str, Any]]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -127,3 +133,41 @@ class DashboardStatsResponse(BaseModel):
 
 class ActionResponse(BaseModel):
     message: str
+
+class MyDocumentItemResponse(BaseModel):
+    document_id: UUID
+    original_filename: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    page_count: Optional[int] = None
+    status: str
+    queue_position: Optional[int] = None
+    priority: int = 1
+    retry_count: int = 0
+    error_message: Optional[str] = None
+    
+    so_ky_hieu: Optional[str] = None
+    trich_yeu: Optional[str] = None
+    don_vi_ban_hanh: Optional[str] = None
+    loai_van_ban_text: Optional[str] = None
+    summary: Optional[str] = None
+    confidence: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MyDocumentsListResponse(BaseModel):
+    items: List[MyDocumentItemResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+class DocumentSearchResponse(BaseModel):
+    status: str
+    query: str
+    data: List[DocumentResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
