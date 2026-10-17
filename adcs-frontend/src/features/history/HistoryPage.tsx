@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { getProcessingHistory, type HistoryRecord } from '../../api/history';
+import { 
+  getProcessingHistory, 
+  type HistoryRecord 
+} from '../../api/history';
+import { userApi } from '../../api/user';
+import { ProcessingDetailModal } from './ProcessingDetailModal';
+import { usePermission } from '../../hooks/usePermission';
 
+
+// --- Trang Chính Lịch Sử Xử Lý ---
 const ProcessingHistoryPage: React.FC = () => {
+  const { isAdmin } = usePermission();
   const [allHistoryData, setAllHistoryData] = useState<HistoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -11,6 +20,24 @@ const ProcessingHistoryPage: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // State xem chi tiết
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isTelegramConnected, setIsTelegramConnected] = useState(false);
+
+  // Kiểm tra trạng thái Telegram của user
+  useEffect(() => {
+    const checkTelegram = async () => {
+      try {
+        const res = await userApi.getTelegramStatus();
+        setIsTelegramConnected(Boolean(res.is_connected));
+      } catch (err) {
+        console.error('Lỗi khi kiểm tra kết nối Telegram:', err);
+      }
+    };
+    checkTelegram();
+  }, []);
 
   const totalItems = allHistoryData.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
@@ -28,7 +55,6 @@ const ProcessingHistoryPage: React.FC = () => {
         time_filter: timeFilter
       });
 
-      // Lấy data từ response.results theo đúng cấu trúc JSON trả về
       let rawData: HistoryRecord[] = [];
       if (response && response.results) {
         rawData = response.results;
@@ -57,6 +83,16 @@ const ProcessingHistoryPage: React.FC = () => {
     }
   };
 
+  const handleOpenDetail = (recordId: number) => {
+    setSelectedRecordId(recordId);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailModalOpen(false);
+    setSelectedRecordId(null);
+  };
+
   // --- Helper Functions ---
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -67,12 +103,12 @@ const ProcessingHistoryPage: React.FC = () => {
     });
   };
 
-  // Hàm chuyển action_type sang tiếng Việt
   const getActionLabel = (actionType: string) => {
     switch (actionType?.toLowerCase()) {
       case 'upload': return 'Tải lên';
       case 'delete': return 'Xóa';
       case 'process': return 'Xử lý AI';
+      case 'translation': return 'Dịch thuật';
       default: return actionType || 'Khác';
     }
   };
@@ -81,18 +117,17 @@ const ProcessingHistoryPage: React.FC = () => {
     switch(action?.toLowerCase()) {
       case 'upload': return 'bg-primary/10 text-primary';
       case 'process': return 'bg-blue-50 text-blue-700';
+      case 'translation': return 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300';
       case 'delete': return 'bg-red-50 text-red-600';
       default: return 'bg-slate-100 text-slate-600';
     }
   };
 
-  // Hàm gộp trạng thái từ 3 cột status
   const getOverallStatus = (record: HistoryRecord) => {
     const statuses = [record.status_llm, record.status_save_file, record.status_save_vector];
-    
     if (statuses.includes('failed') || statuses.includes('error')) return 'Lỗi';
     if (statuses.includes('pending') || statuses.includes('processing')) return 'Đang xử lý';
-    return 'Hoàn tất'; // Nếu không có lỗi và không pending thì mặc định là thành công
+    return 'Hoàn tất';
   };
 
   const getStatusStyles = (status: string) => {
@@ -127,9 +162,25 @@ const ProcessingHistoryPage: React.FC = () => {
           {/* Page Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Lịch sử xử lý văn bản</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {isAdmin ? 'Lịch sử xử lý văn bản (Toàn hệ thống)' : 'Lịch sử xử lý văn bản của bạn'}
+                </h2>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  isAdmin 
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' 
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                }`}>
+                  {isAdmin ? 'Quản trị viên' : 'Cá nhân'}
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
+                {isAdmin 
+                  ? 'Theo dõi toàn bộ tiến trình xử lý, phân tích AI và chia sẻ kết quả trực tiếp qua Telegram trên toàn hệ thống.'
+                  : 'Theo dõi các lượt tải lên, tiến trình phân tích AI và chia sẻ kết quả trực tiếp qua Telegram cho văn bản của bạn.'}
+              </p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 text-sm text-slate-500 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
               <span className="material-symbols-outlined text-base">calendar_today</span>
               <span>Hôm nay, {todayStr}</span>
             </div>
@@ -137,16 +188,23 @@ const ProcessingHistoryPage: React.FC = () => {
 
           {/* Toolbar / Filters */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="lg:col-span-1 relative">
+            <div className="lg:col-span-1 relative flex items-center">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
               <input 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" 
-                placeholder="Tìm kiếm tài liệu... (Nhấn Enter)" 
+                className="w-full pl-10 pr-12 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" 
+                placeholder="Tìm kiếm tài liệu..." 
                 type="text"
               />
+              <button 
+                onClick={() => fetchHistory()}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-primary text-white text-xs font-bold rounded hover:bg-primary/90 transition-colors"
+                title="Tìm kiếm"
+              >
+                Tìm
+              </button>
             </div>
             
             <div className="flex items-center gap-2">
@@ -159,6 +217,7 @@ const ProcessingHistoryPage: React.FC = () => {
                 <option>Tất cả hành động</option>
                 <option value="upload">Tải lên</option>
                 <option value="process">Xử lý AI</option>
+                <option value="translation">Dịch thuật</option>
                 <option value="delete">Xóa</option>
               </select>
             </div>
@@ -178,11 +237,7 @@ const ProcessingHistoryPage: React.FC = () => {
             </div>
             
             <div className="flex justify-end items-center gap-2">
-              <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 outline-none">
-                <span className="material-symbols-outlined text-sm">filter_list</span>
-                Lọc nâng cao
-              </button>
-              <button onClick={() => fetchHistory()} className="p-2 text-slate-400 hover:text-primary transition-all outline-none">
+              <button onClick={() => fetchHistory()} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-50 rounded-lg transition-all outline-none" title="Làm mới">
                 <span className="material-symbols-outlined">refresh</span>
               </button>
             </div>
@@ -199,22 +254,23 @@ const ProcessingHistoryPage: React.FC = () => {
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hành động</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Ghi chú</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                         <div className="flex justify-center items-center gap-2">
-                          <span className="material-symbols-outlined animate-spin">sync</span>
-                          Đang tải dữ liệu...
+                          <span className="material-symbols-outlined animate-spin text-primary">sync</span>
+                          Đang tải dữ liệu lịch sử...
                         </div>
                       </td>
                     </tr>
                   ) : currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                         Không tìm thấy lịch sử nào phù hợp.
                       </td>
                     </tr>
@@ -226,7 +282,12 @@ const ProcessingHistoryPage: React.FC = () => {
                       const actionLabel = getActionLabel(record.action_type);
                       
                       return (
-                        <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                        <tr 
+                          key={record.id} 
+                          onClick={() => handleOpenDetail(record.id)}
+                          className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                          title="Nhấn để xem chi tiết lượt xử lý"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium">
                             {formatDate(record.created_at)}
                           </td>
@@ -235,7 +296,9 @@ const ProcessingHistoryPage: React.FC = () => {
                               <span className={`material-symbols-outlined text-lg ${fileUi.color}`}>
                                 {fileUi.icon}
                               </span>
-                              <span className="text-slate-700 font-semibold">{record.filename || 'Tài liệu không tên'}</span>
+                              <span className="text-slate-800 font-semibold group-hover:text-primary transition-colors">
+                                {record.filename || 'Tài liệu không tên'}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -251,6 +314,18 @@ const ProcessingHistoryPage: React.FC = () => {
                           </td>
                           <td className={`px-6 py-4 italic max-w-xs truncate ${statusLabel === 'Lỗi' ? 'text-red-500 font-medium' : 'text-slate-500'}`}>
                             {record.error_message || record.suggested_department || 'Không có ghi chú'}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDetail(record.id);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-primary/10 text-slate-700 hover:text-primary text-xs font-bold transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                              <span>Chi tiết</span>
+                            </button>
                           </td>
                         </tr>
                       );
@@ -309,6 +384,14 @@ const ProcessingHistoryPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal Xem Chi Tiết & Gửi Telegram */}
+      <ProcessingDetailModal
+        historyId={selectedRecordId}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetail}
+        isTelegramConnected={isTelegramConnected}
+      />
     </div>
   );
 };

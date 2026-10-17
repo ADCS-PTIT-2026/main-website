@@ -6,7 +6,8 @@ from app.db.session import get_db
 from app.schemas.user import (
     UserResponse, UserCreate, UserUpdate, 
     UserAssign, UserStatus, ActionResponse,
-    TelegramStatusResponse
+    TelegramStatusResponse, UserProfileResponse,
+    UserProfileUpdate, ChangePasswordRequest
 )
 from app.models.user import User
 from app.core.dependency import RoleChecker, get_current_user
@@ -21,11 +22,41 @@ from app.services.user_service import (
     delete_user_account_service,
     get_telegram_link_service,
     get_telegram_status_service,
-    disconnect_telegram_service
+    disconnect_telegram_service,
+    get_current_user_profile_service,
+    update_current_user_profile_service,
+    change_current_user_password_service
 )
 
 router = APIRouter(prefix="")
 require_admin = RoleChecker(['admin'])
+
+# --- Current User Profile Endpoints (Đặt trước /{id}) ---
+@router.get("/me", response_model=UserProfileResponse)
+def get_current_user_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Lấy thông tin tài khoản đang đăng nhập."""
+    return get_current_user_profile_service(db, current_user)
+
+@router.put("/me", response_model=UserProfileResponse)
+def update_current_user_profile(
+    request: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Cập nhật thông tin tài khoản đang đăng nhập."""
+    return update_current_user_profile_service(db, current_user, request)
+
+@router.post("/change-password", response_model=ActionResponse)
+def change_current_user_password(
+    request: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Đổi mật khẩu cho người dùng hiện tại."""
+    return change_current_user_password_service(db, current_user, request)
 
 # 1. Lấy danh sách người dùng
 @router.get("", response_model=List[UserResponse])

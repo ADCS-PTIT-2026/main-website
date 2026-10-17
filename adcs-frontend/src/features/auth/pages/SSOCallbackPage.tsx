@@ -21,7 +21,8 @@ const AuthCallback: React.FC = () => {
         })
         .catch((error) => {
           console.error('SSO Callback Error:', error);
-          navigate('/login?error=sso_failed', { replace: true });
+          const detail = error.response?.data?.detail || 'sso_failed';
+          navigate(`/login?error=${encodeURIComponent(detail)}`, { replace: true });
         });
     } else {
       navigate('/login', { replace: true });

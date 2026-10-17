@@ -120,6 +120,15 @@ const DepartmentManagementPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!formData.name || !formData.name.trim()) {
+      alert('Vui lòng nhập tên phòng ban!');
+      return;
+    }
+    if (!formData.description || formData.description.trim().length < 10) {
+      alert('Vui lòng nhập mô tả chức năng nhiệm vụ (tối thiểu 10 ký tự) để mô hình AI có thể phân loại văn bản chính xác!');
+      return;
+    }
+
     try {
       setLoading(true);
       if (isCreating) {
@@ -247,19 +256,34 @@ const DepartmentManagementPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <>
-              <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 mt-3"></div>
-              <div className="flex gap-12 relative pt-0">
-                {node.children.length > 1 && (
-                  <div className="absolute top-0 h-0.5 bg-slate-300 dark:bg-slate-700" 
-                       style={{ left: `calc(${100 / (node.children.length * 2)}%)`, right: `calc(${100 / (node.children.length * 2)}%)` }}>
-                  </div>
-                )}
-                {node.children.map(child => (
-                  <RenderNode key={child.department_id} node={child} level={level + 1} />
-                ))}
+            <div className="flex flex-col items-center">
+              <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 mt-3 pointer-events-none"></div>
+              <div className="flex flex-row items-start justify-center">
+                {node.children.map((child, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === node.children.length - 1;
+                  const hasOnlyOneChild = node.children.length === 1;
+
+                  return (
+                    <div key={child.department_id} className="relative flex flex-col items-center px-6">
+                      {!hasOnlyOneChild && (
+                        <>
+                          {/* Nửa đường ngang bên trái: nối từ mép trái tới tâm */}
+                          <div 
+                            className={`absolute top-0 left-0 w-1/2 h-0.5 bg-slate-300 dark:bg-slate-700 pointer-events-none ${isFirst ? 'hidden' : ''}`}
+                          />
+                          {/* Nửa đường ngang bên phải: nối từ tâm sang mép phải */}
+                          <div 
+                            className={`absolute top-0 left-1/2 w-1/2 h-0.5 bg-slate-300 dark:bg-slate-700 pointer-events-none ${isLast ? 'hidden' : ''}`}
+                          />
+                        </>
+                      )}
+                      <RenderNode node={child} level={level + 1} />
+                    </div>
+                  );
+                })}
               </div>
-            </>
+            </div>
           )
         )}
       </div>
@@ -290,7 +314,7 @@ const DepartmentManagementPage: React.FC = () => {
           onMouseLeave={handleMouseUp}
         >
            <div 
-             className="flex flex-col items-center min-w-max p-12 transition-transform duration-75 origin-top" 
+             className="flex flex-row items-start justify-center gap-20 min-w-max p-12 transition-transform duration-75 origin-top" 
              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
            >
               {treeData.map(rootNode => (
@@ -383,8 +407,21 @@ const DepartmentManagementPage: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-              <label className="block text-xs font-bold text-primary uppercase mb-2"><span className="material-symbols-outlined text-sm align-middle mr-1">smart_toy</span>Mô tả (Ngữ cảnh AI)</label>
-              <textarea name="description" value={formData.description || ''} onChange={handleInputChange} className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 rounded-lg text-sm px-3 py-2 placeholder:italic outline-none focus:ring-1 focus:ring-primary" rows={4} />
+              <label className="block text-xs font-bold text-primary uppercase mb-1">
+                <span className="material-symbols-outlined text-sm align-middle mr-1">smart_toy</span>
+                Mô tả chức năng nhiệm vụ (Ngữ cảnh AI) <span className="text-red-500">*</span>
+              </label>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                Mô tả này sẽ được nạp trực tiếp vào mô hình AI để tự động phân luồng và gán phòng ban xử lý văn bản chính xác (tối thiểu 10 ký tự).
+              </p>
+              <textarea 
+                name="description" 
+                value={formData.description || ''} 
+                onChange={handleInputChange} 
+                placeholder="Ví dụ: Tiếp nhận, thẩm định văn bản hành chính, quản lý công văn đi đến, lưu trữ hồ sơ của Học viện..."
+                className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 placeholder:italic outline-none focus:ring-1 focus:ring-primary" 
+                rows={4} 
+              />
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import logo from '../../assets/ptit-logo.png';
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Bảng điều khiển', path: '/dashboard' },
   { icon: 'description', label: 'Xử lý văn bản', path: '/documents' },
+  { icon: 'folder_shared', label: 'Văn bản của tôi', path: '/documents/my' },
   { icon: 'translate', label: 'Dịch thuật văn bản', path: '/translation' },
   { icon: 'archive', label: 'Kho văn bản', path: '/document-repository' },
   { icon: 'groups', label: 'Phòng ban', path: '/departments' },

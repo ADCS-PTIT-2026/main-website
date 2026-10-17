@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
+import { departmentApi } from '../api/department';
 import { userApi } from '../api/user';
+import { usePermission } from '../hooks/usePermission';
+import { ProcessingDetailModal } from './history/ProcessingDetailModal';
 import toast from 'react-hot-toast';
 
 const DashboardPage: React.FC = () => {
+  const { isAdmin } = usePermission();
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
   const [recentDocs, setRecentDocs] = useState<DocumentResponse[]>([]);
+  const [departmentMap, setDepartmentMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // State quản lý xem chi tiết tài liệu
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+
   // State quản lý trạng thái Telegram
   const [isConnectingTelegram, setIsConnectingTelegram] = useState(false);
   const [isTelegramConnected, setIsTelegramConnected] = useState<boolean>(false);
@@ -78,13 +87,26 @@ const DashboardPage: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsData, docsData] = await Promise.all([
+        const [statsData, docsData, deptsData] = await Promise.all([
           getDashboardStats(),
-          getRecentDocuments(5)
+          getRecentDocuments(5),
+          departmentApi.getAll().catch(() => [])
         ]);
         
         setStats(statsData);
         setRecentDocs(docsData);
+
+        const mapping: Record<string, string> = {};
+        const traverse = (nodes: any[]) => {
+          nodes.forEach(n => {
+            if (n.department_id) mapping[String(n.department_id)] = n.ten_hien_thi || n.name;
+            if (n.id) mapping[String(n.id)] = n.ten_hien_thi || n.name;
+            if (n.children && n.children.length > 0) traverse(n.children);
+          });
+        };
+        traverse(deptsData || []);
+        setDepartmentMap(mapping);
+
       } catch (err: any) {
         setError(err.message || 'Lỗi khi tải dữ liệu dashboard');
         console.error(err);
@@ -142,13 +164,17 @@ const DashboardPage: React.FC = () => {
 
   const getStatusUI = (status: string | null | undefined) => {
     switch (status?.toLowerCase()) {
+      case 'processed':
       case 'success':
       case 'hoàn tất':
         return { label: 'Hoàn tất', color: 'emerald', isPulsing: false };
-      case 'pending':
       case 'processing':
       case 'đang xử lý':
         return { label: 'Đang xử lý', color: 'blue', isPulsing: true };
+      case 'queued':
+      case 'pending':
+      case 'chờ xử lý':
+        return { label: 'Chờ xử lý', color: 'amber', isPulsing: false };
       case 'failed':
       case 'lỗi':
         return { label: 'Lỗi', color: 'rose', isPulsing: false };
@@ -160,7 +186,9 @@ const DashboardPage: React.FC = () => {
   const displayStats = [
     { title: 'Tổng tài liệu', value: stats?.total_documents?.toLocaleString() || '0', icon: 'description', trend: 'Cập nhật', color: 'blue', trendColor: 'emerald' },
     { title: 'Đang xử lý', value: stats?.pending_documents?.toString() || '0', icon: 'pending_actions', trend: 'Cần xử lý', color: 'amber', trendColor: 'amber' },
-    { title: 'Người dùng được phân quyền', value: stats?.new_users?.toString() || '0', icon: 'group', trend: 'Hệ thống', color: 'emerald', trendColor: 'slate' },
+    ...(isAdmin ? [
+      { title: 'Người dùng được phân quyền', value: stats?.new_users?.toString() || '0', icon: 'group', trend: 'Hệ thống', color: 'emerald', trendColor: 'slate' }
+    ] : [])
   ];
 
   if (loading) {
@@ -246,7 +274,7 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-2 lg:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
         {displayStats.map((stat, idx) => (
           <div key={idx} className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -270,37 +298,52 @@ const DashboardPage: React.FC = () => {
         <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
             <h3 className="font-bold text-lg">Tài liệu xử lý gần đây</h3>
-            <button className="text-sm font-semibold text-slate-500 hover:text-primary">Xem tất cả</button>
+            <button 
+              onClick={() => navigate('/documents/my')}
+              className="text-sm font-semibold text-slate-500 hover:text-primary transition-colors cursor-pointer"
+            >
+              Xem tất cả
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
-                  {['Tên tài liệu', 'Loại/Số hiệu', 'Phòng ban', 'Trạng thái AI', 'Ngày nhận'].map((th, i) => (
-                    <th key={i} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">{th}</th>
+                  {['Tên tài liệu', 'Loại/Số hiệu', 'Phòng ban', 'Trạng thái AI', 'Ngày nhận', 'Thao tác'].map((th, i) => (
+                    <th key={i} className={`px-6 py-4 text-xs font-bold text-slate-500 uppercase ${th === 'Thao tác' ? 'text-right' : ''}`}>{th}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {recentDocs.length === 0 ? (
-                   <tr><td colSpan={5} className="px-6 py-4 text-center text-slate-500">Chưa có tài liệu nào</td></tr>
+                   <tr><td colSpan={6} className="px-6 py-4 text-center text-slate-500">Chưa có tài liệu nào</td></tr>
                 ) : (
                   recentDocs.map((doc) => {
                     const uiConfig = getStatusUI(doc.status);
-                    const displayName = doc.title || `Doc_${doc.document_id.substring(0,8)}`;
+                    const displayName = doc.trich_yeu || doc.original_filename || (doc as any).title || `Văn bản_${doc.document_id.substring(0,8)}`;
+                    const docNumber = doc.so_ky_hieu || doc.so_den || (doc as any).document_number || 'Đang cập nhật';
+                    const deptName = doc.assigned_department_id ? (departmentMap[String(doc.assigned_department_id)] || doc.assigned_department_id) : 'Chưa phân bổ';
                     
                     return (
-                      <tr key={doc.document_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <tr 
+                        key={doc.document_id} 
+                        onClick={() => {
+                          setSelectedDocId(doc.document_id);
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                        title="Nhấn để xem chi tiết thông tin văn bản"
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="size-8 bg-primary/5 text-primary rounded flex items-center justify-center">
                               <span className="material-symbols-outlined text-lg">description</span>
                             </div>
-                            <span className="text-sm font-semibold max-w-[200px] truncate" title={displayName}>{displayName}</span>
+                            <span className="text-sm font-semibold max-w-[280px] truncate group-hover:text-primary transition-colors" title={displayName}>{displayName}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm">{doc.document_number || 'Chưa xác định'}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{doc.assigned_department_id || 'Chưa phân bổ'}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300">{docNumber}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{deptName}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-${uiConfig.color}-100 text-${uiConfig.color}-700`}>
                             <span className={`size-1.5 rounded-full bg-${uiConfig.color}-500 ${uiConfig.isPulsing ? 'animate-pulse' : ''}`}></span>
@@ -308,7 +351,21 @@ const DashboardPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-500">
-                          {doc.updated_at ? new Date(doc.updated_at).toLocaleDateString('vi-VN') : 'N/A'}
+                          {doc.ngay_van_ban ? new Date(doc.ngay_van_ban).toLocaleDateString('vi-VN') : (doc.updated_at ? new Date(doc.updated_at).toLocaleDateString('vi-VN') : 'N/A')}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              setSelectedDocId(doc.document_id);
+                              setIsDetailModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 text-slate-700 dark:text-slate-300 hover:text-primary text-xs font-bold transition-all cursor-pointer"
+                            title="Xem chi tiết kết quả xử lý"
+                          >
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                            <span>Chi tiết</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -319,6 +376,17 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal Xem Chi Tiết & Gửi Telegram */}
+      <ProcessingDetailModal
+        documentId={selectedDocId}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedDocId(null);
+        }}
+        isTelegramConnected={isTelegramConnected}
+      />
     </div>
   );
 };

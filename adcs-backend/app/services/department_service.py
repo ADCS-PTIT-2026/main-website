@@ -54,6 +54,27 @@ def build_department_tree(departments):
     return roots
 
 
+def get_active_departments_for_ai(db: Session) -> list:
+    """
+    Truy vấn danh mục phòng ban động từ CSDL để cung cấp ngữ cảnh cho mô hình AI.
+    Mỗi phòng ban gồm có: code, name, description.
+    """
+    departments = list_departments(db)
+    dept_payload = []
+    for d in departments:
+        desc = d.description
+        if not desc or not desc.strip():
+            parent_info = f" trực thuộc {d.parent_name}" if d.parent_name else ""
+            desc = f"Đơn vị / Phòng ban '{d.name}' (Mã: {d.code or d.id}){parent_info} của Học viện Công nghệ Bưu chính Viễn thông."
+        
+        dept_payload.append({
+            "code": d.code or (f"DEPT_{d.id}" if d.id else str(d.department_id)),
+            "name": d.name,
+            "description": desc.strip()
+        })
+    return dept_payload
+
+
 def get_all_departments_service(db: Session):
     logger.info("Fetching all departments")
     departments = list_departments(db)
@@ -65,6 +86,13 @@ def get_all_departments_service(db: Session):
 def create_department_service(db: Session, payload):
     try:
         logger.info(f"Creating department name={payload.name}, code={payload.code}")
+
+        # Bắt buộc mô tả chức năng nhiệm vụ tối thiểu 10 ký tự phục vụ AI
+        if not payload.description or len(payload.description.strip()) < 10:
+            raise HTTPException(
+                status_code=400, 
+                detail="Mô tả chức năng nhiệm vụ là bắt buộc (tối thiểu 10 ký tự) để AI có thể phân loại văn bản chính xác."
+            )
 
         if payload.id is not None and get_department_by_external_id(db, payload.id):
             raise HTTPException(status_code=400, detail="Department external ID already exists")
@@ -106,6 +134,9 @@ def update_department_service(db: Session, department_id, payload):
             existed = get_department_by_name(db, payload.name)
             if existed and existed.department_id != department.department_id:
                 raise HTTPException(status_code=400, detail="Department name already exists")
+
+        if payload.description is not None and len(payload.description.strip()) < 10:
+            raise HTTPException(status_code=400, detail="Mô tả chức năng nhiệm vụ phải có độ dài tối thiểu 10 ký tự.")
 
         if payload.code is not None and payload.code != department.code:
             existed = get_department_by_code(db, payload.code)

@@ -12,6 +12,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -58,17 +59,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
           </div>
         )}
 
-        {/* SSO Login Button (Outlook) */}
+        {/* SSO Login Button (PTIT Keycloak SSO) */}
         <button 
           onClick={onSSO}
           type="button"
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 h-12 px-4 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all mb-6"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 h-12 px-4 text-red-700 dark:text-red-300 text-sm font-bold hover:bg-red-100/50 dark:hover:bg-red-900/40 transition-all mb-6 shadow-sm"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11.4 12L0 10.2V2.1L11.4 0V12ZM12.6 0V12H24V2.1L12.6 0ZM0 13.8V21.9L11.4 24V12L0 13.8ZM12.6 24L24 21.9V13.8H12.6V24Z" fill="#0078D4"/>
-          </svg>
-          <span>Tiếp tục với Outlook</span>
+          <span className="material-symbols-outlined text-primary text-[22px]">school</span>
+          <span>Đăng nhập bằng SSO PTIT</span>
         </button>
+
 
         <div className="relative flex items-center mb-6">
           <div className="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
@@ -100,9 +100,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Mật khẩu
               </label>
-              <a className="text-xs font-semibold text-primary hover:underline cursor-pointer">
+              <button 
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-xs font-semibold text-primary hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
                 Quên mật khẩu?
-              </a>
+              </button>
             </div>
             <div className="relative group">
               <input 
@@ -164,6 +168,32 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
           <a className="text-xs text-slate-400 hover:text-primary cursor-pointer">Liên hệ</a>
         </div>
       </div>
+
+      {/* Modal Hướng dẫn Quên mật khẩu */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 relative">
+            <div className="flex items-center gap-3 text-amber-600 mb-4">
+              <span className="material-symbols-outlined text-[28px]">lock_reset</span>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Khôi phục mật khẩu</h3>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+              Để bảo mật tài khoản nội bộ ADCS, tính năng đặt lại mật khẩu tự động qua email công cộng hiện bị vô hiệu hóa. 
+              <br /><br />
+              Vui lòng liên hệ trực tiếp <strong>Quản trị viên hệ thống (Admin)</strong> qua email <span className="text-primary font-semibold">support@ptit.edu.vn</span> hoặc Trưởng phòng ban của bạn để được hỗ trợ cấp lại mật khẩu.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(false)}
+                className="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

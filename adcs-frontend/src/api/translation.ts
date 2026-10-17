@@ -9,6 +9,7 @@ export interface TranslationFile {
   status: FileStatus;
   comment: string;
   result_file_url?: string;
+  error_message?: string;
   created_at: string;
 }
 

@@ -1,3 +1,4 @@
+import re
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
@@ -5,8 +6,13 @@ from fastapi import HTTPException, status
 from app.crud import user as crud_user
 from app.models.user import User
 from app.models.telegram_bot import Bot
-from app.schemas.user import UserCreate, UserUpdate, UserAssign, UserStatus
-from app.core.security import hash_password 
+from app.models.role_permission import Role
+from app.models.department import Department
+from app.schemas.user import (
+    UserCreate, UserUpdate, UserAssign, UserStatus,
+    UserProfileResponse, UserProfileUpdate, ChangePasswordRequest
+)
+from app.core.security import hash_password, verify_password
 from app.core.logger import logger 
 
 def get_all_users_service(db: Session):
@@ -186,3 +192,127 @@ def disconnect_telegram_service(db: Session, current_user: User):
         db.rollback()
         logger.error(f"Lỗi khi hủy liên kết Telegram user {current_user.user_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Lỗi khi hủy liên kết Telegram")
+
+def get_current_user_profile_service(db: Session, current_user: User):
+    """Lấy thông tin chi tiết của người dùng hiện tại"""
+    try:
+        role_name = None
+        if current_user.role_id:
+            role = db.query(Role).filter(Role.role_id == str(current_user.role_id)).first()
+            if role:
+                role_name = role.name
+
+        department_name = None
+        if current_user.department_id:
+            dept_id_str = str(current_user.department_id)
+            dept = None
+            if dept_id_str.isdigit():
+                dept = db.query(Department).filter(Department.id == int(dept_id_str)).first()
+            else:
+                try:
+                    dept = db.query(Department).filter(Department.department_id == dept_id_str).first()
+                except Exception:
+                    pass
+            if dept:
+                department_name = dept.name
+
+        return {
+            "user_id": str(current_user.user_id),
+            "email": current_user.email,
+            "username": current_user.username,
+            "role_id": str(current_user.role_id) if current_user.role_id else None,
+            "role_name": role_name,
+            "department_id": str(current_user.department_id) if current_user.department_id else None,
+            "department_name": department_name,
+            "is_active": current_user.is_active,
+            "is_telegram_connected": bool(current_user.telegram_chat_id),
+            "telegram_chat_id": current_user.telegram_chat_id
+        }
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy thông tin profile user {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi hệ thống khi lấy thông tin hồ sơ")
+
+def update_current_user_profile_service(db: Session, current_user: User, request: UserProfileUpdate):
+    """Cập nhật thông tin cơ bản của người dùng hiện tại"""
+    try:
+        if request.username is not None and request.username.strip():
+            current_user.username = request.username.strip()
+        db.commit()
+        db.refresh(current_user)
+        logger.info(f"Cập nhật hồ sơ thành công cho user {current_user.email}")
+        return get_current_user_profile_service(db, current_user)
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi cập nhật hồ sơ user {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi hệ thống khi cập nhật thông tin hồ sơ")
+
+def change_current_user_password_service(db: Session, current_user: User, request: ChangePasswordRequest):
+    """Đổi mật khẩu người dùng hiện tại với kiểm tra an toàn"""
+    try:
+        # 1. Kiểm tra mật khẩu mới và xác nhận mật khẩu
+        if request.new_password != request.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu xác nhận không khớp với mật khẩu mới"
+            )
+
+        # 2. Kiểm tra độ phức tạp của mật khẩu mới (CWE-521)
+        if len(request.new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới phải có tối thiểu 8 ký tự"
+            )
+
+        if not re.search(r'[A-Z]', request.new_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới phải chứa ít nhất 1 chữ cái in hoa"
+            )
+
+        if not re.search(r'[a-z]', request.new_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới phải chứa ít nhất 1 chữ cái in thường"
+            )
+
+        if not re.search(r'[0-9]', request.new_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới phải chứa ít nhất 1 chữ số"
+            )
+
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', request.new_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)"
+            )
+
+        # 3. Xác thực mật khẩu hiện tại
+        if not verify_password(request.current_password, current_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu hiện tại không chính xác"
+            )
+
+        # 4. Kiểm tra mật khẩu mới không trùng mật khẩu cũ
+        if verify_password(request.new_password, current_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mật khẩu mới không được trùng với mật khẩu hiện tại"
+            )
+
+        # 5. Cập nhật mật khẩu băm mới
+        current_user.password_hash = hash_password(request.new_password)
+        db.commit()
+        logger.info(f"Đổi mật khẩu thành công cho user {current_user.email}")
+        return {"message": "Đổi mật khẩu thành công"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi đổi mật khẩu user {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Đã xảy ra lỗi hệ thống trong quá trình đổi mật khẩu"
+        )

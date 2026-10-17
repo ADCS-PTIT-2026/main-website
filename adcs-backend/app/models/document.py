@@ -41,6 +41,8 @@ class Document(Base):
     loai_van_ban = Column(JSONB, nullable=True) # Lưu trọn vẹn object loai_van_ban
     de_xuat_xu_ly = Column(JSONB, nullable=True) # de_xuat_thoi_han_xu_ly object
     goi_y_phong_ban = Column(JSONB, nullable=True) # goi_y_phong_ban object
+    suggested_departments = Column(JSONB, nullable=True) # Mảng Top-3 phòng ban đề xuất kèm score và lý do
+    proposed_assignees = Column(JSONB, nullable=True) # Danh sách cán bộ được đề xuất xử lý
     
     # --- Metadata vận hành AI (Mới cập nhật) ---
     tong_so_chunk = Column(Integer, nullable=True)
@@ -49,6 +51,16 @@ class Document(Base):
     storage_info = Column(JSONB, nullable=True) # Lưu object storage_info
     processing_time = Column(Float, nullable=True)
     
+    # --- Metadata hàng đợi xử lý nền (Queue & File Storage) ---
+    file_path = Column(Text, nullable=True)
+    original_filename = Column(String(500), nullable=True)
+    file_size_bytes = Column(Integer, nullable=True)
+    page_count = Column(Integer, nullable=True)
+    priority = Column(Integer, default=1) # 1: User upload, 2: Translate, 3: Crawler
+    retry_count = Column(Integer, default=0)
+    error_message = Column(Text, nullable=True)
+    processing_started_at = Column(DateTime(timezone=True), nullable=True)
+
     is_chua_doc = Column(Boolean, default=True)
     thong_tin_ky_so = Column(JSONB, nullable=True)
 

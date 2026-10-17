@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { searchDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
+import { departmentApi } from '../../../api/department';
 import axiosClient from '../../../api/axiosClient';
+import { Authorized } from '../../../components/common/Authorized';
 
 const getFileIconUI = (document: DocumentResponse) => {
   const type = document.loai_van_ban_text?.toLowerCase() || '';
@@ -9,12 +11,24 @@ const getFileIconUI = (document: DocumentResponse) => {
   return { icon: 'description', text: 'VĂN BẢN', bg: 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30', textCol: 'text-orange-600' };
 };
 
-const DocumentRepositoryPage: React.FC = () => {
+const COMMON_DOC_TYPES = [
+  { value: 'all', label: 'Tất cả loại VB' },
+  { value: 'Quyết định', label: 'Quyết định' },
+  { value: 'Nghị quyết', label: 'Nghị quyết' },
+  { value: 'Công văn', label: 'Công văn' },
+  { value: 'Thông báo', label: 'Thông báo' },
+  { value: 'Tờ trình', label: 'Tờ trình' },
+  { value: 'Báo cáo', label: 'Báo cáo' },
+  { value: 'Kế hoạch', label: 'Kế hoạch' },
+];
 
+const DocumentRepositoryPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
   const [sortBy, setSortBy] = useState<'confidence' | 'newest'>('newest');
-  const [category, setCategory] = useState<'all' | 'promulgated' | 'recent'>('all');
+  const [selectedDocType, setSelectedDocType] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
@@ -27,6 +41,7 @@ const DocumentRepositoryPage: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<DocumentResponse | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   // --- STATE CHO FILE RAW VIEWER ---
   const [rawFileUrl, setRawFileUrl] = useState<string | null>(null);
@@ -35,24 +50,41 @@ const DocumentRepositoryPage: React.FC = () => {
 
   const ITEMS_PER_PAGE = 20;
 
+  // Lấy danh sách phòng ban cho dropdown bộ lọc
+  useEffect(() => {
+    departmentApi.getAll()
+      .then((tree) => {
+        const flatList: { id: string; name: string }[] = [];
+        const traverse = (nodes: any[]) => {
+          nodes.forEach(node => {
+            flatList.push({
+              id: String(node.department_id || node.id),
+              name: node.ten_hien_thi || node.name
+            });
+            if (node.children && node.children.length > 0) {
+              traverse(node.children);
+            }
+          });
+        };
+        traverse(tree || []);
+        setDepartments(flatList);
+      })
+      .catch((err) => console.error("Lỗi lấy danh sách phòng ban:", err));
+  }, []);
+
   const fetchDocuments = async () => {
     setIsLoading(true);
     try {
-      const hasFullSearchCondition = activeQuery.trim() !== '';
-      const isFiltering = hasFullSearchCondition || startDate || endDate || category !== 'all';
-
-      let response: any;
-
-      if (isFiltering) {
-        response = await searchDocuments({
-          query: hasFullSearchCondition ? activeQuery : undefined,
-          start_date: hasFullSearchCondition ? startDate : undefined,
-          end_date: hasFullSearchCondition ? endDate : undefined,
-        });
-      } else {
-        // response = await getAllDocuments();
-        response = null;
-      }
+      const response = await searchDocuments({
+        query: activeQuery.trim() ? activeQuery.trim() : undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        department_id: selectedDepartment !== 'all' ? selectedDepartment : undefined,
+        document_type: selectedDocType !== 'all' ? selectedDocType : undefined,
+        sort_by: sortBy,
+        page: currentPage,
+        page_size: ITEMS_PER_PAGE
+      });
       
       let resultData: DocumentResponse[] = [];
       let total = 0;
@@ -63,7 +95,7 @@ const DocumentRepositoryPage: React.FC = () => {
         total = response.length;
         pages = Math.ceil(total / ITEMS_PER_PAGE);
       } else if (response) {
-        const rawItems = response.results || response.data || response.items || [];
+        const rawItems = response.data || (response as any).results || (response as any).items || [];
         
         resultData = rawItems.map((item: any) => {
           if (item.document) {
@@ -82,7 +114,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
       setDocuments(resultData);
       setTotalItems(total);
-      setTotalPages(pages);
+      setTotalPages(pages > 0 ? pages : 1);
       
     } catch (error) {
       console.error("Lỗi tải văn bản:", error);
@@ -96,7 +128,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [activeQuery, currentPage, category, startDate, endDate, sortBy]);
+  }, [activeQuery, currentPage, selectedDocType, selectedDepartment, startDate, endDate, sortBy]);
 
   // --- LOGIC FETCH RAW FILE KHI MỞ MODAL ---
   useEffect(() => {
@@ -123,11 +155,6 @@ const DocumentRepositoryPage: React.FC = () => {
   }, [selectedDocument]);
 
   const handleSearchSubmit = () => {
-    const isSearching = searchInput.trim() !== '' || startDate !== '' || endDate !== '';
-    if (isSearching && (!searchInput.trim())) {
-        alert("Vui lòng nhập tối thiểu 3 thông tin: Từ khóa, Ngày bắt đầu và Ngày kết thúc để thực hiện tìm kiếm!");
-        return; 
-    }
     setCurrentPage(1);
     setActiveQuery(searchInput);
   };
@@ -143,6 +170,7 @@ const DocumentRepositoryPage: React.FC = () => {
       return; 
     }
     setStartDate(newStartDate);
+    setCurrentPage(1);
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +180,18 @@ const DocumentRepositoryPage: React.FC = () => {
       return; 
     }
     setEndDate(newEndDate);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilter = () => {
+    setSearchInput('');
+    setActiveQuery('');
+    setSelectedDocType('all');
+    setSelectedDepartment('all');
+    setStartDate('');
+    setEndDate('');
+    setSortBy('newest');
+    setCurrentPage(1);
   };
 
   const formatDate = (dateString?: string | Date | null) => {
@@ -159,19 +199,21 @@ const DocumentRepositoryPage: React.FC = () => {
     return new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  const handleDeleteDocument = async () => {
+  const handleDeleteDocument = async (force: boolean = false) => {
     if (!selectedDocument) return;
 
     setIsDeleting(true);
+    setDeleteErrorMessage(null);
     try {
-      await deleteDocument(selectedDocument.document_id);
-      alert('Đã xóa văn bản thành công!');
+      await deleteDocument(selectedDocument.document_id, force);
+      alert('Đã xóa văn bản thành công đồng bộ trên hệ thống!');
       setSelectedDocument(null);
       setIsDeleteOpen(false);
       fetchDocuments();
     } catch (error: any) {
       console.error("Lỗi khi xóa văn bản:", error);
-      alert(error?.response?.data?.detail || 'Không thể xóa văn bản lúc này. Vui lòng thử lại!');
+      const detail = error?.response?.data?.detail || 'Không thể xóa văn bản lúc này. Vui lòng thử lại!';
+      setDeleteErrorMessage(detail);
     } finally {
       setIsDeleting(false);
     }
@@ -209,18 +251,45 @@ const DocumentRepositoryPage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                  <button onClick={() => {setCategory('recent'); setCurrentPage(1);}} className={`px-4 py-1.5 rounded-md text-sm outline-none ${category === 'recent' ? 'bg-white shadow-sm font-bold text-primary' : 'text-slate-600 hover:text-slate-900'}`}>Gần đây</button>
+                {/* Lọc loại văn bản */}
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg px-2.5 h-10">
+                  <span className="text-slate-500 material-symbols-outlined text-[18px]">category</span>
+                  <select 
+                    value={selectedDocType} 
+                    onChange={(e) => { setSelectedDocType(e.target.value); setCurrentPage(1); }} 
+                    className="bg-transparent border-none text-sm font-medium focus:ring-0 text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                  >
+                    {COMMON_DOC_TYPES.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Lọc phòng ban */}
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg px-2.5 h-10 max-w-xs">
+                  <span className="text-slate-500 material-symbols-outlined text-[18px]">domain</span>
+                  <select 
+                    value={selectedDepartment} 
+                    onChange={(e) => { setSelectedDepartment(e.target.value); setCurrentPage(1); }} 
+                    className="bg-transparent border-none text-sm font-medium focus:ring-0 text-slate-700 dark:text-slate-200 outline-none cursor-pointer truncate"
+                  >
+                    <option value="all">Tất cả phòng ban</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
                 </div>
                 
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg px-3 h-9">
-                  <span className="text-slate-500 material-symbols-outlined text-[16px]">calendar_month</span>
+                {/* Lọc ngày tháng */}
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg px-3 h-10">
+                  <span className="text-slate-500 material-symbols-outlined text-[18px]">calendar_month</span>
                   <input 
                     type="date" 
                     value={startDate} 
                     max={endDate || undefined}
                     onChange={handleStartDateChange} 
-                    className="bg-transparent border-none text-sm focus:ring-0 p-0 outline-none text-slate-700 w-[110px]" 
+                    title="Từ ngày"
+                    className="bg-transparent border-none text-sm focus:ring-0 p-0 outline-none text-slate-700 dark:text-slate-200 w-[120px]" 
                   />
                   <span className="text-slate-400">-</span>
                   <input 
@@ -228,10 +297,21 @@ const DocumentRepositoryPage: React.FC = () => {
                     value={endDate} 
                     min={startDate || undefined}
                     onChange={handleEndDateChange} 
-                    className="bg-transparent border-none text-sm focus:ring-0 p-0 outline-none text-slate-700 w-[110px]" 
+                    title="Đến ngày"
+                    className="bg-transparent border-none text-sm focus:ring-0 p-0 outline-none text-slate-700 dark:text-slate-200 w-[120px]" 
                   />
                 </div>
-                
+
+                {/* Nút đặt lại */}
+                {(searchInput || activeQuery || selectedDocType !== 'all' || selectedDepartment !== 'all' || startDate || endDate) && (
+                  <button 
+                    onClick={handleResetFilter}
+                    className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 px-3 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">restart_alt</span>
+                    Đặt lại
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -473,6 +553,49 @@ const DocumentRepositoryPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Gợi ý phòng ban (Top 3) & Cán bộ đề xuất (W9 & W10) */}
+                {selectedDocument.suggested_departments && selectedDocument.suggested_departments.length > 0 && (
+                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">corporate_fare</span>
+                      Phòng ban đề xuất (AI Top 3)
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedDocument.suggested_departments.map((dept: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-slate-100 mr-2">#{idx + 1} {dept.name}</span>
+                            {dept.reasoning && <p className="text-slate-500 text-[11px] mt-0.5">{dept.reasoning}</p>}
+                          </div>
+                          {dept.confidence != null && (
+                            <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
+                              {Math.round(dept.confidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDocument.proposed_assignees && selectedDocument.proposed_assignees.length > 0 && (
+                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">badge</span>
+                      Cán bộ xử lý đề xuất
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedDocument.proposed_assignees.map((assignee: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
+                          <p className="font-bold text-slate-900 dark:text-slate-100">{assignee.name} <span className="font-normal text-slate-500">({assignee.position || 'Cán bộ'})</span></p>
+                          {assignee.email && <p className="text-slate-500 text-[11px]">{assignee.email}</p>}
+                          {assignee.reasoning && <p className="text-slate-400 text-[11px] italic mt-0.5">{assignee.reasoning}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Card System */}
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
@@ -483,7 +606,7 @@ const DocumentRepositoryPage: React.FC = () => {
                       <div>
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Phân bổ phòng ban</p>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                          {selectedDocument.assigned_department_id || 'Chưa phân bổ'}
+                          {departments.find(d => String(d.id) === String(selectedDocument.assigned_department_id))?.name || selectedDocument.assigned_department_id || 'Chưa phân bổ'}
                         </p>
                       </div>
                     </div>
@@ -502,43 +625,58 @@ const DocumentRepositoryPage: React.FC = () => {
                 Đóng
               </button>
               
-              <button 
-                onClick={ () => { setIsDeleteOpen(true); }}
-                disabled={isDeleting}
-                className="px-5 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-lg shadow-lg shadow-rose-600/20 flex items-center gap-2 outline-none disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-              >
-                {isDeleting ? (
-                  <>
-                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                    Đang xóa...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                    Xóa văn bản
-                  </>
-                )}
-              </button>
+              <Authorized permission="doc:delete">
+                <button 
+                  onClick={ () => { setDeleteErrorMessage(null); setIsDeleteOpen(true); }}
+                  disabled={isDeleting}
+                  className="px-5 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-lg shadow-lg shadow-rose-600/20 flex items-center gap-2 outline-none disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                      Đang xóa...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      Xóa văn bản
+                    </>
+                  )}
+                </button>
+              </Authorized>
             </div>
 
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (W11: Hỗ trợ Force Delete khi Data Service lỗi) */}
       {isDeleteOpen && (
-        <div onClick={() => setIsDeleteOpen(false)} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div onClick={() => { setIsDeleteOpen(false); setDeleteErrorMessage(null); }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-4">
               <span className="material-symbols-outlined text-red-600">warning</span>
             </div>
             <h2 className="text-lg font-bold text-center mb-2">Xóa văn bản?</h2>
-            <p className="text-sm text-slate-500 text-center mb-6">
-              Bạn có chắc muốn xóa <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDocument?.document_number || 'văn bản này'}</span>? Hành động này không thể hoàn tác.
+            <p className="text-sm text-slate-500 text-center mb-4">
+              Bạn có chắc muốn xóa <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDocument?.so_ky_hieu || selectedDocument?.trich_yeu || 'văn bản này'}</span>? Hành động này sẽ đồng bộ xóa trên cả Data Service & Vector DB.
             </p>
+
+            {deleteErrorMessage && (
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-200">
+                <p className="font-semibold mb-1">Cảnh báo:</p>
+                <p>{deleteErrorMessage}</p>
+                <p className="mt-2 text-[11px] text-slate-500 font-medium">Bạn có muốn tiếp tục xóa cưỡng bức trên Web DB không?</p>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsDeleteOpen(false)} className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors">Hủy</button>
-              <button onClick={handleDeleteDocument} className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold outline-none transition-colors">Xóa</button>
+              <button onClick={() => { setIsDeleteOpen(false); setDeleteErrorMessage(null); }} className="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50 outline-none transition-colors">Hủy</button>
+              {deleteErrorMessage ? (
+                <button onClick={() => handleDeleteDocument(true)} className="px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 font-semibold outline-none transition-colors">Xóa cưỡng bức (Force)</button>
+              ) : (
+                <button onClick={() => handleDeleteDocument(false)} className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold outline-none transition-colors">Xóa</button>
+              )}
             </div>
           </div>
         </div>

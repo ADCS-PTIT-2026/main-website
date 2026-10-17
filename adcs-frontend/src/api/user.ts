@@ -38,6 +38,25 @@ export interface TelegramStatusResponse {
   link: string;
 }
 
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  username: string;
+  role_id?: string | null;
+  role_name?: string | null;
+  department_id?: string | null;
+  department_name?: string | null;
+  is_active: boolean;
+  is_telegram_connected: boolean;
+  telegram_chat_id?: string | null;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
 export const userApi = {
   getAll: (): Promise<ApiUser[]> => axiosClient.get('/users'),
 
@@ -49,6 +68,12 @@ export const userApi = {
   changeStatus: (id: string, payload: UserStatusPayload): Promise<ApiUser> => axiosClient.put(`/users/${id}/status`, payload),
 
   remove: (id: string): Promise<{ message: string }> => axiosClient.delete(`/users/${id}`),
+
+  getProfile: (): Promise<UserProfile> => axiosClient.get('/users/me'),
+
+  updateProfile: (payload: { username: string }): Promise<UserProfile> => axiosClient.put('/users/me', payload),
+
+  changePassword: (payload: ChangePasswordPayload): Promise<{ message: string }> => axiosClient.post('/users/change-password', payload),
 
   getTelegramStatus: (): Promise<TelegramStatusResponse> => axiosClient.get('/users/telegram_status'),
 
