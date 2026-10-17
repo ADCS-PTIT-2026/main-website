@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getDashboardStats, getRecentDocuments, type DashboardStatsResponse, type DocumentResponse } from '../api/document';
 import { departmentApi } from '../api/department';
 import { userApi } from '../api/user';
+import { feedbackApi, type FeedbackItem } from '../api/feedback';
 import { usePermission } from '../hooks/usePermission';
 import { ProcessingDetailModal } from './history/ProcessingDetailModal';
 import toast from 'react-hot-toast';
@@ -18,6 +19,10 @@ const DashboardPage: React.FC = () => {
   // State quản lý xem chi tiết tài liệu
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+
+  // State quản lý góp ý từ người dùng (dành cho Admin)
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState<boolean>(false);
 
   // State quản lý trạng thái Telegram
   const [isConnectingTelegram, setIsConnectingTelegram] = useState(false);
@@ -117,6 +122,45 @@ const DashboardPage: React.FC = () => {
 
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      setLoadingFeedbacks(true);
+      feedbackApi.getAllFeedbacks(0, 50)
+        .then(res => setFeedbacks(res.items || []))
+        .catch(err => console.error('Lỗi khi tải danh sách góp ý:', err))
+        .finally(() => setLoadingFeedbacks(false));
+    }
+  }, [isAdmin]);
+
+  const getFeedbackTypeBadge = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'bug':
+        return {
+          label: 'Báo lỗi',
+          icon: 'bug_report',
+          className: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+        };
+      case 'feature':
+        return {
+          label: 'Tính năng mới',
+          icon: 'lightbulb',
+          className: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+        };
+      case 'improvement':
+        return {
+          label: 'Cải tiến',
+          icon: 'auto_awesome',
+          className: 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+        };
+      default:
+        return {
+          label: 'Khác',
+          icon: 'chat_bubble',
+          className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+        };
+    }
+  };
 
   const handleConnectTelegram = async (isReconnect = false) => {
     setIsConnectingTelegram(true);
@@ -376,6 +420,108 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Admin Only: Danh sách Ý kiến & Góp ý từ người dùng */}
+      {isAdmin && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <span className="material-symbols-outlined text-lg">rate_review</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg leading-tight">Ý kiến & Góp ý từ người dùng</h3>
+                <p className="text-xs text-slate-500">Phản hồi và đề xuất gửi từ các tài khoản trong hệ thống</p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              Tổng số: {feedbacks.length}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase w-52">Người gửi</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase w-36">Phân loại</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Nội dung góp ý</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase w-44 text-right">Thời gian gửi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {loadingFeedbacks ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                      <span className="inline-block animate-spin material-symbols-outlined text-2xl text-primary">sync</span>
+                      <p className="text-xs mt-1">Đang tải danh sách góp ý...</p>
+                    </td>
+                  </tr>
+                ) : feedbacks.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                      <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600 mb-1">inbox</span>
+                      <p className="text-sm">Chưa có ý kiến góp ý nào từ người dùng</p>
+                    </td>
+                  </tr>
+                ) : (
+                  feedbacks.map((fb: FeedbackItem) => {
+                    const badge = getFeedbackTypeBadge(fb.feedback_type);
+                    const senderInitial = (fb.user_name || fb.user_email || 'U').charAt(0).toUpperCase();
+
+                    return (
+                      <tr key={fb.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        {/* Người gửi */}
+                        <td className="px-6 py-4 align-top">
+                          <div className="flex items-center gap-2.5">
+                            <div className="size-8 rounded-full bg-gradient-to-tr from-primary/80 to-primary text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                              {senderInitial}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                {fb.user_name || 'Người dùng ẩn danh'}
+                              </p>
+                              <p className="text-xs text-slate-500 truncate" title={fb.user_email || ''}>
+                                {fb.user_email || 'Chưa cập nhật email'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Phân loại */}
+                        <td className="px-6 py-4 align-top">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.className}`}>
+                            <span className="material-symbols-outlined text-sm">{badge.icon}</span>
+                            <span>{badge.label}</span>
+                          </span>
+                        </td>
+
+                        {/* Nội dung góp ý */}
+                        <td className="px-6 py-4 align-top">
+                          <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed break-words font-normal">
+                            {fb.content}
+                          </p>
+                        </td>
+
+                        {/* Thời gian */}
+                        <td className="px-6 py-4 align-top text-right text-xs text-slate-500 whitespace-nowrap">
+                          {fb.created_at ? new Date(fb.created_at).toLocaleString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }) : 'Vừa xong'}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Modal Xem Chi Tiết & Gửi Telegram */}
       <ProcessingDetailModal
