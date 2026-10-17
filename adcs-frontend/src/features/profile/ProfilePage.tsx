@@ -189,26 +189,26 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 animate-fade-in font-display">
       {/* Header trang */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-[32px]">manage_accounts</span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5 tracking-tight">
+            <span className="material-symbols-outlined text-primary text-[28px]">manage_accounts</span>
             Hồ sơ cá nhân & Bảo mật
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             Quản lý thông tin tài khoản, mật khẩu đăng nhập và kết nối nhận thông báo Telegram.
           </p>
         </div>
       </div>
 
       {/* Tabs Điều Hướng */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab('profile')}
-          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'profile'
               ? 'border-primary text-primary'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -221,7 +221,7 @@ const ProfilePage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('security')}
-          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'security'
               ? 'border-primary text-primary'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -234,7 +234,7 @@ const ProfilePage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('telegram')}
-          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap shrink-0 ${
             activeTab === 'telegram'
               ? 'border-primary text-primary'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'

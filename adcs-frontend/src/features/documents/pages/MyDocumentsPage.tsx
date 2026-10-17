@@ -214,44 +214,44 @@ const MyDocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 md:p-8 font-display">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 font-display">
+      <div className="max-w-7xl mx-auto space-y-5">
         
         {/* Header trang */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary text-3xl">folder_shared</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-primary text-2xl sm:text-3xl">folder_shared</span>
               Văn bản của tôi
             </h1>
-            <p className="text-slate-500 text-sm mt-1">
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
               Theo dõi danh sách văn bản bạn đã gửi, vị trí hàng đợi và tiến trình trích xuất AI.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={() => fetchMyDocuments()}
               disabled={isLoading}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors shadow-sm cursor-pointer"
               title="Làm mới danh sách"
             >
-              <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>
+              <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin text-primary' : ''}`}>
                 refresh
               </span>
               Làm mới
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-lg shadow-md shadow-primary/20 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-md shadow-primary/20 transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[20px]">upload_file</span>
+              <span className="material-symbols-outlined text-[18px]">upload_file</span>
               Tải lên tệp mới
             </button>
           </div>
         </div>
 
-        {/* Khung kéo thả Upload nhiều tệp */}
+        {/* Khung kéo thả Upload nhiều tệp - Thiết kế gọn gàng, chuyên nghiệp */}
         <input
           ref={fileInputRef}
           type="file"
@@ -269,37 +269,44 @@ const MyDocumentsPage: React.FC = () => {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+          className={`group border-2 border-dashed rounded-2xl p-4 sm:p-5 cursor-pointer transition-all ${
             isDragging
-              ? 'border-primary bg-primary/10 scale-[1.01]'
-              : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-primary/60 hover:bg-primary/5'
+              ? 'border-primary bg-primary/10 scale-[1.005]'
+              : 'border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-primary/60 hover:bg-primary/5'
           }`}
         >
-          <div className="flex flex-col items-center justify-center gap-2">
-            <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl">cloud_upload</span>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-2xl">cloud_upload</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base">
+                  Kéo và thả nhiều tệp vào đây, hoặc nhấn để chọn tệp từ máy tính
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Hỗ trợ PDF, DOCX, PNG, JPG (Tối đa 50MB/tệp). Tự động xếp hàng và xử lý OCR ngầm.
+                </p>
+              </div>
             </div>
-            <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-base">
-              Kéo và thả nhiều tệp vào đây, hoặc click để chọn tệp
-            </h3>
-            <p className="text-xs text-slate-500">
-              Hỗ trợ PDF, DOCX, PNG, JPG (Tối đa 50MB, tối đa 100 trang/tệp). Hệ thống tự động xếp hàng và xử lý ngầm.
-            </p>
+            <span className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-primary group-hover:text-white text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors shrink-0">
+              Chọn nhiều tệp
+            </span>
           </div>
         </div>
 
         {/* Tiến trình Upload nếu đang có file tải lên */}
         {uploadQueue.length > 0 && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-base">cloud_sync</span>
                 Tiến trình tải tệp ({uploadQueue.filter((q) => q.status === 'success').length}/{uploadQueue.length})
               </span>
               {!isUploading && (
                 <button
                   onClick={() => setUploadQueue([])}
-                  className="text-xs text-slate-400 hover:text-slate-600 font-semibold"
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-semibold"
                 >
                   Đóng
                 </button>
@@ -309,16 +316,16 @@ const MyDocumentsPage: React.FC = () => {
               {uploadQueue.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs"
+                  className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs border border-slate-100 dark:border-slate-800"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="material-symbols-outlined text-slate-400 text-base">description</span>
-                    <span className="truncate font-medium text-slate-700 dark:text-slate-300" title={item.file.name}>
+                    <span className="truncate font-semibold text-slate-700 dark:text-slate-300" title={item.file.name}>
                       {item.file.name}
                     </span>
-                    <span className="text-slate-400">({formatFileSize(item.file.size)})</span>
+                    <span className="text-slate-400 shrink-0">({formatFileSize(item.file.size)})</span>
                   </div>
-                  <div>
+                  <div className="shrink-0 ml-2">
                     {item.status === 'uploading' && (
                       <span className="text-primary flex items-center gap-1 font-semibold">
                         <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
@@ -326,13 +333,13 @@ const MyDocumentsPage: React.FC = () => {
                       </span>
                     )}
                     {item.status === 'success' && (
-                      <span className="text-emerald-600 flex items-center gap-1 font-semibold">
+                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
                         <span className="material-symbols-outlined text-sm">check_circle</span>
                         Đã xếp hàng
                       </span>
                     )}
                     {item.status === 'error' && (
-                      <span className="text-rose-600 flex items-center gap-1 font-semibold" title={item.errorMessage}>
+                      <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold" title={item.errorMessage}>
                         <span className="material-symbols-outlined text-sm">error</span>
                         Lỗi
                       </span>
@@ -345,9 +352,9 @@ const MyDocumentsPage: React.FC = () => {
         )}
 
         {/* Thanh Tabs lọc trạng thái và Tìm kiếm */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl shadow-sm">
           {/* Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
             {[
               { id: 'all', label: 'Tất cả' },
               { id: 'queued', label: 'Chờ xử lý' },
@@ -361,7 +368,7 @@ const MyDocumentsPage: React.FC = () => {
                   setStatusFilter(tab.id);
                   setPage(1);
                 }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   statusFilter === tab.id
                     ? 'bg-primary text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -374,7 +381,7 @@ const MyDocumentsPage: React.FC = () => {
 
           {/* Ô tìm kiếm */}
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-            <div className="relative flex-1 md:w-72">
+            <div className="relative flex-1 lg:w-72">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
                 search
               </span>
@@ -383,12 +390,12 @@ const MyDocumentsPage: React.FC = () => {
                 placeholder="Tìm tên tệp, số hiệu, trích yếu..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-primary transition-all text-slate-900 dark:text-white"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-white"
               />
             </div>
             <button
               type="submit"
-              className="px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-colors cursor-pointer"
             >
               Tìm
             </button>
@@ -396,29 +403,29 @@ const MyDocumentsPage: React.FC = () => {
         </div>
 
         {/* Bảng danh sách văn bản */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left text-xs min-w-[760px]">
+              <thead className="bg-slate-50/80 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="py-3 px-4">Tệp văn bản</th>
-                  <th className="py-3 px-4">Trích xuất nhanh</th>
-                  <th className="py-3 px-4">Thời gian</th>
-                  <th className="py-3 px-4">Trạng thái xử lý</th>
-                  <th className="py-3 px-4 text-right">Thao tác</th>
+                  <th className="py-3.5 px-4">Tệp văn bản</th>
+                  <th className="py-3.5 px-4">Trích xuất nhanh</th>
+                  <th className="py-3.5 px-4">Thời gian</th>
+                  <th className="py-3.5 px-4">Trạng thái xử lý</th>
+                  <th className="py-3.5 px-4 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {isLoading && documents.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-400">
-                      <span className="material-symbols-outlined text-3xl animate-spin mb-2 block">sync</span>
+                    <td colSpan={5} className="py-14 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-3xl animate-spin mb-2 block text-primary">sync</span>
                       Đang tải danh sách văn bản...
                     </td>
                   </tr>
                 ) : documents.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-400">
+                    <td colSpan={5} className="py-14 text-center text-slate-400">
                       <span className="material-symbols-outlined text-4xl mb-2 opacity-50 block">inbox</span>
                       Không có văn bản nào phù hợp.
                     </td>
@@ -438,13 +445,13 @@ const MyDocumentsPage: React.FC = () => {
                         {/* Cột 1: Tệp */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                               <span className="material-symbols-outlined text-[20px]">description</span>
                             </div>
                             <div className="min-w-0">
                               <p
                                 onClick={() => handleViewDetail(doc)}
-                                className="font-semibold text-slate-900 dark:text-white truncate max-w-xs hover:text-primary cursor-pointer transition-colors"
+                                className="font-bold text-slate-900 dark:text-white truncate max-w-xs hover:text-primary cursor-pointer transition-colors"
                                 title={doc.original_filename}
                               >
                                 {doc.original_filename}
@@ -452,7 +459,7 @@ const MyDocumentsPage: React.FC = () => {
                               <div className="flex items-center gap-2 text-slate-400 text-[11px] mt-0.5">
                                 <span>{formatFileSize(doc.file_size_bytes)}</span>
                                 {doc.page_count && <span>• {doc.page_count} trang</span>}
-                                <span>• ID: {doc.document_id.slice(0, 8)}</span>
+                                <span className="font-mono">• ID: {doc.document_id.slice(0, 8)}</span>
                               </div>
                             </div>
                           </div>
@@ -468,7 +475,7 @@ const MyDocumentsPage: React.FC = () => {
                                 </p>
                               )}
                               {doc.don_vi_ban_hanh && (
-                                <p className="text-slate-500 truncate text-[11px]">{doc.don_vi_ban_hanh}</p>
+                                <p className="text-slate-500 dark:text-slate-400 truncate text-[11px]">{doc.don_vi_ban_hanh}</p>
                               )}
                               {doc.trich_yeu && (
                                 <p className="text-slate-600 dark:text-slate-400 line-clamp-1 italic text-[11px]">
@@ -482,7 +489,7 @@ const MyDocumentsPage: React.FC = () => {
                         </td>
 
                         {/* Cột 3: Thời gian */}
-                        <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {formatDate(doc.created_at)}
                         </td>
 
@@ -490,12 +497,12 @@ const MyDocumentsPage: React.FC = () => {
                         <td className="py-3.5 px-4">
                           {isQueued && (
                             <div className="space-y-1">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                                 <span className="material-symbols-outlined text-[13px] animate-pulse">hourglass_top</span>
                                 Chờ trong hàng đợi
                               </span>
                               {doc.queue_position && (
-                                <p className="text-[10px] text-amber-700 font-medium">
+                                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
                                   Vị trí #{doc.queue_position} trong hàng đợi
                                 </p>
                               )}
@@ -504,16 +511,16 @@ const MyDocumentsPage: React.FC = () => {
 
                           {isProcessing && (
                             <div className="space-y-1">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 animate-pulse">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 animate-pulse">
                                 <span className="material-symbols-outlined text-[13px] animate-spin">sync</span>
                                 Đang AI phân tích...
                               </span>
-                              <p className="text-[10px] text-blue-600 font-medium">OCR & Semantic Chunking</p>
+                              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">OCR & Semantic Chunking</p>
                             </div>
                           )}
 
                           {isCompleted && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                               <span className="material-symbols-outlined text-[13px]">check_circle</span>
                               Đã xử lý xong
                             </span>
@@ -523,7 +530,7 @@ const MyDocumentsPage: React.FC = () => {
                             <div className="space-y-1">
                               <button
                                 onClick={() => setErrorDetailTarget(doc)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-[13px]">error</span>
                                 Lỗi xử lý (Xem)
@@ -538,7 +545,7 @@ const MyDocumentsPage: React.FC = () => {
                             {/* Nút Xem */}
                             <button
                               onClick={() => handleViewDetail(doc)}
-                              className="p-1.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                               title="Xem chi tiết kết quả"
                             >
                               <span className="material-symbols-outlined text-[18px]">visibility</span>
@@ -548,7 +555,7 @@ const MyDocumentsPage: React.FC = () => {
                             {isFailed && (
                               <button
                                 onClick={() => handleRetry(doc)}
-                                className="p-1.5 text-amber-600 hover:bg-amber-100/70 rounded-lg transition-colors"
+                                className="p-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 rounded-lg transition-colors cursor-pointer"
                                 title="Thử lại xử lý"
                               >
                                 <span className="material-symbols-outlined text-[18px]">replay</span>
@@ -559,7 +566,7 @@ const MyDocumentsPage: React.FC = () => {
                             {isQueued && (
                               <button
                                 onClick={() => handleCancel(doc)}
-                                className="p-1.5 text-rose-500 hover:bg-rose-100/70 rounded-lg transition-colors"
+                                className="p-1.5 text-rose-500 hover:bg-rose-100/70 dark:hover:bg-rose-900/30 rounded-lg transition-colors cursor-pointer"
                                 title="Hủy hàng đợi"
                               >
                                 <span className="material-symbols-outlined text-[18px]">cancel</span>
@@ -569,7 +576,7 @@ const MyDocumentsPage: React.FC = () => {
                             {/* Nút Xóa */}
                             <button
                               onClick={() => setDeleteTarget(doc)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors cursor-pointer"
                               title="Xóa văn bản"
                             >
                               <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -586,22 +593,22 @@ const MyDocumentsPage: React.FC = () => {
 
           {/* Phân trang */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-800 text-xs">
-              <span className="text-slate-500">
-                Hiển thị trang {page} / {totalPages} (Tổng cộng {total} văn bản)
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-slate-200 dark:border-slate-800 text-xs">
+              <span className="text-slate-500 dark:text-slate-400">
+                Hiển thị trang <strong className="text-slate-900 dark:text-white">{page}</strong> / {totalPages} (Tổng cộng {total} văn bản)
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-2.5 py-1.5 border rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors"
                 >
                   Trước
                 </button>
                 <button
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-2.5 py-1.5 border rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors"
                 >
                   Sau
                 </button>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import UserFormPage from './UserFormPage';
 import { type ApiUser, userApi } from '../../../api/user';
 import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from '../../../api/department';
@@ -42,9 +43,9 @@ const getInitials = (value: string) => {
 
 const getRoleStyle = (roleName: string) => {
   const lowerName = roleName.toLowerCase();
-  if (lowerName.includes('admin')) return 'bg-primary/5 text-primary border-primary/10';
-  if (lowerName.includes('editor') || lowerName.includes('lãnh đạo')) return 'bg-blue-50 text-blue-700 border-blue-200';
-  return 'bg-slate-100 text-slate-600 border-slate-200';
+  if (lowerName.includes('admin')) return 'bg-primary/10 text-primary border-primary/20';
+  if (lowerName.includes('editor') || lowerName.includes('lãnh đạo')) return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+  return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
 };
 
 export interface FlatDepartment extends DepartmentResponse {
@@ -104,10 +105,6 @@ const UserManagementPage: React.FC = () => {
         departmentApi.getAll(),
         rolePermissionApi.listRoles()
       ]);
-      
-      // console.log('Fetched Users:', usersData);
-      // console.log('Fetched Departments (Tree):', deptTreeData);
-      // console.log('Fetched Roles:', rolesData);
 
       setUsers(Array.isArray(usersData) ? usersData : []);
       setDepartments(Array.isArray(deptTreeData) ? flattenDepartments(deptTreeData) : []);
@@ -159,7 +156,7 @@ const UserManagementPage: React.FC = () => {
         raw: u,
         id: u?.user_id || Math.random().toString(), // Fallback tránh lỗi key
         avatarStr: getInitials(u?.username || ''),
-        avatarBg: 'bg-slate-100 text-slate-500',
+        avatarBg: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
         name: u?.username || 'Chưa cập nhật',
         deptId: u?.department_id || '',
         dept: deptName,
@@ -180,7 +177,7 @@ const UserManagementPage: React.FC = () => {
   }, [users, roleMap, deptMap]);
 
   const filteredUsers = userRows.filter((user) => {
-    const matchName = user.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchName = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchDept = selectedDept ? user.deptId === selectedDept : true;
     const matchRole = selectedRole ? user.roleId === selectedRole : true;
     const matchStatus = selectedStatus
@@ -210,19 +207,23 @@ const UserManagementPage: React.FC = () => {
     if (!userToDelete) return;
     try {
       await userApi.remove(userToDelete.user_id);
+      toast.success('Đã xóa người dùng thành công!');
       setIsDeleteOpen(false);
       setUserToDelete(null);
       await loadAllData();
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Xóa người dùng thất bại.');
+      toast.error(err?.response?.data?.detail || 'Xóa người dùng thất bại.');
     }
   };
 
+  const activeCount = useMemo(() => userRows.filter((u) => u.raw.is_active).length, [userRows]);
+  const telegramCount = useMemo(() => userRows.filter((u) => u.isTelegramConnected).length, [userRows]);
+
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-screen font-body text-slate-900 dark:text-slate-100">
+    <div className="font-display text-slate-900 dark:text-slate-100 animate-fade-in">
       {isFormOpen ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/20 backdrop-blur-sm flex justify-end">
-          <div className="w-full max-w-5xl bg-white shadow-2xl animate-slide-left h-full overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex justify-end">
+          <div className="w-full max-w-5xl bg-white dark:bg-slate-900 shadow-2xl animate-slide-left h-full overflow-y-auto custom-scrollbar">
             <UserFormPage
               isEditMode={!!selectedUser}
               userId={selectedUser?.user_id || null}
@@ -236,31 +237,47 @@ const UserManagementPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h1 className="text-[1.875rem] font-black tracking-tight font-headline">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-primary text-[28px]">group</span>
                 Quản lý Người dùng
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Quản trị và phân quyền truy cập hệ thống ADCS
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Quản trị tài khoản, đơn vị công tác và phân quyền truy cập hệ thống ADCS.
               </p>
             </div>
 
-            <button
-              onClick={() => {
-                setSelectedUser(null);
-                setIsFormOpen(true);
-              }}
-              className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-[0_4px_6px_-1px_rgba(213,68,68,0.2)] hover:opacity-90 transition-all active:scale-95 outline-none"
-            >
-              <span className="material-symbols-outlined text-[20px]">person_add</span>
-              <span className="text-sm">Thêm người dùng mới</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tổng số:</span>
+                <span className="text-sm font-black text-slate-900 dark:text-white">{userRows.length}</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">Hoạt động: {activeCount}</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50">
+                <span className="material-symbols-outlined text-[14px] text-blue-600 dark:text-blue-400">send</span>
+                <span className="text-xs text-blue-700 dark:text-blue-400 font-semibold">Telegram: {telegramCount}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setIsFormOpen(true);
+                }}
+                className="bg-primary text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 outline-none text-xs sm:text-sm cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span>Thêm người dùng mới</span>
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
+            <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 text-sm">
               {error}
             </div>
           )}

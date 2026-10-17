@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { userApi } from '../../../api/user';
 import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from '../../../api/department';
 import { rolePermissionApi, type Role } from '../../../api/rolePermission';
@@ -177,47 +178,43 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
           username: formData.display_name,
           password: formData.password,
         });
-        
-        // Nếu có chọn role hoặc department khi tạo mới, cần gọi API assign thêm
-        // Lưu ý: Việc lấy userId sau khi tạo tùy thuộc vào response của userApi.create
-        // Nếu backend trả về User sau khi tạo, bạn có thể gọi assign ngay tại đây.
       }
 
-      alert(isEditMode ? 'Cập nhật thành công!' : 'Thêm người dùng thành công!');
+      toast.success(isEditMode ? 'Cập nhật người dùng thành công!' : 'Thêm người dùng thành công!');
       onSaved?.();
       onClose?.();
     } catch (err: any) {
-      alert(err?.response?.data?.detail || err?.message || 'Lưu dữ liệu thất bại.');
+      toast.error(err?.response?.data?.detail || err?.message || 'Lưu dữ liệu thất bại.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-screen font-body text-slate-900 dark:text-slate-100 pb-12">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+    <div className="bg-background-light dark:bg-background-dark min-h-full font-display text-slate-900 dark:text-slate-100 pb-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors outline-none"
+              className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors outline-none cursor-pointer"
             >
               <span className="material-symbols-outlined text-slate-500">arrow_back</span>
             </button>
             <div>
-              <h1 className="text-2xl font-black tracking-tight font-headline">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 {isEditMode ? 'Chỉnh sửa Người dùng' : 'Thêm Người dùng mới'}
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {isEditMode ? 'Cập nhật thông tin và quyền hạn' : 'Tạo hồ sơ truy cập hệ thống ADCS'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all outline-none"
+              className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all outline-none cursor-pointer"
             >
               Hủy
             </button>
@@ -226,7 +223,7 @@ const UserFormPage: React.FC<UserFormPageProps> = ({
               type="submit"
               form="user-form"
               disabled={isLoading || isFetchingOptions}
-              className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold shadow-[0_4px_6px_-1px_rgba(213,68,68,0.2)] hover:opacity-90 transition-all active:scale-95 disabled:opacity-70 outline-none"
+              className="bg-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-70 outline-none cursor-pointer"
             >
               {isLoading && (
                 <span className="material-symbols-outlined animate-spin text-[20px]">

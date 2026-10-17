@@ -13,3 +13,4 @@ wheels/
 
 app/logs/
 app/static
+logs/adcs_app.log

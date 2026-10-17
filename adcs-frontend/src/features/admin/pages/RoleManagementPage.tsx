@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import {
   rolePermissionApi,
   type Permission,
@@ -58,10 +59,6 @@ const RoleManagementPage: React.FC = () => {
         rolePermissionApi.getMatrix(),
       ]);
 
-      // console.log("Loaded Roles:", roleData);
-      // console.log("Loaded Permissions:", permData);
-      // console.log("Loaded Matrix:", matrixData);
-
       const mappedRoles: UiRole[] = roleData.map((r, idx) => ({
         role_id: r.role_id,
         name: r.name,
@@ -111,9 +108,10 @@ const RoleManagementPage: React.FC = () => {
       await rolePermissionApi.updateMatrix(matrix);
       setInitialMatrix(matrix);
       setIsEditing(false);
-      alert("Lưu ma trận quyền thành công!");
+      toast.success("Lưu ma trận quyền thành công!");
     } catch (e: any) {
       setError(e?.message || "Không thể lưu ma trận quyền");
+      toast.error(e?.message || "Không thể lưu ma trận quyền");
     } finally {
       setSavingMatrix(false);
     }
@@ -141,7 +139,7 @@ const RoleManagementPage: React.FC = () => {
     const description = roleForm.description.trim();
 
     if (!name) {
-      alert("Vui lòng nhập tên role.");
+      toast.error("Vui lòng nhập tên role.");
       return;
     }
 
@@ -157,6 +155,7 @@ const RoleManagementPage: React.FC = () => {
             colorClass: colorByIndex(prev.length),
           },
         ]);
+        toast.success("Đã tạo nhóm quyền mới!");
       } else if (roleMode === "edit" && selectedRole) {
         const updated = await rolePermissionApi.updateRole(selectedRole.role_id, { name, description });
         setRoles((prev) =>
@@ -166,12 +165,13 @@ const RoleManagementPage: React.FC = () => {
               : r
           )
         );
+        toast.success("Đã cập nhật nhóm quyền!");
       }
 
       setRoleModalOpen(false);
       setSelectedRole(null);
     } catch (e: any) {
-      alert(e?.message || "Không thể lưu role");
+      toast.error(e?.message || "Không thể lưu role");
     }
   };
 
@@ -206,55 +206,63 @@ const RoleManagementPage: React.FC = () => {
 
       setDeleteModalOpen(false);
       setRoleToDelete(null);
-      alert("Xóa role thành công!");
+      toast.success("Đã xóa nhóm quyền thành công!");
     } catch (e: any) {
-      alert(e?.message || "Không thể xóa role");
+      toast.error(e?.message || "Không thể xóa role");
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-slate-500">Đang tải dữ liệu quyền...</div>;
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex items-center gap-3 text-slate-500">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Đang tải dữ liệu quyền hạn...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col w-full px-4 md:px-10 py-8 gap-8 bg-background-light dark:bg-background-dark">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-montserrat text-slate-900 dark:text-slate-100 text-3xl font-black leading-tight tracking-tight">
+    <div className="flex flex-col max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6 font-display animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black leading-tight tracking-tight flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-primary text-[28px]">admin_panel_settings</span>
             Quản lý Nhóm quyền
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-base font-normal">
-            Thiết lập vai trò, phân quyền và ma trận bảo mật hệ thống
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+            Thiết lập vai trò, phân quyền và ma trận bảo mật hệ thống ADCS.
           </p>
         </div>
 
         <button
           onClick={openAddRoleModal}
-          className="flex items-center justify-center gap-2 rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 outline-none"
+          className="flex items-center justify-center gap-2 rounded-xl h-10 px-5 bg-primary text-white text-xs sm:text-sm font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 outline-none cursor-pointer"
         >
-          <span className="material-symbols-outlined text-lg">add_circle</span>
+          <span className="material-symbols-outlined text-[18px]">add_circle</span>
           <span>Thêm Role</span>
         </button>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 text-sm">
           {error}
         </div>
       )}
 
-      <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[540px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                <th className="px-6 py-4 text-slate-700 dark:text-slate-300 text-sm font-semibold uppercase tracking-wider">
+                <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-4 text-slate-700 dark:text-slate-300 text-sm font-semibold uppercase tracking-wider">
+                <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                   Mô tả
                 </th>
-                <th className="px-6 py-4 text-slate-700 dark:text-slate-300 text-sm font-semibold uppercase tracking-wider text-right">
+                <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider text-right">
                   Hành động
                 </th>
               </tr>
@@ -263,28 +271,28 @@ const RoleManagementPage: React.FC = () => {
               {roles.map((role) => (
                 <tr key={role.role_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${role.colorClass}`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${role.colorClass}`}>
                       {role.name}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-sm">
-                    {role.description}
+                    {role.description || "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1.5">
                       <button
                         onClick={() => openEditRoleModal(role)}
-                        className="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/5 outline-none"
+                        className="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/5 outline-none cursor-pointer"
                         title="Sửa role"
                       >
-                        <span className="material-symbols-outlined text-xl">edit_square</span>
+                        <span className="material-symbols-outlined text-[20px]">edit_square</span>
                       </button>
                       <button
                         onClick={() => openDeleteRoleModal(role)}
-                        className="p-2 text-slate-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 outline-none"
+                        className="p-2 text-slate-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 outline-none cursor-pointer"
                         title="Xóa role"
                       >
-                        <span className="material-symbols-outlined text-xl">delete</span>
+                        <span className="material-symbols-outlined text-[20px]">delete</span>
                       </button>
                     </div>
                   </td>
@@ -295,37 +303,46 @@ const RoleManagementPage: React.FC = () => {
         </div>
       </section>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
-            <span className="material-symbols-outlined">rule</span>
+          <div className="rounded-xl bg-primary/10 p-2 text-primary flex items-center justify-center">
+            <span className="material-symbols-outlined text-[22px]">rule</span>
           </div>
-          <h2 className="text-slate-900 dark:text-slate-100 text-xl font-bold">
-            Ma trận quyền hạn
-          </h2>
+          <div>
+            <h2 className="text-slate-900 dark:text-slate-100 text-lg font-bold">
+              Ma trận quyền hạn
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Bật chế độ chỉnh sửa để cấp hoặc thu hồi quyền hạn cho từng nhóm vai trò.
+            </p>
+          </div>
         </div>
 
         <button
           onClick={handleToggleEdit}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-primary/10 hover:text-primary transition-all outline-none"
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all outline-none cursor-pointer ${
+            isEditing
+              ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-primary"
+          }`}
         >
-          <span className="material-symbols-outlined text-sm">edit</span>
+          <span className="material-symbols-outlined text-[18px]">{isEditing ? "close" : "edit"}</span>
           <span>{isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa Ma trận"}</span>
         </button>
       </div>
 
-      <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[680px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                <th className="px-6 py-4 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider w-1/3">
+                <th className="sticky left-0 z-10 bg-slate-50 dark:bg-slate-800 px-6 py-4 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider min-w-[240px] border-r border-slate-200/60 dark:border-slate-700/60">
                   Key Quyền hạn
                 </th>
                 {roles.map((role) => (
                   <th
                     key={role.role_id}
-                    className="px-4 py-4 text-center text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider"
+                    className="px-4 py-4 text-center text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider whitespace-nowrap"
                   >
                     {role.name}
                   </th>
@@ -335,12 +352,12 @@ const RoleManagementPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {permissions.map((perm) => (
                 <tr key={perm.permission_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-6 py-4 border-r border-slate-100 dark:border-slate-800">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono">
                         {perm.code}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {perm.description}
                       </span>
                     </div>
@@ -357,9 +374,9 @@ const RoleManagementPage: React.FC = () => {
                           checked={matrix[key] || false}
                           onChange={() => handleTogglePermission(perm.code, role.role_id)}
                           disabled={!isEditing}
-                          className={`h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer transition-all
+                          className={`h-5 w-5 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary cursor-pointer transition-all accent-primary
                             ${!isEditing ? "opacity-50 cursor-not-allowed" : ""}
-                            ${isChanged ? "ring-2 ring-yellow-400 bg-yellow-50" : ""}
+                            ${isChanged ? "ring-2 ring-amber-400 bg-amber-50" : ""}
                           `}
                         />
                       </td>

@@ -30,10 +30,17 @@ const AuthCallback: React.FC = () => {
   }, [navigate, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-gray-600 font-medium">Đang xác thực thông tin đăng nhập...</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 font-display px-4">
+      <div className="flex flex-col items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl max-w-sm w-full text-center">
+        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">Đang xác thực PTIT SSO</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Vui lòng đợi trong giây lát, hệ thống đang đồng bộ phiên đăng nhập...
+          </p>
+        </div>
       </div>
     </div>
   );
