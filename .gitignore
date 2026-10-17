@@ -2,3 +2,4 @@ adcs-backend/.env
 adcs-frontend/.env
 backup.sql
 adcs-backend/logs/
+.agents

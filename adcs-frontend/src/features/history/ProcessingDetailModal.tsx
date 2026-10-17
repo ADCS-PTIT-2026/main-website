@@ -163,10 +163,10 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
         </div>
 
         {/* Modal Tabs Navigation */}
-        <div className="px-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-6 bg-white dark:bg-slate-900 text-sm font-semibold">
+        <div className="px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4 sm:gap-6 bg-white dark:bg-slate-900 text-xs sm:text-sm font-bold overflow-x-auto no-scrollbar shrink-0">
           <button
             onClick={() => setActiveTab('info')}
-            className={`py-3 border-b-2 transition-colors flex items-center gap-2 cursor-pointer outline-none ${
+            className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none ${
               activeTab === 'info'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
@@ -177,7 +177,7 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('ai')}
-            className={`py-3 border-b-2 transition-colors flex items-center gap-2 cursor-pointer outline-none ${
+            className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none ${
               activeTab === 'ai'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
@@ -188,7 +188,7 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('technical')}
-            className={`py-3 border-b-2 transition-colors flex items-center gap-2 cursor-pointer outline-none ${
+            className={`py-3 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer outline-none ${
               activeTab === 'technical'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
@@ -200,7 +200,7 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
           {isLoading ? (
             <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-400">
               <span className="material-symbols-outlined text-4xl animate-spin text-primary">progress_activity</span>
