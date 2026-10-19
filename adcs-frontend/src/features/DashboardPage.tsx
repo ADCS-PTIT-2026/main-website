@@ -7,8 +7,9 @@ import { feedbackApi, type FeedbackItem } from '../api/feedback';
 import { usePermission } from '../hooks/usePermission';
 import { ProcessingDetailModal } from './history/ProcessingDetailModal';
 import toast from 'react-hot-toast';
+import PendingAccountNotice from './auth/components/PendingAccountNotice';
 
-const DashboardPage: React.FC = () => {
+const ActiveDashboardPage: React.FC = () => {
   const { isAdmin } = usePermission();
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
   const [recentDocs, setRecentDocs] = useState<DocumentResponse[]>([]);
@@ -770,6 +771,11 @@ const DashboardPage: React.FC = () => {
       />
     </div>
   );
+};
+
+const DashboardPage: React.FC = () => {
+  const { isPending } = usePermission();
+  return isPending ? <PendingAccountNotice /> : <ActiveDashboardPage />;
 };
 
 export default DashboardPage;

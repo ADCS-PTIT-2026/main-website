@@ -6,7 +6,6 @@ from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.core.security import create_access_token, create_refresh_token, decode_token, hash_token, utcnow
-from app.models.role_permission import Role
 from app.models.security import RefreshToken
 from app.models.user import User
 
@@ -36,9 +35,7 @@ def refresh_access_token(db: Session, raw_token: str):
         raise denied
     # Serialize refresh/password changes per user and refresh rotation across workers.
     user = db.query(User).filter(User.user_id == payload["sub"]).with_for_update().first()
-    if not user or not user.is_active or not user.role_id:
-        raise denied
-    if not db.query(Role).filter(Role.role_id == str(user.role_id)).first():
+    if not user:
         raise denied
     stored = db.query(RefreshToken).filter(RefreshToken.token_hash == hash_token(raw_token)).with_for_update().first()
     if not stored or str(stored.user_id) != str(user.user_id) or str(stored.family_id) != payload["sid"]:

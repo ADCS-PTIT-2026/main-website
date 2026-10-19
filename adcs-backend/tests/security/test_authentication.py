@@ -101,6 +101,67 @@ def test_password_change_revokes_all_sessions(client):
     assert client.post('/api/auth/login',json={'email':'owner@ptit.edu.vn','password':'ChangedAudit123!'}).status_code==200
 
 
+@pytest.mark.parametrize('active,assigned,expected', [
+    (False,False,'pending_approval'), (False,True,'pending_approval'),
+    (True,False,'pending_role'), (True,True,'active'),
+])
+def test_account_status_and_pending_business_access(client,data,active,assigned,expected):
+    with SessionLocal() as db:
+        user=db.query(User).filter(User.user_id==data.ids['owner']).one()
+        user.is_active=active; user.role_id=data.ids['user_role'] if assigned else None; db.commit()
+    tokens=login(client); account=tokens['user']
+    assert account['account_status']==expected and account['is_active']==active
+    headers={'Authorization':'Bearer '+tokens['access_token']}
+    response=client.get('/api/auth/me',headers=headers)
+    assert response.status_code==200 and response.json()==account
+    assert 'password_hash' not in response.json() and 'auth_version' not in response.json()
+    if expected!='active':
+        assert account['permissions']==[] and account['is_admin'] is False
+        for path in ['/api/users/me','/api/users','/api/documents/my','/api/departments','/api/translations/','/api/role-permissions/roles']:
+            assert client.get(path,headers=headers).status_code==403,path
+        assert client.post('/api/users/connect_to_telegram',headers=headers).status_code==403
+    else:
+        assert account['permissions']
+        assert client.get('/api/documents/my',headers=headers).status_code==200
+
+
+def test_pending_admin_role_never_grants_admin_access(client,data):
+    with SessionLocal() as db:
+        user=db.query(User).filter(User.user_id==data.ids['admin']).one();user.is_active=False;db.commit()
+    response=client.post('/api/auth/login',json={'email':'admin@ptit.edu.vn','password':'AuditPassword123!'})
+    assert response.status_code==200
+    account=response.json();assert account['user']['is_admin'] is False and account['user']['permissions']==[]
+    assert client.get('/api/users',headers={'Authorization':'Bearer '+account['access_token']}).status_code==403
+
+
+def test_pending_session_requires_password_supports_rotation_and_logout(client,data):
+    with SessionLocal() as db:
+        user=db.query(User).filter(User.user_id==data.ids['owner']).one();user.is_active=False;user.role_id=None;db.commit()
+    assert client.get('/api/auth/me').status_code==401
+    assert client.post('/api/auth/login',json={'email':'owner@ptit.edu.vn','password':'WrongPassword123!'}).status_code==401
+    pair=login(client)
+    response=client.post('/api/auth/refresh',json={'refresh_token':pair['refresh_token']});assert response.status_code==200
+    rotated=response.json();headers={'Authorization':'Bearer '+rotated['access_token']}
+    assert client.get('/api/auth/me',headers=headers).json()['account_status']=='pending_approval'
+    assert client.get('/api/documents/my',headers=headers).status_code==403
+    assert client.post('/api/auth/logout',json={'refresh_token':rotated['refresh_token']}).status_code==200
+    assert client.get('/api/auth/me',headers=headers).status_code==401
+
+
+def test_admin_approval_and_role_assignment_enable_fresh_login(client,data,auth):
+    with SessionLocal() as db:
+        user=db.query(User).filter(User.user_id==data.ids['owner']).one();user.is_active=False;user.role_id=None;db.commit()
+    pending=login(client)
+    response=client.put('/api/users/'+data.ids['owner']+'/assign',headers=auth('admin'),json={'role_id':data.ids['user_role']})
+    assert response.status_code==200
+    assert login(client)['user']['account_status']=='pending_approval'
+    response=client.put('/api/users/'+data.ids['owner']+'/status',headers=auth('admin'),json={'is_active':True})
+    assert response.status_code==200
+    assert client.get('/api/auth/me',headers={'Authorization':'Bearer '+pending['access_token']}).status_code==401
+    approved=login(client);assert approved['user']['account_status']=='active'
+    assert client.get('/api/documents/my',headers={'Authorization':'Bearer '+approved['access_token']}).status_code==200
+
+
 @pytest.fixture(scope='session')
 def signing_keys():
     public,private=rsa.newkeys(2048)
@@ -149,6 +210,16 @@ def test_valid_sso_and_single_use_attempt(client,sso_flow):
     assert sso_flow.exchanges[0]['data']['code_verifier']
     assert callback(client,sso_flow).status_code==401
     assert len(sso_flow.exchanges)==1
+
+
+@pytest.mark.parametrize('active,expected', [(False,'pending_approval'),(True,'pending_role')])
+def test_verified_sso_for_existing_pending_account(client,data,sso_flow,active,expected):
+    with SessionLocal() as db:
+        user=db.query(User).filter(User.user_id==data.ids['owner']).one();user.is_active=active;user.role_id=None;db.commit()
+    response=callback(client,sso_flow);assert response.status_code==200
+    pair=response.json();assert pair['user']['account_status']==expected and pair['user']['permissions']==[]
+    assert client.get('/api/auth/me',headers={'Authorization':'Bearer '+pair['access_token']}).status_code==200
+    assert client.get('/api/departments',headers={'Authorization':'Bearer '+pair['access_token']}).status_code==403
 
 
 @pytest.mark.parametrize('change,remove', [

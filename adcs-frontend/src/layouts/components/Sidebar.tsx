@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleDesktop,
 }) => {
   const location = useLocation();
-  const { isAdmin } = usePermission();
+  const { isAdmin, isPending } = usePermission();
   const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -113,6 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [isUserMenuOpen]);
 
   const visibleNavItems = NAV_ITEMS.filter(item => {
+    if (isPending) return item.path === '/dashboard';
     if (item.isAdminOnly && !isAdmin) {
       return false;
     }
@@ -387,7 +388,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </button>
 
               {/* Góp ý */}
-              <button
+              {!isPending && <button
                 type="button"
                 onClick={() => setIsFeedbackModalOpen(true)}
                 className={`w-full flex items-center rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer group ${
@@ -412,7 +413,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 >
                   arrow_forward_ios
                 </span>
-              </button>
+              </button>}
             </div>
 
             {/* Khối User Profile & Dropdown Popover */}
@@ -432,7 +433,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </p>
                   </div>
 
-                  <button
+                  {!isPending && <button
                     type="button"
                     onClick={() => {
                       setIsUserMenuOpen(false);
@@ -445,7 +446,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       manage_accounts
                     </span>
                     <span>Hồ sơ cá nhân</span>
-                  </button>
+                  </button>}
 
                   <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
 
@@ -465,7 +466,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                title={`${userName} (${userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'})`}
+                title={`${userName} (${isPending ? 'Chờ cấp quyền' : userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'})`}
                 className={`w-full flex items-center p-2 rounded-xl cursor-pointer select-none transition-all ${
                   isOpen ? 'justify-between' : 'justify-between lg:justify-center lg:p-1.5'
                 } ${
@@ -483,7 +484,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       {userName}
                     </p>
                     <span className="text-[10px] font-medium text-slate-400 capitalize block truncate">
-                      {userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'}
+                      {isPending ? 'Chờ cấp quyền' : userRole === 'admin' ? 'Quản trị viên' : 'Thành viên'}
                     </span>
                   </div>
                 </div>

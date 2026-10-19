@@ -5,6 +5,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role?: string | null;
+  is_active?: boolean;
+  account_status?: 'active' | 'pending_approval' | 'pending_role';
   is_admin?: boolean;
   permissions?: string[];
   is_telegram_connected?: boolean;
@@ -25,16 +27,17 @@ export function getCurrentUser(): AuthUser | null {
 
 export const usePermission = () => {
   const user = useMemo(() => getCurrentUser(), []);
+  const isPending = Boolean(user?.account_status && user.account_status !== 'active');
 
   const permissions = useMemo(() => {
-    return Array.isArray(user?.permissions) ? user!.permissions : [];
-  }, [user]);
+    return !isPending && Array.isArray(user?.permissions) ? user!.permissions : [];
+  }, [user, isPending]);
 
   const role = useMemo(() => {
     return (user?.role || '').toLowerCase();
   }, [user]);
 
-  const isAdmin = user?.is_admin === true;
+  const isAdmin = !isPending && user?.is_admin === true;
   const canonical = (code: string): string => {
     const aliases: Record<string, string> = {
       'doc:view': 'file.read', 'doc:read': 'file.read', 'doc:download': 'file.read',
@@ -61,6 +64,7 @@ export const usePermission = () => {
     role: user?.role,
     permissions,
     isAdmin,
+    isPending,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,

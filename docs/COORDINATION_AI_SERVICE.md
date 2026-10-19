@@ -232,17 +232,3 @@ Web Backend sẽ truyền một object JSON `ai_parameters` trong form data khi 
   }
 }
 ```
-
----
-
-## 4. KẾ HOẠCH KIỂM THỬ VÀ NGHIỆM THU TÍCH HỢP
-
-1. **Giai đoạn 1 (Môi trường Staging/Dev):**
-   * Đội AI Server triển khai cập nhật theo cấu trúc mới trên server test: `http://171.226.10.153:12006/api/v1/analyze-document`.
-   * Đội Web Backend cập nhật mã nguồn gửi đúng mẫu Request có `department_list` động và `ai_parameters`.
-   * Thực hiện kiểm thử với bộ dữ liệu mẫu (33 văn bản kiểm thử). Tiêu chí đạt: Tỷ lệ ghép đúng phòng ban tăng từ **2/33 lên >= 28/33**.
-2. **Giai đoạn 2 (Kiểm thử tải & Timeout):**
-   * Chạy thử tải văn bản dung lượng lớn (10MB, 50 trang). Xác nhận không bị lỗi timeout 300s và không xảy ra treo luồng worker.
-3. **Đầu mối liên hệ kỹ thuật:**
-   * Kỹ thuật phụ trách Web Backend: Nguyễn Hữu Hiếu (`hieudt`)
-   * Kỹ thuật phụ trách AI Server: Vui lòng phản hồi xác nhận qua email/kênh Telegram trao đổi kỹ thuật.

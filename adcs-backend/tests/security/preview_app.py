@@ -9,6 +9,7 @@ import rsa
 import conftest
 from app.core.security import hash_password
 from app.models.department import Department
+from app.models.user import User
 from app.services import sso_service
 
 if not conftest.TEST_URL:
@@ -20,6 +21,9 @@ app.router.on_startup.clear()
 app.router.on_shutdown.clear()
 with conftest.SessionLocal() as db:
     db.add(Department(id=100, name="Synthetic department", description="Synthetic department for security checks"))
+    for name, active, role_id in [('pending',False,None),('unassigned',True,None),('awaiting',False,seed.ids['user_role'])]:
+        db.add(User(username='Audit '+name,email=name+'@ptit.edu.vn',password_hash=hash_password('AuditPassword123!'),
+                    is_active=active,role_id=role_id))
     db.commit()
 
 public, private = rsa.newkeys(2048)

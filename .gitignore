@@ -1,7 +1,11 @@
 adcs-backend/.env
+.env
+.env.security-next
 adcs-frontend/.env
 backup.sql
 adcs-backend/logs/
 .agents
-.env
-.env.security-next
+docs/COORDINATION_AI_SERVICE.md
+docs/COORDINATION_DATA_SERVICE.md
+docs/PLAN_IMPLEMENTATION_DETAIL.md  
+docs/

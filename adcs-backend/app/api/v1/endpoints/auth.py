@@ -1,12 +1,18 @@
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest, SSOCallbackRequest
+from app.core.dependency import get_authenticated_user
+from app.models.user import User
+from app.schemas.auth import LoginRequest, LoginResponse, UserResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest, SSOCallbackRequest
 from app.services.auth_service import login, register, refresh_access_token, ptit_sso_login
 from app.services.token_service import revoke_refresh_token
 from app.services.sso_service import begin_sso_login, SSO_COOKIE_NAME, SSO_COOKIE_PATH, SSO_COOKIE_SECURE, SSO_LIFETIME_SECONDS
 
 router = APIRouter()
+
+@router.get("/me", response_model=UserResponse)
+def current_session_api(current_user: User = Depends(get_authenticated_user)):
+    return current_user.session_data
 
 # 1. Đăng nhập
 @router.post("/login", response_model=LoginResponse)

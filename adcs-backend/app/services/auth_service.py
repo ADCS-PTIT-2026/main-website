@@ -4,9 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.crud.user import get_user_by_email, create_user
 from app.models.user import User
-from app.models.role_permission import Role
 from app.core.security import verify_password, hash_password
-from app.core.dependency import get_user_permissions
+from app.core.dependency import get_user_session_data
 from app.services.token_service import issue_token_pair, refresh_access_token
 from app.services.sso_service import ptit_sso_login
 
@@ -21,45 +20,8 @@ def login(db: Session, email: str, password: str):
     if not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác!")
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=403, 
-            detail="Tài khoản của bạn đang chờ Quản trị viên duyệt hoặc đã bị vô hiệu hóa!"
-        )
-
-    if not user.role_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Tài khoản chưa được phân quyền sử dụng hệ thống. Vui lòng liên hệ Quản trị viên."
-        )
-
-    role_name = None
-    role = None
-    permissions = []
-    if user.role_id:
-        role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
-        if role:
-            role_name = role.name
-            permissions = get_user_permissions(db, user.role_id)
-
-    if role is None:
-        raise HTTPException(status_code=403, detail="Vai trò người dùng không hợp lệ")
-
     tokens = issue_token_pair(db, user)
-
-    return {
-        **tokens,
-        "user": {
-            "id": str(user.user_id),
-            "email": user.email,
-            "name": user.username,
-            "role": role_name,
-            "is_admin": bool(role and role.system_code == "admin"),
-            "permissions": permissions,
-            "is_telegram_connected": bool(user.telegram_chat_id),
-            "telegram_chat_id": user.telegram_chat_id
-        }
-    }
+    return {**tokens, "user": get_user_session_data(db, user)}
 
 
 def register(db: Session, name: str, email: str, password: str):

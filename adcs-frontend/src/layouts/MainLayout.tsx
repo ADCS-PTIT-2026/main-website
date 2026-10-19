@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import logo from '../assets/ptit-logo.png';
+import { usePermission } from '../hooks/usePermission';
 
 const PAGE_METADATA: Record<string, { title: string; subtitle: string; icon: string }> = {
   '/dashboard': { title: 'Bảng điều khiển', subtitle: 'Tổng quan hoạt động hệ thống AI', icon: 'dashboard' },
@@ -19,6 +20,7 @@ const PAGE_METADATA: Record<string, { title: string; subtitle: string; icon: str
 
 const MainLayout: React.FC = () => {
   const location = useLocation();
+  const { isPending } = usePermission();
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
     return localStorage.getItem('adcs_sidebar_open') !== 'false';
   });
@@ -117,12 +119,12 @@ const MainLayout: React.FC = () => {
 
           {/* Tác vụ nhanh bên phải Header */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold">
+            {!isPending && <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>AI Engine Sẵn sàng</span>
-            </div>
+            </div>}
 
-            {location.pathname !== '/documents' && (
+            {!isPending && location.pathname !== '/documents' && (
               <Link
                 to="/documents"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-bold shadow-sm shadow-primary/20 transition-all"

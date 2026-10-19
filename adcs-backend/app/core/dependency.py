@@ -22,7 +22,21 @@ def get_user_permissions(db: Session, role_id: str) -> list[str]:
     return [permission[0] for permission in permissions]
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_user_session_data(db: Session, user: User):
+    role = db.query(Role).filter(Role.role_id == str(user.role_id)).first() if user.role_id else None
+    account_status = "pending_approval" if not user.is_active else ("active" if role else "pending_role")
+    authorized = account_status == "active"
+    return {
+        "id": str(user.user_id), "email": user.email, "name": user.username,
+        "role": role.name if role else None, "is_active": bool(user.is_active),
+        "account_status": account_status,
+        "is_admin": bool(authorized and role.system_code == "admin"),
+        "permissions": get_user_permissions(db, user.role_id) if authorized else [],
+        "is_telegram_connected": bool(user.telegram_chat_id), "telegram_chat_id": user.telegram_chat_id,
+    }
+
+
+def get_authenticated_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_error = HTTPException(status_code=401, detail="Phiên đăng nhập không hợp lệ hoặc đã hết hạn",
                                       headers={"WWW-Authenticate": "Bearer"})
     try:
@@ -38,15 +52,18 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     ).first()
     if session is None:
         raise credentials_error
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Tài khoản chưa được kích hoạt hoặc đã bị khóa")
-    role = db.query(Role).filter(Role.role_id == str(user.role_id)).first() if user.role_id else None
-    if role is None:
-        raise HTTPException(status_code=403, detail="Tài khoản chưa được phân quyền")
-    user.role_name = role.name
-    user.is_admin = role.system_code == "admin"
-    user.permissions = get_user_permissions(db, user.role_id)
+    user.session_data = get_user_session_data(db, user)
+    user.role_name = user.session_data["role"]
+    user.is_admin = user.session_data["is_admin"]
+    user.permissions = user.session_data["permissions"]
     return user
+
+
+def get_current_user(current_user: User = Depends(get_authenticated_user)):
+    # Pending/disabled accounts may inspect their own session, never business data.
+    if current_user.session_data["account_status"] != "active":
+        raise HTTPException(status_code=403, detail="Vui lòng chờ hoặc liên hệ admin để cấp quyền cho tài khoản.")
+    return current_user
 
 
 class RoleChecker:

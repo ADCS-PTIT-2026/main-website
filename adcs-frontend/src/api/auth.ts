@@ -8,6 +8,8 @@ export interface LoginResponse {
     email: string;
     name: string;
     role?: string | null;
+    is_active: boolean;
+    account_status: 'active' | 'pending_approval' | 'pending_role';
     is_admin: boolean;
     permissions: string[];
     is_telegram_connected?: boolean;
@@ -16,6 +18,10 @@ export interface LoginResponse {
 }
 
 export const authAPI = {
+  me: async (): Promise<LoginResponse['user']> => {
+    return axiosClient.get<LoginResponse['user'], LoginResponse['user']>('/auth/me');
+  },
+
   login: async (email: string, password: string): Promise<LoginResponse> => {
     return axiosClient.post('/auth/login', { email, password });
   },

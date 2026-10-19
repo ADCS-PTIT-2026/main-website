@@ -44,7 +44,8 @@ axiosClient.interceptors.response.use(
   async (error: unknown) => {
     if (!axios.isAxiosError(error) || !error.config) return Promise.reject(error);
     const request = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    if (request.url?.includes('/auth/') || error.response?.status !== 401 || request._retry) {
+    const isAuthFlow = request.url?.includes('/auth/') && request.url !== '/auth/me';
+    if (isAuthFlow || error.response?.status !== 401 || request._retry) {
       return Promise.reject(error);
     }
     request._retry = true;

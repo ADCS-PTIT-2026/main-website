@@ -295,6 +295,7 @@
 * **Xây dựng Endpoint Healthcheck:**
   * Tạo endpoint `GET /health` tại [main.py](file:///home/hieudt/ADCS/adcs-website/main-website/adcs-backend/app/main.py): Kiểm tra trạng thái kết nối DB bằng câu lệnh `SELECT 1`. Nếu phản hồi trong < 2s trả về `200 OK`, nếu lỗi trả về `503 Service Unavailable`.
 
+
 #### 3. Kế hoạch sửa đổi Hạ tầng (Docker & Nginx)
 * **File:** [docker-compose.yml](file:///home/hieudt/ADCS/adcs-website/main-website/docker-compose.yml)
   * Bổ sung `healthcheck` cho service `backend`:

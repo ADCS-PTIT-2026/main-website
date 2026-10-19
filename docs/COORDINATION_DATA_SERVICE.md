@@ -302,19 +302,3 @@ API tìm kiếm được nâng cấp để hỗ trợ **`query` rỗng** (mặc 
 
 ---
 
-## 5. KẾ HOẠCH PHỐI HỢP TRIỂN KHAI VÀ NGHIỆM THU
-
-1. **Tuần 1: Thiết lập Endpoint và Thống nhất Schema:**
-   * Data Service triển khai endpoint `POST /api/v1/documents/sync`, `PUT /api/v1/documents/{document_id}/sync-metadata`, `DELETE /api/v1/documents/{document_id}`.
-   * Web Backend xây dựng cơ chế Outbox Table để đảm bảo mọi cập nhật trên Web đều được phát event sang Data Service đáng tin cậy (At-least-once Delivery).
-2. **Tuần 2: Nâng cấp API Tìm kiếm & Phân luồng ưu tiên:**
-   * Data Service hoàn thiện hỗ trợ `query` rỗng và filter thuộc tính độc lập cho API Kho văn bản.
-   * Crawler gán cờ `priority = 3` khi đẩy tài liệu vào hệ thống.
-3. **Tuần 3: Kiểm thử luồng Đồng bộ 2 chiều (Integration Testing):**
-   * **Test Case 1:** Upload văn bản trên Web -> Kiểm tra xuất hiện ngay trong DB Data Service với đúng `document_id`.
-   * **Test Case 2:** Sửa metadata văn bản trên Web -> Kiểm tra DB Data Service cập nhật và Vector search tìm thấy nội dung mới sửa.
-   * **Test Case 3:** Xóa văn bản trên Web -> Kiểm tra dữ liệu được dọn sạch ở cả 2 DB và Vector DB.
-   * **Test Case 4:** Tắt tạm thời Data Service, cập nhật trên Web, bật lại Data Service -> Kiểm tra cơ chế tự động bù trừ dữ liệu (Retry/Reconcile).
-4. **Đầu mối liên hệ kỹ thuật:**
-   * Phụ trách Web Backend: Nguyễn Hữu Hiếu (`hieudt`)
-   * Phụ trách Data Service: Vui lòng xác nhận qua kênh trao đổi kỹ thuật hoặc email dự án.

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 class LoginRequest(BaseModel):
@@ -11,6 +11,8 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: Optional[str] = None
+    is_active: bool
+    account_status: Literal["active", "pending_approval", "pending_role"]
     is_admin: bool = False
     permissions: list[str] = []
     is_telegram_connected: bool = False

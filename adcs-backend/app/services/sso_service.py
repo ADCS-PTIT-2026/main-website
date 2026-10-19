@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.core.dependency import get_user_permissions
+from app.core.dependency import get_user_session_data
 from app.core.logger import logger
 from app.core.security import hash_password, hash_token, utcnow
 from app.crud.user import create_user, get_user_by_email
@@ -135,17 +135,5 @@ def ptit_sso_login(db: Session, code: str, state: str, cookie_state: str | None)
         name = info.get("name") or info.get("preferred_username") or email.split("@")[0]
         user = create_user(db, User(username=name, email=email, password_hash=hash_password(secrets.token_urlsafe(32)),
                                     is_active=True, role_id=str(role.role_id)))
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Tài khoản chưa được kích hoạt hoặc đã bị khóa")
-    if not user.role_id:
-        raise HTTPException(status_code=403, detail="Tài khoản chưa được phân quyền")
-    role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
-    if not role:
-        raise HTTPException(status_code=403, detail="Vai trò người dùng không hợp lệ")
     tokens = issue_token_pair(db, user)
-    return {**tokens, "user": {
-        "id": str(user.user_id), "email": user.email, "name": user.username,
-        "role": role.name, "is_admin": role.system_code == "admin",
-        "permissions": get_user_permissions(db, user.role_id),
-        "is_telegram_connected": bool(user.telegram_chat_id), "telegram_chat_id": user.telegram_chat_id,
-    }}
+    return {**tokens, "user": get_user_session_data(db, user)}
