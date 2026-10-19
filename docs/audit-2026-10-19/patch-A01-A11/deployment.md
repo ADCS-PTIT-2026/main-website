@@ -30,20 +30,19 @@ Không tìm thấy password hash của tài khoản hiện tại trong dump Git 
 
 Các phiên tạm dùng để xác minh quyền admin/user đã được thu hồi. Không gửi thông báo Telegram hay đồng bộ tài liệu thật sang QLVB trong các kiểm tra này. SSO start được kiểm tra; đăng nhập tài khoản thật tại PTIT vẫn cần người dùng tương tác với nhà cung cấp.
 
-## Khóa của nhà cung cấp còn chờ
+## Khóa của nhà cung cấp
 
-Tại thời điểm cập nhật báo cáo, chưa có hai file khóa mới mà chủ hệ thống đang chuẩn bị:
+Telegram đã hoàn tất: nạp khóa mới cho đúng `@ptit_adcs_bot`, kiểm chứng khóa cũ trả HTTP 401, đăng ký lại webhook. Endpoint công khai chấp nhận secret mới và trả 403 khi thiếu secret. Phiên admin tạm dùng cho thao tác đã thu hồi; không gửi tin nhắn thử đến người dùng.
 
-- `/home/hieudt/.local/share/adcs-security-20261019/telegram-token-new`
 - `/home/hieudt/.local/share/adcs-security-20261019/qlvb-key-new`
 
-Chủ hệ thống đã xác nhận sẽ thu hồi/cấp lại khóa ở BotFather và hệ thống quản trị QLVB. Không gửi giá trị khóa qua chat. Khi có file, cần nạp vào cấu hình, tạo lại backend, thiết lập webhook kèm secret mới và kiểm chứng khóa cũ bị từ chối tại nhà cung cấp. **Telegram và đồng bộ QLVB hiện tạm tắt, không dùng khóa đã lộ. Chưa xác nhận thu hồi hai khóa tại nguồn.**
+QLVB còn chờ file trên. Chủ hệ thống đã xác nhận sẽ thu hồi/cấp lại khóa trong hệ thống quản trị QLVB. Không gửi giá trị khóa qua chat. Khi có file, cần nạp vào cấu hình, tạo lại backend và kiểm chứng khóa cũ bị từ chối tại nhà cung cấp. **Đồng bộ QLVB hiện tạm tắt, không dùng khóa đã lộ. Chưa xác nhận thu hồi khóa QLVB tại nguồn.**
 
 ## Lịch sử Git và bản sao khôi phục
 
-Lịch sử đã được làm sạch trong clone riêng trước khi cập nhật remote: loại dump dữ liệu, log, file môi trường và tài liệu tích hợp chứa credential; thay literal bí mật ở các blob/commit message còn lại. Mọi cập nhật cưỡng bức remote dùng `--force-with-lease` cho đúng ref `main` để tránh ghi đè thay đổi đến trong lúc xử lý. Trạng thái xác minh remote được bổ sung sau bước cập nhật.
+Đã viết lại 60 commit lịch sử và cập nhật `main` trên GitHub: loại dump dữ liệu, log, file môi trường và tài liệu tích hợp chứa credential; thay literal bí mật ở các blob/commit message còn lại. Đã đưa bản vá vào commit triển khai mới. Lần cập nhật cưỡng bức dùng `--force-with-lease` cho đúng ref `main` để tránh ghi đè thay đổi đến trong lúc xử lý. Clone mới từ GitHub đã được quét lại, không còn đường dẫn nhạy cảm trong lịch sử reachable hoặc giá trị khóa đã biết.
 
-Việc viết lại refs không thu hồi credential và không bảo đảm xóa bản sao từ máy khác hoặc cache GitHub. Các clone cũ phải được thay bằng clone mới; không merge lại lịch sử cũ. Nếu cần xóa cache theo SHA cũ, chủ repository cần [liên hệ GitHub Support theo hướng dẫn chính thức](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github). Không tự gửi tin nhắn/ticket thay chủ hệ thống.
+Kiểm tra sau cập nhật cho thấy **GitHub vẫn trả HTTP 200 cho file cũ truy cập theo SHA**; không tải lại nội dung file trong phép kiểm. Vì vậy, việc làm sạch refs chưa xóa cache phía GitHub. Các clone cũ phải được thay bằng clone mới; không merge lại lịch sử cũ. Chủ repository cần [liên hệ GitHub Support theo hướng dẫn chính thức](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github) để xử lý phần còn lưu này. Đã chuẩn bị bản nháp riêng tại `/home/hieudt/.local/share/adcs-security-20261019/github-support-draft.txt`; chưa gửi ticket/tin nhắn thay chủ hệ thống.
 
 Bản sao khôi phục và chứng cứ vận hành riêng nằm ngoài repo, trong `/home/hieudt/.local/share/adcs-security-20261019` (quyền 700). Các bản sao chứa dữ liệu cũ sẽ được gom vào kho mã hóa; key giải mã quyền 600 được giữ riêng trong thư mục này. Không đưa kho/key vào Git hoặc chia sẻ công khai. Đổi khóa và làm sạch refs không thay thế việc xử lý các bản clone, bản backup khác do bên ngoài quản lý.
 

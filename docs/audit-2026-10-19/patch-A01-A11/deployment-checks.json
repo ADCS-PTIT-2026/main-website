@@ -1,0 +1,146 @@
+{
+  "database_and_runtime_rotation": {
+    "old_db_login": false,
+    "new_db_login": true,
+    "SECRET_KEY_matches_replacement": true,
+    "DB_PASSWORD_matches_replacement": true,
+    "SERVICE_INTERNAL_KEY_matches_replacement": true,
+    "TELEGRAM_WEBHOOK_SECRET_matches_replacement": true,
+    "jwt_differs_from_old": true
+  },
+  "logging": {
+    "validation_password_absent_from_app_log": true,
+    "validation_password_absent_from_docker_log": true,
+    "query_code_absent_from_nginx_log": true,
+    "no_worker_boot_error": true
+  },
+  "telegram_rotation": {
+    "new_token_valid": true,
+    "correct_bot": true,
+    "old_token_http_statuses": [
+      401
+    ]
+  },
+  "telegram_webhook": {
+    "webhook_registered": true,
+    "webhook_url_correct": true,
+    "missing_secret_denied": true,
+    "configured_secret_accepted": true
+  },
+  "git_remote_verification": {
+    "remote_head": "c2328eddd8abf6299ae43545ca925fdc53fc18cb",
+    "fresh_clone_verified": true,
+    "sensitive_paths_removed": [
+      "backup.sql",
+      "adcs-backend/logs/",
+      "adcs-backend/.env",
+      "adcs-frontend/.env",
+      "QLVB - Tiếp nhận Văn bản đến.txt"
+    ],
+    "objects_scanned": 631,
+    "known_secrets_remaining": 0,
+    "old_cached_objects_require_support": true
+  },
+  "github_cache": {
+    "old_raw_object_http_status": 200,
+    "downloaded_body": false,
+    "requires_owner_followup": true
+  },
+  "production_smoke": {
+    "passed": 20,
+    "failed": 0,
+    "test_sessions_revoked": true
+  },
+  "public_http_smoke": [
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/api/users",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/api/role-permissions/roles",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/api/departments",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/api/system-parameters",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/api/translations/",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "http://127.0.0.1:12011",
+      "path": "/login",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/api/users",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/api/role-permissions/roles",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/api/departments",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/api/system-parameters",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/api/translations/",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "base": "https://adcs.ptitai.org",
+      "path": "/login",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    }
+  ],
+  "qlvb": {
+    "enabled": false,
+    "replacement_received": false,
+    "provider_revocation_confirmed": false
+  },
+  "note": "No token or credential values are included. Provider QLVB work and GitHub cached old objects remain open."
+}
