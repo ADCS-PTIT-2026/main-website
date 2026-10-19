@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { usePermission } from '../../../hooks/usePermission';
 import {
   getMyDocuments,
   retryDocument,
@@ -38,6 +39,7 @@ interface UploadingFile {
 }
 
 const MyDocumentsPage: React.FC = () => {
+  const { hasPermission } = usePermission();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -150,6 +152,7 @@ const MyDocumentsPage: React.FC = () => {
   };
 
   const handleFilesSelected = (fileList: FileList | null) => {
+    if (!hasPermission("file.create")) { toast.error("Bạn không có quyền tải văn bản lên"); return; }
     if (!fileList || fileList.length === 0) return;
     const filesArray = Array.from(fileList);
     processUploadQueue(filesArray);

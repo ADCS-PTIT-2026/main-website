@@ -1,0 +1,354 @@
+[
+  {
+    "name": "anonymous protected route redirects",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "password login to dashboard",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "route /dashboard",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /documents",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /documents/my",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /document-repository",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /translation",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /departments",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /history",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "route /profile",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "regular user admin guard",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "persisted document preview after reload",
+    "passed": false,
+    "detail": {
+      "preview_elements": 0
+    }
+  },
+  {
+    "name": "translation language selection reaches API",
+    "passed": false,
+    "detail": {
+      "target_lang_field": false,
+      "source_lang_field": false
+    }
+  },
+  {
+    "name": "history fallback opens detail",
+    "passed": false,
+    "detail": {
+      "status": 404
+    }
+  },
+  {
+    "name": "admin feedback list displays returned items",
+    "passed": false,
+    "detail": null
+  },
+  {
+    "name": "admin route /admin/roles",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "admin route /admin/users",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "admin route /admin/ai-config",
+    "passed": true,
+    "detail": {
+      "page_errors": []
+    }
+  },
+  {
+    "name": "admin new user saves selected role department and active status",
+    "passed": false,
+    "detail": {
+      "role_id_saved": false,
+      "department_id_saved": false,
+      "is_active": false
+    }
+  },
+  {
+    "name": "role requests include authorization",
+    "passed": false,
+    "detail": {
+      "request_count": 6,
+      "authorized_count": 0
+    }
+  },
+  {
+    "name": "viewport 375 light /dashboard",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 light /documents/my",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 light /document-repository",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 light /translation",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 light /departments",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 light /profile",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /dashboard",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /documents/my",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /document-repository",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /translation",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /departments",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 375 dark /profile",
+    "passed": true,
+    "detail": {
+      "view": 375,
+      "body": 375
+    }
+  },
+  {
+    "name": "viewport 1440 light /dashboard",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 light /documents/my",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 light /document-repository",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 light /translation",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 light /departments",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 light /profile",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /dashboard",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /documents/my",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /document-repository",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /translation",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /departments",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "viewport 1440 dark /profile",
+    "passed": true,
+    "detail": {
+      "view": 1440,
+      "body": 1440
+    }
+  },
+  {
+    "name": "feedback modal has dialog semantics",
+    "passed": false,
+    "detail": null
+  },
+  {
+    "name": "feedback modal closes with Escape",
+    "passed": false,
+    "detail": null
+  },
+  {
+    "name": "no uncaught browser exceptions",
+    "passed": true,
+    "detail": {
+      "errors": []
+    }
+  },
+  {
+    "name": "SSO callback rejects mismatched state before exchange",
+    "passed": false,
+    "detail": {
+      "exchange_calls": 2
+    }
+  }
+]

@@ -4,6 +4,7 @@ import random
 import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
+from app.core.log_redaction import SensitiveDataFilter
 
 request_id_var = contextvars.ContextVar("request_id", default="SYSTEM")
 
@@ -21,6 +22,9 @@ class RequestIdFilter(logging.Filter):
 
 logger = logging.getLogger("adcs_logger")
 logger.setLevel(logging.INFO)
+logger.addFilter(SensitiveDataFilter())
+for name in ("uvicorn.error", "gunicorn.error", "httpx", "httpcore"):
+    logging.getLogger(name).addFilter(SensitiveDataFilter())
 
 formatter = logging.Formatter('[%(asctime)s] [%(request_id)s] [%(levelname)s] %(message)s')
 
@@ -30,7 +34,7 @@ console_handler.addFilter(RequestIdFilter())
 logger.addHandler(console_handler)
 
 
-log_dir = "logs"
+log_dir = os.getenv("ADCS_LOG_DIR", "logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 

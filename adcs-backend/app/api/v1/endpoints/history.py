@@ -8,7 +8,7 @@ from app.services.history_service import (
 )
 from app.db.session import get_db
 from sqlalchemy.orm import Session
-from app.core.dependency import get_current_user 
+from app.core.dependency import PermissionChecker
 from app.models.user import User
 
 router = APIRouter()
@@ -19,7 +19,7 @@ async def get_history_api(
     search: str = Query(None, description="Từ khóa tìm kiếm tài liệu"),
     action: str = Query(None, description="Lọc theo hành động (Tải lên, Xử lý AI, Xóa)"),
     time_filter: str = Query(None, description="Lọc theo thời gian (7 ngày qua, Tháng này...)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(PermissionChecker("file.read")),
     db: Session = Depends(get_db)
 ):
     """
@@ -41,7 +41,7 @@ async def get_history_api(
 async def get_document_history_detail_api(
     document_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """
     Lấy chi tiết một tài liệu dưới dạng ProcessingDetail (dùng cho Bảng điều khiển Dashboard).
@@ -52,7 +52,7 @@ async def get_document_history_detail_api(
 async def send_document_telegram_api(
     document_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """
     Gửi thông báo kết quả chi tiết của tài liệu tới Telegram của người dùng.
@@ -63,18 +63,18 @@ async def send_document_telegram_api(
 async def get_history_detail_api(
     history_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """
     Lấy chi tiết kết quả của một lượt xử lý tài liệu trong lịch sử.
     """
-    return await fetch_history_detail(history_id, db)
+    return await fetch_history_detail(history_id, db, current_user)
 
 @router.post("/{history_id}/send-telegram")
 async def send_history_telegram_api(
     history_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """
     Gửi thông báo kết quả xử lý của một lượt trong lịch sử tới Telegram của người dùng.

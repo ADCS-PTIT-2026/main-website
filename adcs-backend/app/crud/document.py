@@ -3,7 +3,7 @@ from sqlalchemy import func, or_, text, case
 from fastapi import HTTPException
 from app.models.document import Document
 from app.models.user import User
-from app.models.role_permission import Role
+from app.core.authorization import is_system_admin
 from typing import Optional, Dict, Any, List
 import uuid
 from uuid import UUID
@@ -20,8 +20,7 @@ def build_document_scope_query(db: Session, user: Optional[User] = None):
     if not user:
         return query
 
-    role_name = getattr(user, "role_name", None)
-    if role_name == "admin":
+    if is_system_admin(user):
         return query
 
     conditions = [Document.uploaded_by_user_id == str(user.user_id)]
@@ -34,7 +33,7 @@ def can_user_access_document(document: Document, user: User) -> bool:
     """Kiểm tra người dùng có quyền truy cập văn bản cụ thể hay không."""
     if not user:
         return False
-    if getattr(user, "role_name", None) == "admin":
+    if is_system_admin(user):
         return True
     
     # Người upload có toàn quyền truy cập
@@ -254,13 +253,9 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu!")
 
     # Kiểm tra quyền: chỉ chủ sở hữu hoặc admin
-    is_admin = False
-    if user.role_id:
-        role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
-        if role and role.name.lower() == "admin":
-            is_admin = True
+    is_admin = is_system_admin(user)
 
-    if not is_admin and doc.uploaded_by_user_id != user.user_id:
+    if not is_admin and str(doc.uploaded_by_user_id) != str(user.user_id):
         raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện lại xử lý cho tài liệu này!")
 
     if doc.status not in ["failed", "error"]:
@@ -281,13 +276,9 @@ def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if not doc:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu!")
 
-    is_admin = False
-    if user.role_id:
-        role = db.query(Role).filter(Role.role_id == str(user.role_id)).first()
-        if role and role.name.lower() == "admin":
-            is_admin = True
+    is_admin = is_system_admin(user)
 
-    if not is_admin and doc.uploaded_by_user_id != user.user_id:
+    if not is_admin and str(doc.uploaded_by_user_id) != str(user.user_id):
         raise HTTPException(status_code=403, detail="Bạn không có quyền hủy tài liệu này!")
 
     if doc.status != "queued":

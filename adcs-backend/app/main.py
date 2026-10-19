@@ -7,7 +7,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.concurrency import iterate_in_threadpool
 
 from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history, translation, feedback
 from app.core.http_client import http_client
@@ -27,15 +26,10 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
 
-            if response.status_code != 200:
-                response_body = [chunk async for chunk in response.body_iterator]
-                response.body_iterator = iterate_in_threadpool(iter(response_body))
-
-                try:
-                    body_content = b"".join(response_body).decode("utf-8")
-                    logger.warning(f"⚠️ CHI TIẾT LỖI ({response.status_code}): {body_content}")
-                except Exception:
-                    logger.warning(f"⚠️ CHI TIẾT LỖI ({response.status_code}): (Không thể decode body)")
+            if response.status_code >= 400:
+                logger.warning("Yêu cầu bị từ chối: HTTP %s", response.status_code)
+            if request.url.path.startswith("/api/auth/"):
+                response.headers["Cache-Control"] = "no-store"
 
             process_time = (time.time() - start_time) * 1000
             response.headers["X-Request-ID"] = req_id
@@ -44,8 +38,8 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
             return response
             
         except Exception as e:
-            logger.error(f"❌ LỖI HỆ THỐNG: {str(e)}")
-            raise e
+            logger.error("Lỗi xử lý yêu cầu: %s", type(e).__name__)
+            raise
         finally:
             request_id_var.reset(token)
 
@@ -73,37 +67,15 @@ class LoadSheddingMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI()
 
-def init_telegram_webhook():
-    import requests
-    from app.db.session import SessionLocal
-    from app.models.telegram_bot import Bot
-    try:
-        db = SessionLocal()
-        bot = db.query(Bot).filter(Bot.name == "ptit_adcs_bot").first()
-        if bot and bot.token:
-            webhook_url = "https://adcs.ptitai.org/api/telegram/webhook"
-            info_url = f"https://api.telegram.org/bot{bot.token}/getWebhookInfo"
-            resp = requests.get(info_url, timeout=5).json()
-            if resp.get("ok") and resp.get("result", {}).get("url") != webhook_url:
-                set_url = f"https://api.telegram.org/bot{bot.token}/setWebhook?url={webhook_url}"
-                set_resp = requests.get(set_url, timeout=5).json()
-                logger.info(f"Đã tự động cấu hình Telegram webhook: {set_resp}")
-            else:
-                logger.info(f"Telegram webhook đã sẵn sàng: {resp.get('result', {}).get('url')}")
-        db.close()
-    except Exception as e:
-        logger.warning(f"Không thể khởi tạo Telegram webhook lúc khởi động: {e}")
-
 @app.on_event("startup")
 async def startup_event():
     http_client.client = httpx.AsyncClient(timeout=300.0)
-    init_telegram_webhook()
     from app.services.document_queue_service import document_queue
     document_queue.start()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "https://adcs.ptitai.org").split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -139,10 +111,12 @@ app.include_router(feedback.router, prefix="/api/feedbacks", tags=["Feedback"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    print(f"Lỗi Validation: {exc.errors()}")
+    # Pydantic errors may contain raw input and exception contexts, including passwords.
+    errors = [{"loc": error["loc"], "type": error["type"], "msg": "Giá trị không hợp lệ"}
+              for error in exc.errors()]
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": exc.body},
+        content={"detail": errors},
     )
 
 @app.on_event("shutdown")

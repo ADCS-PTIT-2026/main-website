@@ -8,6 +8,8 @@ export interface LoginResponse {
     email: string;
     name: string;
     role?: string | null;
+    is_admin: boolean;
+    permissions: string[];
     is_telegram_connected?: boolean;
     telegram_chat_id?: string | null;
   };
@@ -26,21 +28,18 @@ export const authAPI = {
     });
   },
 
-  getPtitLoginUrl: (): string => {
-    const authEndpoint = import.meta.env.VITE_PTIT_AUTH_ENDPOINT;
-    const clientId = import.meta.env.VITE_PTIT_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_PTIT_REDIRECT_URI;
-    const scope = 'openid profile email';
-    
-    const state = Math.random().toString(36).substring(2, 15); 
-    sessionStorage.setItem('oauth_state', state);
-
-    return `${authEndpoint}?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+  logout: async (refreshToken: string): Promise<void> => {
+    await axiosClient.post('/auth/logout', { refresh_token: refreshToken });
   },
 
-  ptitSsoCallback: async (code: string): Promise<LoginResponse> => {
-    const response = await axiosClient.get(`/auth/sso/callback?code=${code}`);
-    return response as unknown as LoginResponse;
+  getPtitLoginUrl: async (): Promise<string> => {
+    const response = await axiosClient.get<{ authorization_url: string; state: string }, { authorization_url: string; state: string }>('/auth/sso/start');
+    sessionStorage.setItem('oauth_state', response.state);
+    return response.authorization_url;
+  },
+
+  ptitSsoCallback: async (code: string, state: string): Promise<LoginResponse> => {
+    return axiosClient.post<LoginResponse, LoginResponse>('/auth/sso/callback', { code, state });
   },
 
   getPtitLogoutUrl: (idTokenHint: string): string => {

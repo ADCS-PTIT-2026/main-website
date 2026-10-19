@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest
+from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, TokenResponse, RefreshTokenRequest, SSOCallbackRequest
 from app.services.auth_service import login, register, refresh_access_token, ptit_sso_login
+from app.services.token_service import revoke_refresh_token
+from app.services.sso_service import begin_sso_login, SSO_COOKIE_NAME, SSO_COOKIE_PATH, SSO_COOKIE_SECURE, SSO_LIFETIME_SECONDS
 
 router = APIRouter()
 
@@ -24,10 +26,20 @@ def refresh_token_api(request: RefreshTokenRequest, db: Session = Depends(get_db
     """
     return refresh_access_token(db, request.refresh_token)
 
-# 4. Đăng nhập qua PTIT SSO
-@router.get("/sso/callback", response_model=LoginResponse)
-async def sso_callback_api(code: str = Query(...), db: Session = Depends(get_db)):
-    """
-    Endpoint nhận Authorization Code từ Frontend gửi lên sau khi đăng nhập thành công từ PTIT
-    """
-    return ptit_sso_login(db, code)
+@router.post("/logout")
+def logout_api(request: RefreshTokenRequest, db: Session = Depends(get_db)):
+    revoke_refresh_token(db, request.refresh_token)
+    return {"message": "Đã đăng xuất"}
+
+@router.get("/sso/start")
+def sso_start_api(response: Response, db: Session = Depends(get_db)):
+    result = begin_sso_login(db)
+    response.set_cookie(SSO_COOKIE_NAME, result["state"], max_age=SSO_LIFETIME_SECONDS,
+                        httponly=True, secure=SSO_COOKIE_SECURE, samesite="lax", path=SSO_COOKIE_PATH)
+    return result
+
+@router.post("/sso/callback", response_model=LoginResponse)
+def sso_callback_api(payload: SSOCallbackRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    result = ptit_sso_login(db, payload.code, payload.state, request.cookies.get(SSO_COOKIE_NAME))
+    response.delete_cookie(SSO_COOKIE_NAME, path=SSO_COOKIE_PATH, secure=SSO_COOKIE_SECURE, samesite="lax")
+    return result

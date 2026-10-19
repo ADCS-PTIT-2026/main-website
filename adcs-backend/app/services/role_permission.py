@@ -16,6 +16,8 @@ def get_all_roles_service(db: Session):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Lỗi hệ thống khi lấy danh sách nhóm quyền")
 
 def create_role_service(db: Session, payload):
+    if payload.name.strip().casefold() in {"admin", "user", "administrator"}:
+        raise HTTPException(status_code=400, detail="Tên vai trò hệ thống được bảo vệ")
     logger.info(f"Yêu cầu tạo nhóm quyền mới: {payload.name}")
     try:
         new_role = crud.create_role(db, payload.model_dump())
@@ -32,7 +34,10 @@ def update_role_service(db: Session, role_id: str, payload):
         if not role:
             logger.warning(f"Từ chối cập nhật. Không tìm thấy nhóm quyền ID: {role_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy nhóm quyền")
-
+        if role.system_code and payload.name != role.name:
+            raise HTTPException(status_code=400, detail="Không thể đổi tên vai trò hệ thống")
+        if not role.system_code and payload.name.strip().casefold() in {"admin", "user", "administrator"}:
+            raise HTTPException(status_code=400, detail="Tên vai trò hệ thống được bảo vệ")
         updated_role = crud.update_role(db, role, payload.model_dump())
         logger.info(f"Cập nhật nhóm quyền thành công ID: {role_id}")
         return updated_role
@@ -50,6 +55,11 @@ def delete_role_service(db: Session, role_id: str):
             logger.warning(f"Từ chối xóa. Không tìm thấy nhóm quyền ID: {role_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy nhóm quyền")
 
+        if role.system_code:
+            raise HTTPException(status_code=400, detail="Không thể xóa vai trò hệ thống")
+        from app.models.user import User
+        if db.query(User).filter(User.role_id == str(role_id)).first():
+            raise HTTPException(status_code=409, detail="Vai trò đang được sử dụng")
         crud.delete_role(db, role)
         logger.info(f"Xóa nhóm quyền thành công ID: {role_id}")
         return {"message": "Đã xóa nhóm quyền thành công"}
@@ -74,7 +84,7 @@ def get_all_permissions_service(db: Session):
 def create_permission_service(db: Session, payload):
     logger.info(f"Yêu cầu tạo quyền mới: {payload.name if hasattr(payload, 'name') else 'Unknown'}")
     try:
-        new_permission = crud.create_permission(db, payload.model_dump())
+        new_permission = crud.create_permission(db, payload.model_dump(exclude={"name"}))
         logger.info(f"Tạo quyền thành công. ID: {new_permission.permission_id}")
         return new_permission
     except Exception as e:
@@ -89,7 +99,7 @@ def update_permission_service(db: Session, permission_id: str, payload):
             logger.warning(f"Từ chối cập nhật. Không tìm thấy quyền ID: {permission_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy quyền")
 
-        updated_permission = crud.update_permission(db, permission, payload.model_dump())
+        updated_permission = crud.update_permission(db, permission, payload.model_dump(exclude={"name"}))
         logger.info(f"Cập nhật quyền thành công ID: {permission_id}")
         return updated_permission
     except HTTPException:

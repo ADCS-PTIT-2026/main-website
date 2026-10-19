@@ -1,0 +1,313 @@
+{
+  "total": 51,
+  "passed": 18,
+  "failed": 33,
+  "checks": [
+    {
+      "name": "test_health",
+      "passed": true,
+      "duration_seconds": 0.877,
+      "failure": null
+    },
+    {
+      "name": "test_login_and_wrong_password",
+      "passed": true,
+      "duration_seconds": 2.376,
+      "failure": null
+    },
+    {
+      "name": "test_registration_pending_approval",
+      "passed": true,
+      "duration_seconds": 1.476,
+      "failure": null
+    },
+    {
+      "name": "test_protected_document_list",
+      "passed": true,
+      "duration_seconds": 0.54,
+      "failure": null
+    },
+    {
+      "name": "test_anonymous_users_denied",
+      "passed": false,
+      "duration_seconds": 0.643,
+      "failure": "AssertionError: assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = get('/api/users')\n +      where get = <starlette.testclient.TestClient object at 0x7f2224111890>.get"
+    },
+    {
+      "name": "test_anonymous_role_creation_denied",
+      "passed": false,
+      "duration_seconds": 0.241,
+      "failure": "AssertionError: assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = post('/api/role-permissions/roles', json={'name': 'audit-unauthorized'})\n +      where post = <starlette.testclient.TestClient object at 0x7f2224f08bd0>.post"
+    },
+    {
+      "name": "test_anonymous_matrix_update_denied",
+      "passed": false,
+      "duration_seconds": 0.48,
+      "failure": "AssertionError: assert 422 in (401, 403)\n +  where 422 = <Response [422 Unprocessable Entity]>.status_code\n +    where <Response [422 Unprocessable Entity]> = put('/api/role-permissions/roles/permissions-matrix', json={})\n +      where put = <starlette.testclient.TestClient object at 0x7f2224d20150>.put"
+    },
+    {
+      "name": "test_anonymous_role_rename_cannot_grant_admin",
+      "passed": false,
+      "duration_seconds": 0.257,
+      "failure": "AssertionError: Anonymous role updates=200,200; regular user admin action=200\nassert 200 == 403\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_admin_can_save_permission_matrix",
+      "passed": false,
+      "duration_seconds": 0.238,
+      "failure": "assert 422 == 200\n +  where 422 = <Response [422 Unprocessable Entity]>.status_code"
+    },
+    {
+      "name": "test_admin_can_create_permission",
+      "passed": false,
+      "duration_seconds": 0.728,
+      "failure": "assert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+    },
+    {
+      "name": "test_anonymous_department_creation_denied",
+      "passed": false,
+      "duration_seconds": 0.253,
+      "failure": "assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_translation_list_requires_identity",
+      "passed": false,
+      "duration_seconds": 0.244,
+      "failure": "assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_translation_comment_requires_owner",
+      "passed": false,
+      "duration_seconds": 0.248,
+      "failure": "AssertionError: assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = put('/api/translations/08f17433-3211-4a42-a20e-6dae9ad64fad/comment', json={'comment': 'unauthorized change'})\n +      where put = <starlette.testclient.TestClient object at 0x7f221f78f310>.put"
+    },
+    {
+      "name": "test_translation_delete_requires_owner",
+      "passed": false,
+      "duration_seconds": 0.229,
+      "failure": "AssertionError: assert 200 in (401, 403)\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = delete('/api/translations/0f219a19-33d5-4fe9-bf4c-c7a46ea95e3e')\n +      where delete = <starlette.testclient.TestClient object at 0x7f221f78fd10>.delete"
+    },
+    {
+      "name": "test_document_scope",
+      "passed": true,
+      "duration_seconds": 0.262,
+      "failure": null
+    },
+    {
+      "name": "test_non_uuid_document_cannot_bypass_scope",
+      "passed": false,
+      "duration_seconds": 0.245,
+      "failure": "assert 200 == 403\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_refresh_token_not_usable_as_access_token",
+      "passed": false,
+      "duration_seconds": 0.292,
+      "failure": "AssertionError: assert 200 == 401\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = get('/api/users/me', headers={'Authorization': 'Bearer <synthetic-token-redacted>'})\n +      where get = <starlette.testclient.TestClient object at 0x7f221f740610>.get\n +      and   {'Authorization': 'Bearer <synthetic-token-redacted>'} = headers({'admin': '117d80bc-25c4-4533-89c4-16920fc10c6b', 'owner': '9aa90972-f166-446b-b7f2-582"
+    },
+    {
+      "name": "test_access_token_not_usable_for_refresh",
+      "passed": false,
+      "duration_seconds": 0.363,
+      "failure": "AssertionError: assert 200 == 401\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = post('/api/auth/refresh', json={'refresh_token': '<synthetic-token-redacted>'})\n +      where post = <starlette.testclient.TestClient object at 0x7f2224d3d910>.post"
+    },
+    {
+      "name": "test_sso_rejects_unverified_token",
+      "passed": false,
+      "duration_seconds": 0.642,
+      "failure": "AssertionError: assert 200 in (401, 502, 503)\n +  where 200 = <Response [200 OK]>.status_code\n +    where <Response [200 OK]> = get('/api/auth/sso/callback?code=synthetic-code')\n +      where get = <starlette.testclient.TestClient object at 0x7f221f7a2150>.get"
+    },
+    {
+      "name": "test_telegram_webhook_rejects_forged_link",
+      "passed": false,
+      "duration_seconds": 0.363,
+      "failure": "AssertionError: Forged webhook linked chat_id=123456; HTTP=200\nassert not '123456'\n +  where '123456' = <app.models.user.User object at 0x7f221f76fa50>.telegram_chat_id"
+    },
+    {
+      "name": "test_websocket_requires_authentication",
+      "passed": false,
+      "duration_seconds": 0.285,
+      "failure": "assert not True"
+    },
+    {
+      "name": "test_retry_and_cancel_owner",
+      "passed": true,
+      "duration_seconds": 0.31,
+      "failure": null
+    },
+    {
+      "name": "test_retry_and_cancel_other_denied",
+      "passed": true,
+      "duration_seconds": 0.432,
+      "failure": null
+    },
+    {
+      "name": "test_approve_preserves_approved_status",
+      "passed": false,
+      "duration_seconds": 0.524,
+      "failure": "AssertionError: assert 'success' == 'approved'\n  \n  - approved\n  + success"
+    },
+    {
+      "name": "test_read_only_permission_cannot_edit",
+      "passed": false,
+      "duration_seconds": 0.285,
+      "failure": "assert 200 == 403\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_action_requirement_is_returned",
+      "passed": false,
+      "duration_seconds": 0.305,
+      "failure": "AssertionError: assert None == 'Required synthetic action'\n +  where None = <built-in method get of dict object at 0x7f221f56be00>('yeu_cau_hanh_dong')\n +    where <built-in method get of dict object at 0x7f221f56be00> = {'document_id': 'e2b94fe7-302a-48f1-b9fb-85f40a48eabe', 'assigned_department_id': None, 'uploaded_by_user_id': '2a5b7a6b-9416-4d27-8a40-1d0cd4695e41', 'so_den': None, ...}.get\n +      where {'document_id': 'e2b94fe7-302a-48f1-b9f"
+    },
+    {
+      "name": "test_null_clears_due_date",
+      "passed": false,
+      "duration_seconds": 0.626,
+      "failure": "assert datetime.date(2026, 10, 20) is None"
+    },
+    {
+      "name": "test_failed_document_exposes_error",
+      "passed": false,
+      "duration_seconds": 0.273,
+      "failure": "AssertionError: assert None == 'Synthetic failure reason'\n +  where None = <built-in method get of dict object at 0x7f221f57ee80>('error_message')\n +    where <built-in method get of dict object at 0x7f221f57ee80> = {'document_id': 'ed94a436-8b72-4a02-b02a-efa35d5b96c7', 'assigned_department_id': None, 'uploaded_by_user_id': '66892438-1622-4295-b57a-a4392739ac92', 'so_den': None, ...}.get\n +      where {'document_id': 'ed94a436-8b72-4a02-b02a-efa"
+    },
+    {
+      "name": "test_queue_success",
+      "passed": true,
+      "duration_seconds": 0.242,
+      "failure": null
+    },
+    {
+      "name": "test_queue_failed_ai_exhausts_retries",
+      "passed": true,
+      "duration_seconds": 0.236,
+      "failure": null
+    },
+    {
+      "name": "test_queue_malformed_ai_does_not_stick",
+      "passed": false,
+      "duration_seconds": 0.511,
+      "failure": "AssertionError: assert 'processing' in ('failed', 'queued')"
+    },
+    {
+      "name": "test_recovery_does_not_steal_active_worker",
+      "passed": false,
+      "duration_seconds": 0.237,
+      "failure": "assert 1 == 0\n +  where 1 = recover_interrupted_documents(<sqlalchemy.orm.session.Session object at 0x7f221f53fb10>)"
+    },
+    {
+      "name": "test_history_unknown_web_document_does_not_crash",
+      "passed": false,
+      "duration_seconds": 0.249,
+      "failure": "AttributeError: 'NoneType' object has no attribute 'source_pages'"
+    },
+    {
+      "name": "test_history_filter_does_not_match_other_owner_filename",
+      "passed": false,
+      "duration_seconds": 0.308,
+      "failure": "assert False\n +  where False = all(<generator object test_history_filter_does_not_match_other_owner_filename.<locals>.<genexpr> at 0x7f2224d7cd40>)"
+    },
+    {
+      "name": "test_history_detail_requires_document_scope",
+      "passed": false,
+      "duration_seconds": 0.532,
+      "failure": "assert 200 == 403\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_history_fallback_detail_resolves",
+      "passed": false,
+      "duration_seconds": 0.349,
+      "failure": "AssertionError: assert 404 == 200\n +  where 404 = <Response [404 Not Found]>.status_code\n +    where <Response [404 Not Found]> = get('/api/history/6371345/detail', headers={'Authorization': 'Bearer <synthetic-token-redacted>'})\n +      where get = <starlette.testclient.TestClient object at 0x7f221f596dd0>.get\n +      and   {'Authorization': 'Bearer <synthetic-token-redacted>'} = headers({'admin': '4871bed6-e753-4c0a-8d3c-f1168ac4a725', 'owner': "
+    },
+    {
+      "name": "test_department_cycle_rejected",
+      "passed": false,
+      "duration_seconds": 0.657,
+      "failure": "assert 200 in (400, 409, 422)\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_validation_returns_422_instead_of_500",
+      "passed": true,
+      "duration_seconds": 0.317,
+      "failure": null
+    },
+    {
+      "name": "test_email_validation_returns_422_instead_of_500",
+      "passed": true,
+      "duration_seconds": 0.497,
+      "failure": null
+    },
+    {
+      "name": "test_feedback_submission",
+      "passed": true,
+      "duration_seconds": 0.292,
+      "failure": null
+    },
+    {
+      "name": "test_non_admin_cannot_change_ai_config",
+      "passed": true,
+      "duration_seconds": 0.271,
+      "failure": null
+    },
+    {
+      "name": "test_admin_ai_validation",
+      "passed": true,
+      "duration_seconds": 0.649,
+      "failure": null
+    },
+    {
+      "name": "test_upload_enqueues_and_persists_file",
+      "passed": true,
+      "duration_seconds": 0.249,
+      "failure": null
+    },
+    {
+      "name": "test_upload_quota_rejects_sixth_pending_file",
+      "passed": true,
+      "duration_seconds": 0.332,
+      "failure": null
+    },
+    {
+      "name": "test_upload_rejects_unsupported_extension",
+      "passed": false,
+      "duration_seconds": 0.271,
+      "failure": "assert 200 in (400, 415, 422)\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_upload_rejects_invalid_pdf",
+      "passed": false,
+      "duration_seconds": 0.298,
+      "failure": "assert 200 in (400, 415, 422)\n +  where 200 = <Response [200 OK]>.status_code"
+    },
+    {
+      "name": "test_upload_pdf_page_limit",
+      "passed": true,
+      "duration_seconds": 0.464,
+      "failure": null
+    },
+    {
+      "name": "test_upload_save_choice_reaches_ai",
+      "passed": false,
+      "duration_seconds": 0.491,
+      "failure": "assert False is True"
+    },
+    {
+      "name": "test_profile_update_and_change_password",
+      "passed": true,
+      "duration_seconds": 3.179,
+      "failure": null
+    },
+    {
+      "name": "test_password_verification_does_not_print_hashes",
+      "passed": false,
+      "duration_seconds": 1.124,
+      "failure": "AssertionError: assert '<synthetic-password-hash-redacted> not in '<synthetic-password-hash-redacted>\n  \n  '<synthetic-password-hash-redacted> is contained here:\n    <synthetic-password-hash-redacted>\n  ? +++++++\n    <synthetic-password-hash-redacted>"
+    },
+    {
+      "name": "test_invalid_auth_request_does_not_log_password",
+      "passed": false,
+      "duration_seconds": 0.5,
+      "failure": "assert 'SyntheticAu...dNeverLog123' not in 'INFO     ad...ất 1.97ms)\\n'\n  \n  'SyntheticAuditPasswordNeverLog123' is contained here:\n    assword\":\"SyntheticAuditPasswordNeverLog123\"}}],\"body\":{\"email\":\"missing-name@ptit.edu.vn\",\"password\":\"SyntheticAuditPasswordNeverLog123\"}}\n  ?           +++++++++++++++++++++++++++++++++\n    INFO     adcs_logger:main.py:42 📤 HOÀN THÀNH: 422 (Mất 1.97ms)"
+    }
+  ]
+}

@@ -10,6 +10,8 @@ from app.models.role_permission import Role
 from app.schemas.telegram import RoleNotificationRequest
 from app.core.dependency import RoleChecker, get_current_user
 import html
+import secrets
+from app.services.telegram_link_service import consume_telegram_link
 from app.core.logger import logger
 
 load_dotenv()
@@ -17,15 +19,8 @@ router = APIRouter()
 require_admin = RoleChecker(['admin'])
 
 def get_system_bot_token(db: Session = None) -> str:
-    """Lấy token bot từ biến môi trường, fallback sang database nếu chưa có trong env"""
-    env_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if env_token:
-        return env_token
-    if db:
-        bot = db.query(Bot).filter(Bot.name == "ptit_adcs_bot").first()
-        if bot and bot.token:
-            return bot.token
-    return ""
+    """Chỉ lấy token bot từ cấu hình môi trường riêng."""
+    return os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 def send_telegram_notification(bot_token: str, chat_id: str, text: str):
     token = bot_token or get_system_bot_token()
@@ -56,8 +51,10 @@ async def notify_by_roles(
     """
     API gửi thông báo theo nhóm quyền (Yêu cầu Service Key hoặc quyền nội bộ)
     """
-    expected_key = os.getenv("SERVICE_INTERNAL_KEY", os.getenv("SECRET_KEY", "adcs-service-REDACTED_LEAKED_SECRET"))
-    if not x_service_key or x_service_key != expected_key:
+    expected_key = os.getenv("SERVICE_INTERNAL_KEY")
+    if not expected_key:
+        raise HTTPException(status_code=503, detail="Chưa cấu hình khóa dịch vụ nội bộ")
+    if not x_service_key or not secrets.compare_digest(x_service_key.encode(), expected_key.encode()):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Yêu cầu khóa xác thực dịch vụ (X-Service-Key) hợp lệ."
@@ -112,67 +109,50 @@ async def notify_by_roles(
 
 @router.post("/webhook")
 async def telegram_webhook(request: Request, db: Session = Depends(get_db)):
+    expected = os.getenv("TELEGRAM_WEBHOOK_SECRET")
+    supplied = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Webhook Telegram chưa được cấu hình")
+    if not supplied or not secrets.compare_digest(supplied.encode(), expected.encode()):
+        raise HTTPException(status_code=403, detail="Webhook Telegram không hợp lệ")
     data = await request.json()
-    logger.info(f"[Telegram Webhook] Nhận update: {data}")
-    
-    if "message" in data and "text" in data["message"]:
-        msg = data["message"]
-        text = msg["text"].strip()
-        chat_id = msg["chat"]["id"]
-        bot_token = get_system_bot_token(db)
-
-        logger.info(f"[Telegram Webhook] Nhận tin nhắn: '{text}' từ chat_id: {chat_id}")
-
-        if text.startswith("/start"):
-            parts = text.split(maxsplit=1)
-            if len(parts) > 1:
-                user_id = parts[1].strip()
-                logger.info(f"[Telegram Webhook] Bóc tách user_id: {user_id}")
-                
-                user = db.query(User).filter(User.user_id == str(user_id)).first()
-                if not user:
-                    logger.warning(f"[Telegram Webhook Error] Không tìm thấy user với user_id: {user_id}")
-                    send_telegram_notification(
-                        bot_token,
-                        str(chat_id),
-                        "⚠️ <b>Lỗi liên kết:</b> Không tìm thấy thông tin tài khoản trên hệ thống PTIT ADCS. Vui lòng thử lại từ Bảng điều khiển website."
-                    )
-                    return {"status": "user_not_found"}
-
-                logger.info(f"[Telegram Webhook] Đã tìm thấy User: {user.email}")
-                user.telegram_chat_id = str(chat_id)
-                db.commit()
-
-                welcome_text = (
-                    f"🎉 <b>KẾT NỐI THÀNH CÔNG!</b>\n\n"
-                    f"Chào <b>{user.username or user.email}</b>,\n"
-                    f"Tài khoản <b>{user.email}</b> đã được liên kết thành công với hệ thống <b>PTIT ADCS</b>.\n\n"
-                    f"Từ giờ, bạn sẽ nhận được thông báo kết quả xử lý văn bản từ AI ngay tại đây. 🤖🚀"
-                )
-                
-                logger.info(f"[Telegram Webhook] Đang gửi tin nhắn chào mừng tới chat_id {chat_id}...")
-                send_telegram_notification(bot_token, str(chat_id), welcome_text)
-            else:
-                help_text = (
-                    "👋 <b>Chào mừng bạn đến với PTIT ADCS Bot!</b>\n\n"
-                    "Để nhận thông báo xử lý văn bản từ hệ thống AI, bạn cần liên kết tài khoản:\n\n"
-                    "1️⃣ Đăng nhập website: <a href='https://adcs.ptitai.org'>https://adcs.ptitai.org</a>\n"
-                    "2️⃣ Tại Bảng điều khiển, nhấn nút <b>'Kết nối Telegram'</b>\n"
-                    "3️⃣ Nhấn nút <b>Bắt đầu (Start)</b> trên Telegram để hoàn tất."
-                )
-                send_telegram_notification(bot_token, str(chat_id), help_text)
-
+    message = data.get("message", {}) if isinstance(data, dict) else {}
+    chat = message.get("chat", {})
+    text = message.get("text")
+    if chat.get("type") != "private" or not isinstance(text, str) or "id" not in chat:
+        return {"status": "ignored"}
+    parts = text.strip().split(maxsplit=1)
+    if not parts or parts[0] != "/start":
+        return {"status": "ok"}
+    if len(parts) != 2:
+        return {"status": "link_required"}
+    user = consume_telegram_link(db, parts[1], str(chat["id"]))
+    if user is None:
+        return {"status": "invalid_or_expired_link"}
+    logger.info("Đã liên kết Telegram cho user_id=%s", user.user_id)
+    token = get_system_bot_token()
+    if token:
+        name = html.escape(user.username or user.email or "Người dùng")
+        send_telegram_notification(token, str(chat["id"]), f"Kết nối thành công tài khoản <b>{name}</b> với PTIT ADCS.")
     return {"status": "ok"}
+
 
 @router.post("/setup-webhook", dependencies=[Depends(require_admin)])
 def setup_webhook_endpoint(db: Session = Depends(get_db)):
-    """Cấu hình lại Webhook với Telegram API (Yêu cầu quyền Admin)"""
-    bot_token = get_system_bot_token(db)
-    if not bot_token:
-        raise HTTPException(status_code=404, detail="Không tìm thấy cấu hình Bot Token trong biến môi trường hoặc CSDL")
-    webhook_url = "https://adcs.ptitai.org/api/telegram/webhook"
-    res = requests.get(f"https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}", timeout=10).json()
-    return res
+    token = get_system_bot_token()
+    secret = os.getenv("TELEGRAM_WEBHOOK_SECRET")
+    if not token or not secret:
+        raise HTTPException(status_code=503, detail="Cần cấu hình bot token và webhook secret")
+    url = os.getenv("TELEGRAM_WEBHOOK_URL", "https://adcs.ptitai.org/api/telegram/webhook")
+    try:
+        response = requests.post(f"https://api.telegram.org/bot{token}/setWebhook",
+                                 json={"url": url, "secret_token": secret}, timeout=10)
+        response.raise_for_status()
+        if not response.json().get("ok"):
+            raise HTTPException(status_code=502, detail="Telegram từ chối cấu hình webhook")
+    except (requests.RequestException, ValueError):
+        raise HTTPException(status_code=502, detail="Không thể cấu hình webhook Telegram")
+    return {"status": "success"}
 
 @router.get("/bot-info", dependencies=[Depends(require_admin)])
 async def get_bot_info(db: Session = Depends(get_db)):
@@ -186,6 +166,6 @@ async def get_bot_info(db: Session = Depends(get_db)):
         "data": {
             "name": bot.name if bot else "ptit_adcs_bot",
             "channel_type": bot.channel_type if bot else "telegram",
-            "is_token_configured": has_env_token or (bool(bot.token) if bot else False)
+            "is_token_configured": has_env_token
         }
     }

@@ -1,0 +1,119 @@
+
+> adcs-frontend@0.0.0 lint
+> eslint .
+
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/api/axiosClient.ts
+  22:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/api/history.ts
+  63:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/api/translation.ts
+  50:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/components/FeedbackModal.tsx
+  42:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/DashboardPage.tsx
+   51:18  error  '_' is defined but never used             @typescript-eslint/no-unused-vars
+   51:21  error  Empty block statement                     no-empty
+  106:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  180:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  545:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  546:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/admin/pages/RoleManagementPage.tsx
+   73:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/admin/pages/UserFormPage.tsx
+  186:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/admin/pages/UserManagementPage.tsx
+  113:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/ai_config/AIConfigurationPage.tsx
+   15:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/auth/components/AuthForm.tsx
+  5:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/auth/pages/LoginPage.tsx
+  31:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/auth/pages/RegisterPage.tsx
+  43:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/departments/DepartmentTreePage.tsx
+   43:6   warning  React Hook useEffect has a missing dependency: 'expandedNodes.size'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  104:6   warning  React Hook useEffect has a missing dependency: 'loadDepartments'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  163:21  error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+  179:21  error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/documents/pages/DocumentPage.tsx
+   60:16  error    'err' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  121:39  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  121:69  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  166:17  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  305:17  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  327:28  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  328:33  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  367:6   warning  React Hook useMemo has a missing dependency: 'getDepartmentName'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/documents/pages/DocumentRepositoryPage.tsx
+   80:34  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  122:56  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  122:85  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  124:42  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  153:6   warning  React Hook useEffect has a missing dependency: 'fetchDocuments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  162:26  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  177:6   warning  React Hook useEffect has a missing dependency: 'rawFileUrl'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  244:21  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  413:47  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/documents/pages/MyDocumentsPage.tsx
+   80:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   80:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/history/HistoryPage.tsx
+  78:6  warning  React Hook useEffect has a missing dependency: 'fetchHistory'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/history/ProcessingDetailModal.tsx
+   43:16  error    '_' is defined but never used                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   43:19  error    Empty block statement                                                                                                                                                                                                          no-empty
+   68:21  error    Unexpected any. Specify a different type                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   78:6   warning  React Hook useEffect has a missing dependency: 'onClose'. Either include it or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  108:19  error    Unexpected any. Specify a different type                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/profile/ProfilePage.tsx
+   38:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/hieudt/ADCS/adcs-website/main-website/adcs-frontend/src/features/translation/TranslationPage.tsx
+   47:6   warning  React Hook useEffect has a missing dependency: 'fetchFiles'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   60:6   warning  React Hook useEffect has a missing dependency: 'fetchFiles'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   85:14  error    'error' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  104:14  error    'error' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  112:23  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  142:23  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+✖ 72 problems (63 errors, 9 warnings)
+

@@ -4,33 +4,44 @@ services:
     container_name: adcs-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: REDACTED_LEAKED_SECRET
-      POSTGRES_DB: adcs_db_2
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-adcs_db_2}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5434:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
     volumes:
       - /var/lib/adcs/postgres:/var/lib/postgresql/data/pgdata
-      - ./backup.sql:/docker-entrypoint-initdb.d/backup.sql
+      - ./adcs-backend/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     networks:
       - adcs_web_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build:
       context: ./adcs-backend
     container_name: backend
     restart: always
+    user: "${ADCS_UID:-1004}:${ADCS_GID:-1004}"
     env_file:
       - ./adcs-backend/.env
     environment:
-      - DATABASE_URL=postgresql://postgres:REDACTED_LEAKED_SECRET@db:5432/adcs_db_2
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
+      DB_NAME: ${POSTGRES_DB:-adcs_db_2}
+      DATABASE_URL: ""
     expose:
       - "8000"
     volumes:
@@ -51,6 +62,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -66,6 +82,11 @@ services:
         condition: service_healthy
     networks:
       - adcs_web_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   adcs_web_network:

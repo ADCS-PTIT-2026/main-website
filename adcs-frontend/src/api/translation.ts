@@ -30,12 +30,8 @@ export async function uploadTranslationFiles(files: File[]): Promise<UploadTrans
 }
 
 // Lấy danh sách lịch sử dịch
-export async function getTranslations(userId: string | null): Promise<TranslationFile[]> {
-  const query = new URLSearchParams();
-  if (userId) {
-    query.append('user_id', userId);
-  }
-  return axiosClient.get(`/translations/?${query.toString()}`);
+export async function getTranslations(): Promise<TranslationFile[]> {
+  return axiosClient.get('/translations/');
 }
 
 // Cập nhật nhận xét

@@ -20,9 +20,9 @@ import ProtectedRoute from './ProtectedRoute';
 import { usePermission } from './hooks/usePermission';
 
 const AdminRouteGuard = () => {
-  const { isAdmin, hasPermission } = usePermission();
+  const { isAdmin } = usePermission();
 
-  if (isAdmin || hasPermission('admin:all') || hasPermission('user:manage')) {
+  if (isAdmin) {
     return <Outlet />;
   }
 

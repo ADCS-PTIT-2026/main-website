@@ -20,7 +20,7 @@ const TranslationPage: React.FC = () => {
   const fetchFiles = async () => {
     if (!userId) return; 
     try {
-      const data = await getTranslations(userId);
+      const data = await getTranslations();
       setFiles(data);
     } catch (error) {
       console.error("Lỗi tải danh sách dịch:", error);

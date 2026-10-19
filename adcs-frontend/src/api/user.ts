@@ -77,7 +77,7 @@ export const userApi = {
 
   getTelegramStatus: (): Promise<TelegramStatusResponse> => axiosClient.get('/users/telegram_status'),
 
-  getTelegramLink: (): Promise<{ bot_name: string; link: string; is_connected: boolean; telegram_chat_id?: string | null }> => axiosClient.get('/users/connect_to_telegram'),
+  getTelegramLink: (): Promise<{ bot_name: string; link: string; is_connected: boolean; telegram_chat_id?: string | null }> => axiosClient.post('/users/connect_to_telegram'),
 
   disconnectTelegram: (): Promise<{ message: string; is_connected: boolean }> => axiosClient.post('/users/disconnect_telegram')
 };

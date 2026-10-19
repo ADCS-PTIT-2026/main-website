@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { clearAuthStorage } from '../../api/axiosClient';
 import { userApi, type UserProfile, type TelegramStatusResponse } from '../../api/user';
 
 type TabType = 'profile' | 'security' | 'telegram';
 
 const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -24,6 +27,7 @@ const ProfilePage: React.FC = () => {
 
   // State cho Tab 3: Telegram
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatusResponse | null>(null);
+  const [isOpeningTelegram, setIsOpeningTelegram] = useState(false);
   const [isLoadingTelegram, setIsLoadingTelegram] = useState(false);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -60,6 +64,22 @@ const ProfilePage: React.FC = () => {
     fetchProfile();
     fetchTelegramStatus();
   }, []);
+
+  const handleOpenTelegram = async () => {
+    const popup = window.open('about:blank', '_blank');
+    if (popup) popup.opener = null;
+    setIsOpeningTelegram(true);
+    try {
+      const result = await userApi.getTelegramLink();
+      if (popup) popup.location.replace(result.link);
+      else window.location.assign(result.link);
+    } catch {
+      popup?.close();
+      toast.error('Không thể tạo liên kết Telegram. Vui lòng thử lại.');
+    } finally {
+      setIsOpeningTelegram(false);
+    }
+  };
 
   // Xử lý cập nhật thông tin cá nhân
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -149,6 +169,8 @@ const ProfilePage: React.FC = () => {
         confirm_password: confirmPassword
       });
       toast.success(res.message || 'Đổi mật khẩu thành công!');
+      clearAuthStorage();
+      navigate('/login', { replace: true });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -608,15 +630,15 @@ const ProfilePage: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 {telegramStatus?.link && (
-                  <a
-                    href={telegramStatus.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    disabled={isOpeningTelegram}
+                    onClick={handleOpenTelegram}
                     className="px-6 py-3 bg-[#229ED9] hover:bg-[#1E88E5] text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-[20px]">send</span>
-                    <span>Mở Telegram Bot (@{telegramStatus.bot_name})</span>
-                  </a>
+                    <span>{isOpeningTelegram ? 'Đang tạo liên kết...' : `Mở Telegram Bot (@${telegramStatus.bot_name})`}</span>
+                  </button>
                 )}
 
                 <button

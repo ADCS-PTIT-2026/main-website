@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/ptit-logo.png';
+import { authAPI } from '../../api/auth';
+import { usePermission } from '../../hooks/usePermission';
 import { FeedbackModal } from '../../components/FeedbackModal';
 
 export interface SidebarProps {
@@ -37,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleDesktop,
 }) => {
   const location = useLocation();
+  const { isAdmin } = usePermission();
   const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -63,7 +66,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+    if (refreshToken) {
+      try { await authAPI.logout(refreshToken); } catch { /* Clear the local session even if the server is unavailable. */ }
+    }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
@@ -106,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [isUserMenuOpen]);
 
   const visibleNavItems = NAV_ITEMS.filter(item => {
-    if (item.isAdminOnly && userRole !== 'admin') {
+    if (item.isAdminOnly && !isAdmin) {
       return false;
     }
     return true;

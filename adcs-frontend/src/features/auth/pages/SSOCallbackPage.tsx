@@ -1,18 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { authAPI } from '../../../api/auth';
+import { clearAuthStorage } from '../../../api/axiosClient';
 
 const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const started = useRef(false);
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const expectedState = sessionStorage.getItem('oauth_state');
+    sessionStorage.removeItem('oauth_state');
 
-    if (code) {
-      authAPI.ptitSsoCallback(code)
+    if (code && state && expectedState && state === expectedState) {
+      authAPI.ptitSsoCallback(code, state)
         .then((response) => {
+          clearAuthStorage();
           localStorage.setItem('access_token', response.access_token);
           localStorage.setItem('refresh_token', response.refresh_token);
           localStorage.setItem('user', JSON.stringify(response.user));
@@ -20,12 +28,11 @@ const AuthCallback: React.FC = () => {
           navigate('/dashboard', { replace: true });
         })
         .catch((error) => {
-          console.error('SSO Callback Error:', error);
           const detail = error.response?.data?.detail || 'sso_failed';
           navigate(`/login?error=${encodeURIComponent(detail)}`, { replace: true });
         });
     } else {
-      navigate('/login', { replace: true });
+      navigate('/login?error=sso_failed', { replace: true });
     }
   }, [navigate, searchParams]);
 

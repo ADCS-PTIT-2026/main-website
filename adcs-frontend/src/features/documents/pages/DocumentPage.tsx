@@ -9,6 +9,7 @@ import {
 } from "../../../api/document";
 import { DocumentPreview } from "../components/DocumentPreview";
 import { Authorized } from "../../../components/common/Authorized";
+import { usePermission } from "../../../hooks/usePermission";
 import { departmentApi, type DepartmentTreeResponse, type DepartmentResponse } from "../../../api/department";
 
 const formatDate = (value?: string | null) => {
@@ -19,6 +20,7 @@ const formatDate = (value?: string | null) => {
 };
 
 const DocumentPage: React.FC = () => {
+  const { hasPermission } = usePermission();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchParams] = useSearchParams();
 
@@ -171,7 +173,10 @@ const DocumentPage: React.FC = () => {
     }
   };
 
-  const handleChooseFile = () => fileInputRef.current?.click();
+  const handleChooseFile = () => {
+    if (!hasPermission('file.create')) { toast.error('Bạn không có quyền tải văn bản lên'); return; }
+    fileInputRef.current?.click();
+  };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,6 +220,7 @@ const DocumentPage: React.FC = () => {
 
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
+    if (!hasPermission("file.create")) { toast.error("Bạn không có quyền tải văn bản lên"); return; }
 
     const allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'];
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
@@ -305,6 +311,23 @@ const DocumentPage: React.FC = () => {
     } catch (e: any) {
       setError(e?.message || "Không thể cập nhật văn bản");
       toast.error("Thao tác thất bại", { id: toastId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveMetadata = async () => {
+    if (!activeDocumentId) return;
+    setSaving(true);
+    try {
+      const payload = { ...editedData };
+      delete payload.status;
+      await approveAIResult(activeDocumentId, payload);
+      setIsEditing(false);
+      await loadDocument(activeDocumentId);
+      toast.success('Đã lưu thông tin văn bản');
+    } catch {
+      toast.error('Không thể lưu thông tin văn bản');
     } finally {
       setSaving(false);
     }
@@ -832,6 +855,7 @@ const DocumentPage: React.FC = () => {
                 <span className="material-symbols-outlined text-lg text-primary">database</span>
                 Thông tin hành chính trích xuất
               </h3>
+              <Authorized permission="file.update">
               <button
                 type="button"
                 onClick={toggleEdit}
@@ -841,6 +865,13 @@ const DocumentPage: React.FC = () => {
                 <span className="material-symbols-outlined text-[15px]">{isEditing ? "close" : "edit"}</span>
                 {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
               </button>
+              {isEditing && (
+                <button type="button" onClick={handleSaveMetadata} disabled={saving}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-primary disabled:opacity-40">
+                  {saving ? 'Đang lưu...' : 'Lưu thông tin'}
+                </button>
+              )}
+              </Authorized>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">

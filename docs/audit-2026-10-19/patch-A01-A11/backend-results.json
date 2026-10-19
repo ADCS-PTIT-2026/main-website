@@ -1,0 +1,496 @@
+{
+  "date": "2026-10-19",
+  "environment": "isolated PostgreSQL initialized with distributed schema; external services mocked",
+  "total": 81,
+  "passed": 81,
+  "failed": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_login_creates_typed_session_and_only_hashes_refresh_token",
+      "status": "passed",
+      "duration_seconds": 0.895
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_refresh_token_cannot_be_access_and_access_cannot_refresh",
+      "status": "passed",
+      "duration_seconds": 0.288
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_legacy_untyped_tokens_and_unregistered_sessions_are_rejected",
+      "status": "passed",
+      "duration_seconds": 0.235
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_rotation_and_replay_revoke_successor_family",
+      "status": "passed",
+      "duration_seconds": 0.516
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_concurrent_refresh_uses_single_database_rotation",
+      "status": "passed",
+      "duration_seconds": 0.508
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_logout_revokes_access_and_refresh",
+      "status": "passed",
+      "duration_seconds": 0.286
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_password_change_revokes_all_sessions",
+      "status": "passed",
+      "duration_seconds": 2.43
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_valid_sso_and_single_use_attempt",
+      "status": "passed",
+      "duration_seconds": 5.816
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change0-remove0]",
+      "status": "passed",
+      "duration_seconds": 0.17
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change1-remove1]",
+      "status": "passed",
+      "duration_seconds": 0.301
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change2-remove2]",
+      "status": "passed",
+      "duration_seconds": 0.373
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change3-remove3]",
+      "status": "passed",
+      "duration_seconds": 0.115
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change4-remove4]",
+      "status": "passed",
+      "duration_seconds": 0.105
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change5-remove5]",
+      "status": "passed",
+      "duration_seconds": 0.366
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change6-remove6]",
+      "status": "passed",
+      "duration_seconds": 0.087
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change7-remove7]",
+      "status": "passed",
+      "duration_seconds": 0.103
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_invalid_claims[change8-remove8]",
+      "status": "passed",
+      "duration_seconds": 0.091
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_never_decodes_without_jwks",
+      "status": "passed",
+      "duration_seconds": 0.248
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_wrong_signature_and_hmac",
+      "status": "passed",
+      "duration_seconds": 0.759
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_rejects_hmac_token",
+      "status": "passed",
+      "duration_seconds": 0.354
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_requires_state_cookie_match_before_exchange[wrong-state-that-is-long-enough-for-validation]",
+      "status": "passed",
+      "duration_seconds": 0.131
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_requires_state_cookie_match_before_exchange[\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9\\xe9]",
+      "status": "passed",
+      "duration_seconds": 0.078
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_attempt_is_bound_to_initiating_browser",
+      "status": "passed",
+      "duration_seconds": 0.277
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_expired_sso_attempt_fails_before_exchange",
+      "status": "passed",
+      "duration_seconds": 0.495
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_sso_auth_code_is_not_accepted_in_query_string",
+      "status": "passed",
+      "duration_seconds": 0.086
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_webhook_requires_secret_before_linking[None]",
+      "status": "passed",
+      "duration_seconds": 0.032
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_webhook_requires_secret_before_linking[wrong-secret]",
+      "status": "passed",
+      "duration_seconds": 0.353
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_webhook_requires_secret_before_linking[\\xe9]",
+      "status": "passed",
+      "duration_seconds": 0.042
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_valid_webhook_cannot_link_using_user_id",
+      "status": "passed",
+      "duration_seconds": 0.107
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_telegram_one_time_token_is_hashed_and_cannot_be_replayed",
+      "status": "passed",
+      "duration_seconds": 0.282
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_link_must_be_private_and_not_expired",
+      "status": "passed",
+      "duration_seconds": 0.348
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_new_link_and_disconnect_invalidate_old_link",
+      "status": "passed",
+      "duration_seconds": 0.283
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_status_endpoint_does_not_reveal_link_token_or_user_id",
+      "status": "passed",
+      "duration_seconds": 0.058
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_setup_webhook_registers_secret_explicitly",
+      "status": "passed",
+      "duration_seconds": 0.043
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_missing_webhook_configuration_fails_closed",
+      "status": "passed",
+      "duration_seconds": 0.21
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_bot_credentials_never_fall_back_to_database",
+      "status": "passed",
+      "duration_seconds": 0.024
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_auth_passwords_and_hashes_are_not_logged_or_echoed",
+      "status": "passed",
+      "duration_seconds": 0.443
+    },
+    {
+      "suite": "tests.security.test_authentication",
+      "name": "test_log_filter_redacts_credentials_and_exception_text",
+      "status": "passed",
+      "duration_seconds": 0.041
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/users-None]",
+      "status": "passed",
+      "duration_seconds": 0.049
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[POST-/api/users-payload1]",
+      "status": "passed",
+      "duration_seconds": 0.235
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/role-permissions/roles-None]",
+      "status": "passed",
+      "duration_seconds": 0.03
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[POST-/api/role-permissions/roles-payload3]",
+      "status": "passed",
+      "duration_seconds": 0.05
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[PUT-/api/role-permissions/roles/permissions-matrix-payload4]",
+      "status": "passed",
+      "duration_seconds": 0.047
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/role-permissions/permissions-None]",
+      "status": "passed",
+      "duration_seconds": 0.232
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/departments-None]",
+      "status": "passed",
+      "duration_seconds": 0.04
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[POST-/api/departments-payload7]",
+      "status": "passed",
+      "duration_seconds": 0.054
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/system-parameters-None]",
+      "status": "passed",
+      "duration_seconds": 0.27
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/translations/-None]",
+      "status": "passed",
+      "duration_seconds": 0.032
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[PUT-/api/translations/92981cc9-3e6e-4437-91b6-d6866a6cbe3e/comment-payload10]",
+      "status": "passed",
+      "duration_seconds": 0.071
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[DELETE-/api/translations/f5d8d589-d105-4319-9475-07ec8f688573-None]",
+      "status": "passed",
+      "duration_seconds": 0.393
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[GET-/api/translations/42a55ae0-3862-48ca-b798-22a6101625b1/download-None]",
+      "status": "passed",
+      "duration_seconds": 0.042
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_anonymous_access_rejected[POST-/api/users/connect_to_telegram-None]",
+      "status": "passed",
+      "duration_seconds": 0.036
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_regular_user_cannot_rename_roles_or_use_admin_api",
+      "status": "passed",
+      "duration_seconds": 0.366
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_system_roles_are_protected_even_from_admin",
+      "status": "passed",
+      "duration_seconds": 0.47
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_admin_identity_does_not_depend_on_display_name",
+      "status": "passed",
+      "duration_seconds": 0.051
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_admin_can_manage_custom_roles_and_matrix",
+      "status": "passed",
+      "duration_seconds": 0.489
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_departments_read_write_permissions",
+      "status": "passed",
+      "duration_seconds": 0.439
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_admin_user_creation_and_config",
+      "status": "passed",
+      "duration_seconds": 0.26
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_translation_list_identity_and_admin_scope",
+      "status": "passed",
+      "duration_seconds": 0.572
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_other_user_cannot_modify_or_download_translation[PUT-/comment-payload0]",
+      "status": "passed",
+      "duration_seconds": 0.052
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_other_user_cannot_modify_or_download_translation[DELETE--None]",
+      "status": "passed",
+      "duration_seconds": 0.076
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_other_user_cannot_modify_or_download_translation[GET-/download-None]",
+      "status": "passed",
+      "duration_seconds": 0.266
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_translation_owner_download_comment_zip_delete",
+      "status": "passed",
+      "duration_seconds": 0.12
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_history_never_matches_another_document_by_filename",
+      "status": "passed",
+      "duration_seconds": 0.046
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_history_detail_and_telegram_enforce_scope",
+      "status": "passed",
+      "duration_seconds": 0.417
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_unmapped_history_is_admin_only",
+      "status": "passed",
+      "duration_seconds": 0.053
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_history_ignores_filename_collision",
+      "status": "passed",
+      "duration_seconds": 0.05
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_legacy_document_id_resolves_scope_before_detail_or_file",
+      "status": "passed",
+      "duration_seconds": 0.295
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_unmapped_legacy_document_is_not_trusted_by_owner_claim",
+      "status": "passed",
+      "duration_seconds": 0.038
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_reads_require_permission[]",
+      "status": "passed",
+      "duration_seconds": 0.087
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_reads_require_permission[/stats]",
+      "status": "passed",
+      "duration_seconds": 0.038
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_reads_require_permission[/all]",
+      "status": "passed",
+      "duration_seconds": 0.035
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_reads_require_permission[/my]",
+      "status": "passed",
+      "duration_seconds": 0.394
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_reads_require_permission[/search]",
+      "status": "passed",
+      "duration_seconds": 0.042
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_document_actions_require_permissions_and_scope",
+      "status": "passed",
+      "duration_seconds": 0.169
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_edit_and_approval_are_separate",
+      "status": "passed",
+      "duration_seconds": 0.093
+    },
+    {
+      "suite": "tests.security.test_authorization",
+      "name": "test_privilege_alone_does_not_grant_foreign_document_scope",
+      "status": "passed",
+      "duration_seconds": 0.38
+    },
+    {
+      "suite": "tests.security.test_deployment",
+      "name": "test_distributed_schema_has_no_production_rows",
+      "status": "passed",
+      "duration_seconds": 0.036
+    },
+    {
+      "suite": "tests.security.test_deployment",
+      "name": "test_deployment_has_no_credential_fallbacks_and_db_is_loopback_only",
+      "status": "passed",
+      "duration_seconds": 0.035
+    },
+    {
+      "suite": "tests.security.test_deployment",
+      "name": "test_short_jwt_secrets_are_not_accepted",
+      "status": "passed",
+      "duration_seconds": 0.048
+    },
+    {
+      "suite": "tests.security.test_deployment",
+      "name": "test_sso_cookie_cors_is_restricted_to_configured_frontend",
+      "status": "passed",
+      "duration_seconds": 0.065
+    }
+  ]
+}

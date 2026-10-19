@@ -1,0 +1,68 @@
+[
+  {
+    "name": "password login succeeds with persistent token session",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "regular user redirected from administrative pages",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "read-only department page hides create and save controls",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "concurrent 401s refresh once and retry successfully",
+    "passed": true,
+    "detail": {
+      "refresh_requests": 1
+    }
+  },
+  {
+    "name": "admin role page loads with Authorization on all role calls",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "authenticated role API saves and reloads permission matrix",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "logout revokes the server session",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "mismatched OAuth state is rejected before code exchange",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "SSO starts with PKCE nonce and an HttpOnly state cookie",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "valid SSO callback exchanges code once under React StrictMode",
+    "passed": true,
+    "detail": {
+      "exchanges": 1
+    }
+  },
+  {
+    "name": "SSO stores the server-verified identity",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "no uncaught browser exceptions",
+    "passed": true,
+    "detail": {
+      "errors": []
+    }
+  }
+]

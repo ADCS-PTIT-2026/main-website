@@ -1,5 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
-const ROLE_API = `${API_BASE}/role-permissions`;
+import axiosClient from "./axiosClient";
+const ROLE_API = "/role-permissions";
 
 export type Role = {
   role_id: string;
@@ -20,27 +20,11 @@ export type RoleCreateUpdatePayload = {
 };
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+  return axiosClient.request<T, T>({
+    url,
+    method: init?.method || 'GET',
+    data: init?.body ? JSON.parse(String(init.body)) : undefined,
   });
-
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`;
-    try {
-      const err = await res.json();
-      detail = err?.detail || err?.message || detail;
-    } catch {
-      const text = await res.text();
-      if (text) detail = text;
-    }
-    throw new Error(detail);
-  }
-
-  return res.json();
 }
 
 export const rolePermissionApi = {

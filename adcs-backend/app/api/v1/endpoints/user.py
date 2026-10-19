@@ -59,12 +59,12 @@ def change_current_user_password(
     return change_current_user_password_service(db, current_user, request)
 
 # 1. Lấy danh sách người dùng
-@router.get("", response_model=List[UserResponse])
+@router.get("", response_model=List[UserResponse], dependencies=[Depends(require_admin)])
 def get_users(db: Session = Depends(get_db)):
     return get_all_users_service(db)
 
 # 2. Tạo tài khoản mới
-@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 def create_user(request: UserCreate, db: Session = Depends(get_db)):
     return create_new_user(db, request)
 
@@ -89,7 +89,7 @@ def delete_user_account(id: str, db: Session = Depends(get_db)):
     return delete_user_account_service(db, id)
 
 # 7. Lấy link liên kết Telegram
-@router.get("/connect_to_telegram")
+@router.post("/connect_to_telegram")
 def get_telegram_link(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

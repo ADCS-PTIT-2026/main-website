@@ -1,0 +1,40 @@
+{
+  "audit_date": "2026-10-19",
+  "backend": {
+    "total": 51,
+    "passed": 18,
+    "failed": 33
+  },
+  "browser": {
+    "total": 48,
+    "passed": 39,
+    "failed": 9
+  },
+  "npm_audit": {
+    "info": 0,
+    "low": 2,
+    "moderate": 4,
+    "high": 18,
+    "critical": 0,
+    "total": 24
+  },
+  "npm_audit_production": {
+    "info": 0,
+    "low": 0,
+    "moderate": 1,
+    "high": 4,
+    "critical": 0,
+    "total": 5
+  },
+  "frontend_build": "passed on Node 22.23.2",
+  "frontend_lint": {
+    "errors": 63,
+    "warnings": 9
+  },
+  "backend_syntax": "passed Python 3.11 compileall",
+  "python_audit": {
+    "packages": 2,
+    "advisories": 2,
+    "includes_test_dependencies": true
+  }
+}

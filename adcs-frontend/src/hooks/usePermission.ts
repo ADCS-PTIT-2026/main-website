@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role?: string | null;
+  is_admin?: boolean;
   permissions?: string[];
   is_telegram_connected?: boolean;
   telegram_chat_id?: string | null;
@@ -33,39 +34,23 @@ export const usePermission = () => {
     return (user?.role || '').toLowerCase();
   }, [user]);
 
-  const isAdmin = useMemo(() => {
-    return (
-      role === 'admin' ||
-      role === 'administrator' ||
-      permissions.includes('admin:all') ||
-      permissions.includes('*')
-    );
-  }, [role, permissions]);
+  const isAdmin = user?.is_admin === true;
+  const canonical = (code: string): string => {
+    const aliases: Record<string, string> = {
+      'doc:view': 'file.read', 'doc:read': 'file.read', 'doc:download': 'file.read',
+      'doc:edit': 'file.update', 'doc:update': 'file.update', 'file.edit': 'file.update',
+      'doc:create': 'file.create', 'doc:upload': 'file.create',
+      'doc:approve': 'file.approve', 'doc:delete': 'file.delete',
+    };
+    return aliases[code] || code;
+  };
 
   const hasPermission = (permissionCode: string): boolean => {
-    if (isAdmin) return true;
-    if (permissions.includes(permissionCode)) return true;
-
-    // Mapping tương thích hai chiều giữa format doc:action và file.action
-    const altCode = permissionCode.startsWith('doc:')
-      ? permissionCode.replace('doc:', 'file.')
-      : permissionCode.startsWith('file.')
-      ? permissionCode.replace('file.', 'doc:')
-      : null;
-
-    if (altCode && permissions.includes(altCode)) return true;
-    return false;
+    return isAdmin || permissions.some(code => canonical(code) === canonical(permissionCode));
   };
 
-  const hasAnyPermission = (codes: string[]): boolean => {
-    if (isAdmin) return true;
-    return codes.some((code) => permissions.includes(code));
-  };
-
-  const hasAllPermissions = (codes: string[]): boolean => {
-    if (isAdmin) return true;
-    return codes.every((code) => permissions.includes(code));
-  };
+  const hasAnyPermission = (codes: string[]): boolean => codes.some(hasPermission);
+  const hasAllPermissions = (codes: string[]): boolean => codes.every(hasPermission);
 
   const hasRole = (targetRole: string): boolean => {
     return role === targetRole.toLowerCase();

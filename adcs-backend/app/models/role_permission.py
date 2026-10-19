@@ -9,6 +9,7 @@ class Role(Base):
     role_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
+    system_code = Column(String(32), unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Permission(Base):

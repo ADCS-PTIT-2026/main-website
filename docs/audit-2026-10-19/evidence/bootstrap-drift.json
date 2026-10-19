@@ -1,0 +1,15 @@
+{
+  "documents_columns_missing_from_bootstrap": [
+    "error_message",
+    "file_path",
+    "file_size_bytes",
+    "original_filename",
+    "page_count",
+    "priority",
+    "processing_started_at",
+    "proposed_assignees",
+    "retry_count",
+    "suggested_departments"
+  ],
+  "feedbacks_missing_from_bootstrap": true
+}

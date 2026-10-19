@@ -1,7 +1,8 @@
-from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks, Query
 from fastapi.responses import FileResponse, StreamingResponse 
 from sqlalchemy.orm import Session
 from typing import List
+from uuid import UUID
 
 from app.db.session import get_db
 from app.schemas.translation import UploadTranslationResponse, TranslationResponse, CommentUpdateRequest
@@ -25,26 +26,27 @@ async def upload_for_translation(
     )
 
 @router.get("/", response_model=List[TranslationResponse])
-def get_translation_list(user_id: str, db: Session = Depends(get_db)):
-    return translation_service.get_user_translation_list(db, user_id)
+def get_translation_list(user_id: UUID | None = Query(None), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return translation_service.get_user_translation_list(db, current_user, user_id)
 
 @router.put("/{log_id}/comment")
 def update_translation_comment_api(
-    log_id: str, 
+    log_id: UUID,
     payload: CommentUpdateRequest, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
 ):
-    return translation_service.update_translation_comment_service(db, log_id, payload.comment)
+    return translation_service.update_translation_comment_service(db, log_id, payload.comment, current_user)
 
 @router.delete("/{log_id}")
-def delete_translation_api(log_id: str, db: Session = Depends(get_db)):
-    return translation_service.delete_translation_service(db, log_id)
+def delete_translation_api(log_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return translation_service.delete_translation_service(db, log_id, current_user)
 
 @router.get("/{log_id}/download")
-def download_translated_file(log_id: str, db: Session = Depends(get_db)):
+def download_translated_file(log_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """Tải file kết quả dịch thuật."""
     
-    file_path, original_filename = translation_service.get_download_file_info(db, log_id)
+    file_path, original_filename = translation_service.get_download_file_info(db, log_id, current_user)
         
     return FileResponse(
         path=file_path, 
@@ -59,7 +61,7 @@ def download_all_translated_files(
 ):
     """Tải toàn bộ file đã dịch thành công dưới dạng .zip"""
     
-    zip_buffer = translation_service.get_all_translated_files_zip(db, current_user.user_id)
+    zip_buffer = translation_service.get_all_translated_files_zip(db, current_user)
     
     return StreamingResponse(
         zip_buffer, 

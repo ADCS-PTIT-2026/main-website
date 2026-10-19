@@ -13,7 +13,7 @@ from app.services.system_parameter import (
 router = APIRouter()
 require_admin = RoleChecker(['admin'])
 
-@router.get("", response_model=Dict[str, str])
+@router.get("", response_model=Dict[str, str], dependencies=[Depends(require_admin)])
 def get_system_parameters(db: Session = Depends(get_db)):
     """Lấy toàn bộ cấu hình hệ thống"""
     return get_system_parameters_service(db)

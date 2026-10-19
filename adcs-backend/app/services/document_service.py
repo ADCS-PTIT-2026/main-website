@@ -198,7 +198,10 @@ async def send_to_ai_service(
 
 async def send_document_to_qlvb(db: Session, doc: Document, file_content: bytes, filename: str):
     """Gửi file raw và kết quả phân tích sang hệ thống QLVB (test.qlvb.ript.vn)"""
-    qlvb_api_key = os.getenv("QLVB_API_KEY", "REDACTED_LEAKED_SECRET")
+    qlvb_api_key = os.getenv("QLVB_API_KEY")
+    if not qlvb_api_key:
+        logger.warning("Chưa cấu hình khóa QLVB; bỏ qua đồng bộ")
+        return
     qlvb_base_url = os.getenv("QLVB_BASE_URL", "https://test.qlvb.ript.vn")
     url = f"{qlvb_base_url}/api/qlvb/van-ban-den"
     
@@ -496,8 +499,6 @@ def update_ai_result(db: Session, document_id: str, payload: dict):
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu (Document not found)")
 
     payload["updated_at"] = datetime.utcnow()
-    if "status" not in payload:
-        payload["status"] = "success"
 
     try:
         updated_document = update_document_metadata(db, document, payload)

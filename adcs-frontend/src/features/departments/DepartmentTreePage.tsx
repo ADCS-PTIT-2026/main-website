@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { usePermission } from '../../hooks/usePermission';
 import { departmentApi, type DepartmentTreeResponse, type DepartmentPayload, type DepartmentResponse } from '../../api/department';
 
 const DepartmentManagementPage: React.FC = () => {
+  const { hasPermission } = usePermission();
   const [treeData, setTreeData] = useState<DepartmentTreeResponse[]>([]);
   const [flatDepartments, setFlatDepartments] = useState<DepartmentResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -495,14 +497,14 @@ const DepartmentManagementPage: React.FC = () => {
               </div>
             )}
 
-            <button
+            {hasPermission('department.create') && <button
               type="button"
               onClick={handleAddClick}
               className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-primary/90 flex items-center gap-1.5 outline-none shadow-md shadow-primary/20 cursor-pointer shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               <span>Thêm phòng ban</span>
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -810,14 +812,14 @@ const DepartmentManagementPage: React.FC = () => {
           </div>
 
           <div className="flex-none p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex gap-2.5">
-            <button
+            {hasPermission(isCreating ? 'department.create' : 'department.update') && <button
               onClick={handleSave}
               disabled={loading}
               className="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-primary/90 disabled:opacity-70 transition-all outline-none shadow-md shadow-primary/20 cursor-pointer"
             >
               {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
-            {!isCreating && (
+            </button>}
+            {!isCreating && hasPermission("department.delete") && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={loading}

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import logo from '../../../assets/ptit-logo.png';
 import { authAPI } from '../../../api/auth';
+import { clearAuthStorage } from '../../../api/axiosClient';
 
 const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,7 @@ const LoginPage: React.FC = () => {
     try {
       const response = await authAPI.login(formData.email, formData.password);
       
+      clearAuthStorage();
       const storage = formData.remember ? localStorage : sessionStorage;
       
       storage.setItem('access_token', response.access_token);
@@ -54,12 +56,12 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSSOLogin = () => {
+  const handleSSOLogin = async () => {
     setIsLoading(true);
     setErrorMsg('');
 
     try {
-      const ptitAuthUrl = authAPI.getPtitLoginUrl();
+      const ptitAuthUrl = await authAPI.getPtitLoginUrl();
 
       window.location.href = ptitAuthUrl;
     } catch (error) {

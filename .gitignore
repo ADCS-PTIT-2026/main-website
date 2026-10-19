@@ -3,3 +3,5 @@ adcs-frontend/.env
 backup.sql
 adcs-backend/logs/
 .agents
+.env
+.env.security-next

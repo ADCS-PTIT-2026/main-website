@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from uuid import UUID
 
@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: Optional[str] = None
+    is_admin: bool = False
     permissions: list[str] = []
     is_telegram_connected: bool = False
     telegram_chat_id: Optional[str] = None
@@ -35,3 +36,7 @@ class RefreshTokenRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+
+class SSOCallbackRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=4096)
+    state: str = Field(min_length=32, max_length=128)

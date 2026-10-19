@@ -1,0 +1,623 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict uNgvsCchPyJD3x9qhtggigQvvbNT6mHThkHK1E3Ytiv4DjUEZcqOf46xmPLnCIu
+
+-- Dumped from database version 17.10
+-- Dumped by pg_dump version 17.10
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bots (
+    bot_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    token text,
+    channel_type text,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: departments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.departments (
+    department_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT now(),
+    id integer NOT NULL,
+    parent_id integer,
+    ten_viet_tat text,
+    ten_hien_thi text,
+    loai_don_vi text,
+    cap_don_vi text,
+    level_number integer,
+    is_formal boolean,
+    has_seal boolean,
+    parent_name text,
+    child_count integer,
+    name text,
+    code text,
+    CONSTRAINT chk_no_self_parent CHECK (((parent_id IS NULL) OR (parent_id <> id)))
+);
+
+
+--
+-- Name: documents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.documents (
+    document_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    assigned_department_id uuid,
+    assigned_user_id uuid,
+    so_den character varying(255),
+    so_ky_hieu character varying(255),
+    trich_yeu text,
+    hinh_thuc character varying(100),
+    loai_van_ban_text character varying(100),
+    don_vi_ban_hanh text,
+    nguoi_ky character varying(255),
+    chuc_vu_nguoi_ky character varying(255),
+    ngay_van_ban date,
+    ngay_den timestamp with time zone,
+    ngay_het_han date,
+    do_khan character varying(50),
+    noi_nhan jsonb,
+    can_cu_phap_ly jsonb,
+    yeu_cau_hanh_dong text,
+    status text,
+    summary text,
+    key_points jsonb,
+    confidence real,
+    muc_tin_cay character varying(50),
+    loai_van_ban jsonb,
+    de_xuat_xu_ly jsonb,
+    goi_y_phong_ban jsonb,
+    tong_so_chunk integer,
+    total_chunks_processed integer,
+    source_pages integer,
+    storage_info jsonb,
+    processing_time real,
+    is_chua_doc boolean DEFAULT true,
+    thong_tin_ky_so jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone,
+    uploaded_by_user_id uuid NOT NULL,
+    related_documents jsonb,
+    title text,
+    file_path text,
+    original_filename character varying(500),
+    file_size_bytes bigint,
+    page_count integer,
+    priority integer DEFAULT 1,
+    retry_count integer DEFAULT 0,
+    error_message text,
+    processing_started_at timestamp with time zone,
+    suggested_departments jsonb,
+    proposed_assignees jsonb
+);
+
+
+--
+-- Name: feedbacks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.feedbacks (
+    id integer NOT NULL,
+    user_id uuid,
+    feedback_type character varying(50) DEFAULT 'improvement'::character varying NOT NULL,
+    content text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: feedbacks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.feedbacks_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: feedbacks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.feedbacks_id_seq OWNED BY public.feedbacks.id;
+
+
+--
+-- Name: human_resources; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.human_resources (
+    human_resource_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id integer NOT NULL,
+    name text NOT NULL,
+    login text,
+    email text,
+    ma_can_bo text,
+    ten_hien_thi text,
+    chuc_danh text,
+    oauth_uid text,
+    is_role_qlvb boolean DEFAULT false,
+    active boolean DEFAULT true,
+    department_id integer,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    notification_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_id uuid,
+    bot_id uuid,
+    to_user_id uuid,
+    status text,
+    sent_at timestamp with time zone,
+    delivered_at timestamp with time zone
+);
+
+
+--
+-- Name: permissions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.permissions (
+    permission_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    description text
+);
+
+
+--
+-- Name: role_permissions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.role_permissions (
+    role_id uuid NOT NULL,
+    permission_id uuid NOT NULL
+);
+
+
+--
+-- Name: roles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.roles (
+    role_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: system_parameters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.system_parameters (
+    param_key text NOT NULL,
+    param_value text,
+    description text,
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tags (
+    tag_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: translation_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_logs (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    filename character varying(255) NOT NULL,
+    file_type character varying(50) NOT NULL,
+    file_hash character varying(255),
+    status character varying(50) DEFAULT 'pending'::character varying,
+    comment text,
+    source_language character varying(50) DEFAULT 'vi'::character varying,
+    target_language character varying(50) DEFAULT 'en'::character varying,
+    result_file_url text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    user_id uuid
+);
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    user_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username text,
+    email text,
+    display_name text,
+    password_hash text,
+    auth_provider text DEFAULT 'local'::text,
+    department_id uuid,
+    role_id uuid,
+    phone text,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now(),
+    last_login_at timestamp with time zone,
+    telegram_chat_id text
+);
+
+
+--
+-- Name: feedbacks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feedbacks ALTER COLUMN id SET DEFAULT nextval('public.feedbacks_id_seq'::regclass);
+
+
+--
+-- Name: bots bots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bots
+    ADD CONSTRAINT bots_pkey PRIMARY KEY (bot_id);
+
+
+--
+-- Name: departments departments_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.departments
+    ADD CONSTRAINT departments_id_key UNIQUE (id);
+
+
+--
+-- Name: departments departments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.departments
+    ADD CONSTRAINT departments_pkey PRIMARY KEY (department_id);
+
+
+--
+-- Name: documents documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_pkey PRIMARY KEY (document_id);
+
+
+--
+-- Name: feedbacks feedbacks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feedbacks
+    ADD CONSTRAINT feedbacks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: human_resources human_resources_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.human_resources
+    ADD CONSTRAINT human_resources_id_key UNIQUE (id);
+
+
+--
+-- Name: human_resources human_resources_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.human_resources
+    ADD CONSTRAINT human_resources_pkey PRIMARY KEY (human_resource_id);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (notification_id);
+
+
+--
+-- Name: permissions permissions_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_code_key UNIQUE (code);
+
+
+--
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_pkey PRIMARY KEY (permission_id);
+
+
+--
+-- Name: role_permissions role_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permissions
+    ADD CONSTRAINT role_permissions_pkey PRIMARY KEY (role_id, permission_id);
+
+
+--
+-- Name: roles roles_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roles
+    ADD CONSTRAINT roles_name_key UNIQUE (name);
+
+
+--
+-- Name: roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roles
+    ADD CONSTRAINT roles_pkey PRIMARY KEY (role_id);
+
+
+--
+-- Name: system_parameters system_parameters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.system_parameters
+    ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (param_key);
+
+
+--
+-- Name: tags tags_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_name_key UNIQUE (name);
+
+
+--
+-- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_pkey PRIMARY KEY (tag_id);
+
+
+--
+-- Name: translation_logs translation_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_logs
+    ADD CONSTRAINT translation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: idx_documents_queue; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_queue ON public.documents USING btree (priority, created_at) WHERE (status = 'queued'::text);
+
+
+--
+-- Name: idx_feedbacks_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feedbacks_created_at ON public.feedbacks USING btree (created_at DESC);
+
+
+--
+-- Name: idx_feedbacks_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feedbacks_user_id ON public.feedbacks USING btree (user_id);
+
+
+--
+-- Name: idx_translation_logs_file_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_translation_logs_file_hash ON public.translation_logs USING btree (file_hash);
+
+
+--
+-- Name: departments departments_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.departments
+    ADD CONSTRAINT departments_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.departments(id);
+
+
+--
+-- Name: documents documents_assigned_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_assigned_department_id_fkey FOREIGN KEY (assigned_department_id) REFERENCES public.departments(department_id) ON DELETE SET NULL;
+
+
+--
+-- Name: documents documents_assigned_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_assigned_user_id_fkey FOREIGN KEY (assigned_user_id) REFERENCES public.users(user_id) ON DELETE SET NULL;
+
+
+--
+-- Name: documents documents_uploaded_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_uploaded_by_user_id_fkey FOREIGN KEY (uploaded_by_user_id) REFERENCES public.users(user_id) NOT VALID;
+
+
+--
+-- Name: feedbacks feedbacks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feedbacks
+    ADD CONSTRAINT feedbacks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE SET NULL;
+
+
+--
+-- Name: human_resources human_resources_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.human_resources
+    ADD CONSTRAINT human_resources_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id) ON DELETE SET NULL;
+
+
+--
+-- Name: notifications notifications_bot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_bot_id_fkey FOREIGN KEY (bot_id) REFERENCES public.bots(bot_id) ON DELETE SET NULL;
+
+
+--
+-- Name: notifications notifications_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(document_id) ON DELETE SET NULL;
+
+
+--
+-- Name: notifications notifications_to_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_to_user_id_fkey FOREIGN KEY (to_user_id) REFERENCES public.users(user_id);
+
+
+--
+-- Name: role_permissions role_permissions_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permissions
+    ADD CONSTRAINT role_permissions_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permissions(permission_id) ON DELETE CASCADE;
+
+
+--
+-- Name: role_permissions role_permissions_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.role_permissions
+    ADD CONSTRAINT role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(role_id) ON DELETE CASCADE;
+
+
+--
+-- Name: tags tags_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id);
+
+
+--
+-- Name: translation_logs translation_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_logs
+    ADD CONSTRAINT translation_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) NOT VALID;
+
+
+--
+-- Name: users users_department_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id) ON DELETE SET NULL;
+
+
+--
+-- Name: users users_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(role_id) ON DELETE SET NULL;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict uNgvsCchPyJD3x9qhtggigQvvbNT6mHThkHK1E3Ytiv4DjUEZcqOf46xmPLnCIu
+

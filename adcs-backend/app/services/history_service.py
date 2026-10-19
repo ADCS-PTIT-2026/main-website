@@ -8,6 +8,8 @@ from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User
 from app.crud.document import get_document_by_id, can_user_access_document
+from app.core.authorization import is_system_admin
+from app.core.document_websocket import is_uuid
 from app.api.v1.endpoints.telegram import get_system_bot_token, send_telegram_notification
 
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
@@ -27,12 +29,7 @@ async def fetch_processing_history(
     """
     url = f"{DATA_SERVICE_URL}/api/v1/history"
 
-    is_admin = False
-    if user:
-        role_name = getattr(user, "role_name", None)
-        permissions = getattr(user, "permissions", [])
-        if role_name == "admin" or "admin:all" in permissions or "*" in permissions:
-            is_admin = True
+    is_admin = is_system_admin(user)
 
     fetch_limit = limit if is_admin else 200
     params = {
@@ -74,35 +71,18 @@ async def fetch_processing_history(
             Document.uploaded_by_user_id == str(user.user_id)
         ).order_by(Document.created_at.desc()).all()
 
-    user_filenames = set()
-    user_doc_ids = set()
-    for doc in user_docs:
-        if doc.original_filename:
-            user_filenames.add(doc.original_filename.lower().strip())
-        if doc.document_id:
-            user_doc_ids.add(str(doc.document_id).lower().strip())
-
+    user_doc_ids = {str(doc.document_id).lower() for doc in user_docs}
     filtered_results = []
-    seen_matched_filenames = set()
-
+    seen_matched_ids = set()
     for item in results:
-        fn = (item.get("filename") or "").lower().strip()
-        did = str(item.get("document_id") or "").lower().strip()
-        
-        is_user_record = False
-        if fn and fn in user_filenames:
-            is_user_record = True
-            seen_matched_filenames.add(fn)
-        elif did and did in user_doc_ids:
-            is_user_record = True
-
-        if is_user_record:
+        did = str(item.get("document_id") or "").strip().lower()
+        if did in user_doc_ids:
             filtered_results.append(item)
+            seen_matched_ids.add(did)
 
     # Bổ sung các tài liệu user đã tải lên trong Web DB mà Data Service history chưa có
     for doc in user_docs:
-        fn_clean = (doc.original_filename or "").lower().strip()
-        if fn_clean and fn_clean not in seen_matched_filenames:
+        if str(doc.document_id).lower() not in seen_matched_ids:
             status_val = doc.status or "queued"
             llm_stat = "success" if status_val in ["processed", "approved"] else ("failed" if status_val == "failed" else "pending")
             file_stat = "success" if status_val in ["processed", "approved"] else "pending"
@@ -124,7 +104,7 @@ async def fetch_processing_history(
                 "error_message": doc.error_message,
                 "created_at": str(doc.created_at) if doc.created_at else ""
             })
-            seen_matched_filenames.add(fn_clean)
+            seen_matched_ids.add(str(doc.document_id).lower())
 
     # Sắp xếp bản ghi mới nhất lên đầu
     def get_sort_key(item):
@@ -142,7 +122,7 @@ async def fetch_processing_history(
 
 
 
-async def fetch_history_detail(history_id: int, db: Session) -> dict:
+async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict:
     """
     Lấy chi tiết một lượt xử lý từ Data Service và làm giàu bằng dữ liệu từ Web DB.
     """
@@ -182,19 +162,15 @@ async def fetch_history_detail(history_id: int, db: Session) -> dict:
         except Exception as e:
             logger.warning(f"Không thể lấy chi tiết document_id={doc_id} từ Data Service: {e}")
 
-    # 2. Truy vấn bổ sung từ DB của Web Backend (bảng documents)
+    # Only a canonical ID can connect an external record to a local document.
+    # Filenames and summaries are not evidence of ownership.
+    if not isinstance(doc_data, dict):
+        doc_data = {}
+    canonical_id = doc_id if is_uuid(doc_id) else (doc_data.get("web_document_id") or doc_data.get("document_id"))
+    doc_web = get_document_by_id(db, canonical_id) if is_uuid(canonical_id) else None
+    if not is_system_admin(user) and (not doc_web or not can_user_access_document(doc_web, user)):
+        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập lịch sử tài liệu này")
     filename = raw_history_item.get("filename")
-    doc_web = None
-    if filename:
-        doc_web = db.query(Document).filter(
-            Document.original_filename == filename
-        ).order_by(Document.created_at.desc()).first()
-
-    if not doc_web and doc_data.get("trich_yeu"):
-        short_summary = doc_data["trich_yeu"][:40]
-        doc_web = db.query(Document).filter(
-            Document.trich_yeu.ilike(f"%{short_summary}%")
-        ).order_by(Document.created_at.desc()).first()
 
     # 3. Tính toán trạng thái tổng hợp
     status_llm = raw_history_item.get("status_llm")
@@ -242,7 +218,7 @@ async def fetch_history_detail(history_id: int, db: Session) -> dict:
         "confidence": doc_web.confidence if doc_web else (0.95 if overall_status == "success" else None),
         "muc_tin_cay": doc_web.muc_tin_cay if doc_web else ("Cao" if overall_status == "success" else None),
         "processing_time": doc_web.processing_time if doc_web else None,
-        "source_pages": doc_web.source_pages or (doc_web.page_count if doc_web else None),
+        "source_pages": (doc_web.source_pages or doc_web.page_count) if doc_web else None,
         "attachments": doc_data.get("attachments", []),
         "storage_info": doc_web.storage_info if doc_web else None
     }
@@ -262,7 +238,7 @@ async def send_history_telegram_notification(history_id: int, user: User, db: Se
         )
 
     # Lấy thông tin chi tiết của lượt xử lý
-    detail = await fetch_history_detail(history_id, db)
+    detail = await fetch_history_detail(history_id, db, user)
 
     # Chỉ cho phép gửi nếu trạng thái hoàn tất thành công
     if detail.get("status") in ["failed", "error"] or detail.get("status_llm") in ["failed", "error"]:
@@ -355,8 +331,7 @@ async def fetch_document_processing_detail(document_id: str, db: Session, user: 
                 data = res.json()
                 results = data.get("results", []) if isinstance(data, dict) else data
                 for item in results:
-                    if (item.get("document_id") and str(item.get("document_id")) == str(doc_web.document_id)) or \
-                       (item.get("filename") and doc_web.original_filename and item.get("filename") == doc_web.original_filename):
+                    if item.get("document_id") and str(item.get("document_id")) == str(doc_web.document_id):
                         history_item = item
                         break
     except Exception as e:

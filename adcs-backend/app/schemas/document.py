@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from typing import Optional, Any, List, Dict
 from datetime import date, datetime
+from typing import Literal
 
 class UploadResponse(BaseModel):
     document_id: UUID
@@ -57,6 +58,7 @@ class DocumentResponse(BaseModel):
 
 
 class AIResultUpdateRequest(BaseModel):
+    status: Optional[Literal["approved"]] = None
     assigned_department_id: Optional[str] = None
     assigned_user_id: Optional[UUID] = None
 

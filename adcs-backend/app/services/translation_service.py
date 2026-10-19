@@ -3,6 +3,7 @@ import io
 import zipfile
 import hashlib
 import os
+from pathlib import Path
 from fastapi import BackgroundTasks, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
@@ -12,6 +13,7 @@ from app.db.session import SessionLocal
 from app.core.document_websocket import manager
 from app.crud import translation as crud_translation
 from app.core.logger import logger
+from app.core.authorization import is_system_admin
 
 load_dotenv()
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
@@ -74,14 +76,25 @@ async def handle_translation_upload(
         "processed_files": processed_files
     }
 
-def get_user_translation_list(db: Session, user_id: str):
+def get_user_translation_list(db: Session, current_user, user_id=None):
     """Lấy danh sách bản dịch của user."""
-    logger.info(f"Truy vấn danh sách dịch thuật cho user_id: {user_id}")
-    return crud_translation.get_translation_logs_by_user(db, user_id)
+    target = str(user_id) if user_id else str(current_user.user_id)
+    if target != str(current_user.user_id) and not is_system_admin(current_user):
+        raise HTTPException(status_code=403, detail="Bạn không có quyền xem bản dịch của tài khoản này")
+    return crud_translation.get_translation_logs_by_user(db, target)
 
-def update_translation_comment_service(db: Session, log_id: str, comment: str):
-    """Cập nhật nhận xét cho bản dịch."""
+
+def _authorized_translation_log(db: Session, log_id, current_user):
     log = crud_translation.get_translation_log_by_id(db, log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi")
+    if str(log.user_id) != str(current_user.user_id) and not is_system_admin(current_user):
+        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập bản dịch này")
+    return log
+
+def update_translation_comment_service(db: Session, log_id: str, comment: str, current_user):
+    """Cập nhật nhận xét cho bản dịch."""
+    log = _authorized_translation_log(db, log_id, current_user)
     if not log:
         logger.warning(f"Thất bại khi cập nhật nhận xét: Không tìm thấy log_id {log_id}")
         raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi")
@@ -90,9 +103,9 @@ def update_translation_comment_service(db: Session, log_id: str, comment: str):
     logger.info(f"Đã cập nhật nhận xét thành công cho log_id: {log_id}")
     return {"message": "Đã lưu nhận xét thành công"}
 
-def delete_translation_service(db: Session, log_id: str):
+def delete_translation_service(db: Session, log_id: str, current_user):
     """Xóa bản ghi dịch thuật."""
-    log = crud_translation.get_translation_log_by_id(db, log_id)
+    log = _authorized_translation_log(db, log_id, current_user)
     if not log:
         logger.warning(f"Thất bại khi xóa: Không tìm thấy log_id {log_id}")
         raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi")
@@ -130,7 +143,7 @@ async def process_translation_background(log_id: str, file_content: bytes, filen
             else:
                 logger.info(f"[Background Task] Data Service trả về file nhị phân ({content_type}). Đang lưu file...")
                 
-                save_dir = "static/downloads"
+                save_dir = os.getenv("TRANSLATION_DOWNLOAD_DIR", "static/downloads")
                 os.makedirs(save_dir, exist_ok=True)
                 
                 file_path = os.path.join(save_dir, f"translated_{log_id}.docx")
@@ -157,14 +170,22 @@ async def process_translation_background(log_id: str, file_content: bytes, filen
     finally:
         db.close()
 
-def get_download_file_info(db: Session, log_id: str):
+def _download_path(value: str):
+    root = Path(os.getenv("TRANSLATION_DOWNLOAD_DIR", "static/downloads")).resolve()
+    path = Path(value.lstrip("/") if value.startswith("/static/downloads/") else value).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise HTTPException(status_code=404, detail="File kết quả không tồn tại")
+    return str(path)
+
+
+def get_download_file_info(db: Session, log_id: str, current_user):
     """Xử lý logic kiểm tra và lấy đường dẫn vật lý của file dịch thuật."""
-    log = crud_translation.get_translation_log_by_id(db, log_id)
+    log = _authorized_translation_log(db, log_id, current_user)
     if not log or not log.result_file_url:
         logger.warning(f"Tải file thất bại: Không tìm thấy log_id {log_id} hoặc chưa có kết quả")
         raise HTTPException(status_code=404, detail="File kết quả chưa sẵn sàng hoặc không tồn tại")
     
-    file_path = log.result_file_url.lstrip("/")
+    file_path = _download_path(log.result_file_url)
     
     if not os.path.exists(file_path):
         logger.error(f"Tải file thất bại: Không tìm thấy file vật lý tại {file_path}")
@@ -172,8 +193,9 @@ def get_download_file_info(db: Session, log_id: str):
         
     return file_path, log.filename
 
-def get_all_translated_files_zip(db: Session, user_id: str):
+def get_all_translated_files_zip(db: Session, current_user):
     """Gom tất cả các file đã dịch thành công của user thành 1 file ZIP trong bộ nhớ."""
+    user_id = str(current_user.user_id)
     logs = crud_translation.get_translation_logs_by_user(db, user_id)
     
     success_logs = [log for log in logs if log.status == "success" and log.result_file_url]
@@ -186,11 +208,14 @@ def get_all_translated_files_zip(db: Session, user_id: str):
     
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for log in success_logs:
-            file_path = log.result_file_url.lstrip("/")
+            try:
+                file_path = _download_path(log.result_file_url)
+            except HTTPException:
+                continue
             
             if os.path.exists(file_path):
                 safe_id = str(log.id)[:8]
-                arcname = f"Translated_{safe_id}_{log.filename}"
+                arcname = f"Translated_{safe_id}_{os.path.basename(log.filename)}"
                 zip_file.write(file_path, arcname)
             else:
                 logger.error(f"Lỗi khi nén ZIP: Không tìm thấy file vật lý {file_path}")

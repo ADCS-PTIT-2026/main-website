@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, Integer
 from app.db.session import Base
 
 class User(Base):
@@ -13,3 +13,4 @@ class User(Base):
     department_id = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     telegram_chat_id = Column(String, nullable=True)
+    auth_version = Column(Integer, nullable=False, default=0, server_default="0")

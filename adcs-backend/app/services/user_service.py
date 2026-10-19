@@ -1,11 +1,14 @@
 import re
+import os
+from app.services.telegram_link_service import issue_telegram_link, disconnect_telegram
+from app.models.security import RefreshToken
+from app.core.security import utcnow
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 
 from app.crud import user as crud_user
 from app.models.user import User
-from app.models.telegram_bot import Bot
 from app.models.role_permission import Role
 from app.models.department import Department
 from app.schemas.user import (
@@ -89,12 +92,12 @@ def update_user_info_service(db: Session, user_id: str, request: UserUpdate):
 def assign_user_role_dept_service(db: Session, user_id: str, request: UserAssign):
     logger.info(f"Yêu cầu phân quyền/phòng ban cho user ID: {user_id}")
     try:
-        user = crud_user.get_user_by_id(db, user_id)
+        user = db.query(User).filter(User.user_id == user_id).with_for_update().populate_existing().first()
         if not user:
             logger.warning(f"Từ chối phân quyền. Không tìm thấy user ID: {user_id}")
             raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
         
-        updated_user = crud_user.update_user_fields(db, user, request.model_dump(exclude_unset=True))
+        updated_user = crud_user.update_user_fields(db, user, {**request.model_dump(exclude_unset=True), "auth_version": user.auth_version + 1})
         logger.info(f"Phân quyền/phòng ban thành công cho user ID: {user_id}")
         return updated_user
     except HTTPException:
@@ -106,12 +109,12 @@ def assign_user_role_dept_service(db: Session, user_id: str, request: UserAssign
 def change_user_status_service(db: Session, user_id: str, request: UserStatus):
     logger.info(f"Yêu cầu thay đổi trạng thái (Active/Inactive) cho user ID: {user_id}")
     try:
-        user = crud_user.get_user_by_id(db, user_id)
+        user = db.query(User).filter(User.user_id == user_id).with_for_update().populate_existing().first()
         if not user:
             logger.warning(f"Từ chối đổi trạng thái. Không tìm thấy user ID: {user_id}")
             raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
             
-        updated_user = crud_user.update_user_fields(db, user, request.model_dump())
+        updated_user = crud_user.update_user_fields(db, user, {**request.model_dump(), "auth_version": user.auth_version + 1})
         logger.info(f"Đổi trạng thái thành công cho user ID: {user_id}")
         return updated_user
     except HTTPException:
@@ -138,35 +141,16 @@ def delete_user_account_service(db: Session, user_id: str):
         raise HTTPException(status_code=500, detail="Lỗi hệ thống khi xóa tài khoản")
 
 def get_telegram_link_service(db: Session, current_user: User):
-    logger.info(f"Yêu cầu tạo Telegram Deep Link cho user ID: {current_user.user_id}")
-    try:
-        bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
-        if not bot:
-            logger.warning("Không tìm thấy cấu hình Telegram Bot 'ptit_adcs_bot' trong Database")
-            raise HTTPException(status_code=404, detail="Chưa cấu hình Telegram Bot trong hệ thống")
-
-        payload = str(current_user.user_id)
-        deep_link = f"https://t.me/{bot.name}?start={payload}"
-        
-        logger.info(f"Tạo Deep Link thành công cho user ID: {current_user.user_id}")
-        return {
-            "bot_name": bot.name,
-            "link": deep_link,
-            "is_connected": bool(current_user.telegram_chat_id),
-            "telegram_chat_id": current_user.telegram_chat_id
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Lỗi hệ thống khi tạo link Telegram cho user {current_user.user_id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Lỗi hệ thống khi khởi tạo liên kết Telegram")
+    if not os.getenv("TELEGRAM_BOT_TOKEN") or not os.getenv("TELEGRAM_WEBHOOK_SECRET"):
+        raise HTTPException(status_code=503, detail="Telegram chưa được cấu hình đầy đủ")
+    bot_name = os.getenv("TELEGRAM_BOT_NAME", "ptit_adcs_bot")
+    return issue_telegram_link(db, current_user, bot_name)
 
 def get_telegram_status_service(db: Session, current_user: User):
     """Lấy trạng thái kết nối Telegram của người dùng hiện tại"""
     try:
-        bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
-        bot_name = bot.name if bot else "ptit_adcs_bot"
-        deep_link = f"https://t.me/{bot_name}?start={current_user.user_id}"
+        bot_name = os.getenv("TELEGRAM_BOT_NAME", "ptit_adcs_bot")
+        deep_link = f"https://t.me/{bot_name}"
         return {
             "is_connected": bool(current_user.telegram_chat_id),
             "telegram_chat_id": current_user.telegram_chat_id,
@@ -180,8 +164,7 @@ def get_telegram_status_service(db: Session, current_user: User):
 def disconnect_telegram_service(db: Session, current_user: User):
     """Hủy liên kết Telegram của người dùng hiện tại để kết nối lại hoặc đổi tài khoản khác"""
     try:
-        current_user.telegram_chat_id = None
-        db.commit()
+        disconnect_telegram(db, current_user)
         db.refresh(current_user)
         logger.info(f"Đã hủy liên kết Telegram cho user {current_user.email}")
         return {
@@ -249,6 +232,7 @@ def update_current_user_profile_service(db: Session, current_user: User, request
 def change_current_user_password_service(db: Session, current_user: User, request: ChangePasswordRequest):
     """Đổi mật khẩu người dùng hiện tại với kiểm tra an toàn"""
     try:
+        current_user = db.query(User).filter(User.user_id == str(current_user.user_id)).with_for_update().populate_existing().first()
         # 1. Kiểm tra mật khẩu mới và xác nhận mật khẩu
         if request.new_password != request.confirm_password:
             raise HTTPException(
@@ -303,6 +287,8 @@ def change_current_user_password_service(db: Session, current_user: User, reques
 
         # 5. Cập nhật mật khẩu băm mới
         current_user.password_hash = hash_password(request.new_password)
+        current_user.auth_version += 1
+        db.query(RefreshToken).filter(RefreshToken.user_id == current_user.user_id, RefreshToken.revoked_at.is_(None)).update({"revoked_at": utcnow()})
         db.commit()
         logger.info(f"Đổi mật khẩu thành công cho user {current_user.email}")
         return {"message": "Đổi mật khẩu thành công"}

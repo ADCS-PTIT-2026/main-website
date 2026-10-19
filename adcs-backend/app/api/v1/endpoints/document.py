@@ -27,9 +27,9 @@ from app.services.document_service import (
     search_documents_combined_service
 )
 from app.services.telegram_service import send_telegram_ai_result
-from app.core.dependency import get_current_user, RoleChecker, PermissionChecker
+from app.core.dependency import get_current_user, RoleChecker, PermissionChecker, require_permission
 from app.models.user import User
-from app.models.telegram_bot import Bot
+from app.core.authorization import is_system_admin
 from app.core.document_websocket import manager, is_uuid
 from app.crud.document import (
     get_document_by_id,
@@ -51,7 +51,7 @@ require_role = RoleChecker(['admin'])
 @router.get("/stats", response_model=DashboardStatsResponse)
 def get_document_stats_api(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """API lấy dữ liệu thống kê tổng quát theo phạm vi quyền của người dùng"""
     return get_dashboard_stats_service(db, user=current_user)
@@ -61,7 +61,7 @@ def get_document_stats_api(
 def get_documents_api(
     limit: int = Query(5, description="Số lượng tài liệu cần lấy"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """API lấy danh sách tài liệu gần đây theo phạm vi của người dùng"""
     return get_recent_documents_service(db, limit=limit, user=current_user)
@@ -70,7 +70,7 @@ def get_documents_api(
 @router.get("/all", response_model=List[DocumentResponse])
 def get_all_documents_api(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     return get_all_documents(db, user=current_user)
 
@@ -86,7 +86,7 @@ async def search_document_api(
     page_size: int = Query(20, ge=1, le=100, description="Kích thước mỗi trang"),
     sort_by: Optional[str] = Query("newest", description="Sắp xếp: newest hoặc confidence"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     try:
         results = search_documents_combined_service(
@@ -114,7 +114,7 @@ def get_my_documents_api(
     status: Optional[str] = Query(None, description="Lọc theo trạng thái: queued, processing, processed, failed, all"),
     search: Optional[str] = Query(None, description="Từ khóa tìm kiếm theo tên file, số hiệu, trích yếu"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
     """API lấy danh sách văn bản do chính user tải lên kèm vị trí hàng đợi (W4)"""
     return get_my_documents(
@@ -131,50 +131,49 @@ def get_my_documents_api(
 async def get_document_detail(
     document_id: str, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
-    if not is_uuid(document_id):
-        results = await get_detail_document_in_data_service(document_id)
-        return results
-    else:
-        doc = get_document_by_id(db, document_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
-        
-        # Kiểm tra quyền: Chỉ admin, người upload hoặc cùng phòng ban mới được xem
-        if not can_user_access_document(doc, current_user):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bạn không có quyền truy cập vào tài liệu này."
-            )
+    doc, external = await _resolve_document_access(document_id, db, current_user)
+    return doc if doc is not None else external
 
-        return doc
-    
-# 6. Lấy file raw (Kiểm tra quyền truy cập)
+
+async def _resolve_document_access(document_id: str, db: Session, user: User):
+    external = None
+    canonical_id = document_id
+    if not is_uuid(document_id):
+        external = await get_detail_document_in_data_service(document_id)
+        if not isinstance(external, dict) or "error" in external:
+            raise HTTPException(status_code=502, detail="Không thể lấy tài liệu từ dịch vụ dữ liệu")
+        canonical_id = external.get("web_document_id") or external.get("document_id")
+    doc = get_document_by_id(db, canonical_id) if is_uuid(canonical_id) else None
+    if doc:
+        if not can_user_access_document(doc, user):
+            raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập tài liệu này")
+        return doc, external
+    if external is not None and is_system_admin(user):
+        return None, external
+    if external is not None:
+        raise HTTPException(status_code=403, detail="Không thể xác minh phạm vi truy cập tài liệu")
+    raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
+
+
 @router.get("/{document_id}/file")
 async def get_document_raw_file(
     document_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.read"))
 ):
-    local_path = None
-    if is_uuid(document_id):
-        doc = get_document_by_id(db, document_id)
-        if not doc:
-            raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
-        if not can_user_access_document(doc, current_user):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bạn không có quyền tải file này.")
-        local_path = doc.file_path
-    else:
-        detail = await get_detail_document_in_data_service(document_id)
-        if "error" in detail:
-            raise HTTPException(status_code=400, detail=detail["error"])
-        local_path = detail.get("local_path")
-    
-    logger.info(f"Yêu cầu tải file vật lý: {local_path}")
-    if not local_path or not os.path.exists(local_path):
-        raise HTTPException(status_code=404, detail="Không tìm thấy file vật lý trên máy chủ.")
-
+    doc, external = await _resolve_document_access(document_id, db, current_user)
+    local_path = doc.file_path if doc is not None else external.get("local_path")
+    if doc is None and local_path:
+        from pathlib import Path
+        path = Path(local_path).resolve()
+        roots = [Path(os.getenv("UPLOAD_DIR", "/mnt/data2tb/adcs/uploads")).resolve(),
+                 Path(__file__).resolve().parents[4] / "static" / "uploads"]
+        if not any(path.is_relative_to(root) for root in roots):
+            raise HTTPException(status_code=404, detail="Không tìm thấy tệp tài liệu")
+    if not local_path or not os.path.isfile(local_path):
+        raise HTTPException(status_code=404, detail="Không tìm thấy tệp tài liệu")
     return FileResponse(local_path)
 
 # 7. Xóa tài liệu (W11: Đồng bộ 2 nơi - Web DB & Data Service / Vector DB)
@@ -183,15 +182,17 @@ async def delete_document_api(
     document_id: str, 
     force: bool = Query(False, description="Bỏ qua lỗi Data Service nếu Data Service ngoại tuyến"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.delete"))
 ):
+    if force and not is_system_admin(current_user):
+        raise HTTPException(status_code=403, detail="Chỉ quản trị viên được xóa cưỡng bức")
     try: 
         doc = None
         if is_uuid(document_id):
             doc = get_document_by_id(db, document_id)
         
         # Kiểm tra quyền
-        is_admin = getattr(current_user, "role_name", "") == "admin"
+        is_admin = is_system_admin(current_user)
         if doc:
             is_owner = str(doc.uploaded_by_user_id) == str(current_user.user_id)
             if not (is_admin or is_owner):
@@ -251,6 +252,11 @@ def update_ai_result_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) 
 ):
+    metadata = request.model_dump(exclude_unset=True, exclude={"status", "updated_at"})
+    if metadata or request.status != "approved":
+        require_permission(current_user, "file.update")
+    if request.status == "approved":
+        require_permission(current_user, "file.approve")
     doc = get_document_by_id(db, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
@@ -260,11 +266,10 @@ def update_ai_result_api(
     update_data = request.model_dump(exclude_unset=True)
     updated_doc = update_ai_result(db, document_id, update_data)
 
-    bot = db.query(Bot).filter(Bot.channel_type == 'telegram', Bot.name == 'ptit_adcs_bot').first()
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN") or (bot.token if bot else None)
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 
     telegram_status = "not_configured"
-    if bot_token:
+    if bot_token and request.status == "approved":
         tele_res = send_telegram_ai_result(
             bot_token=bot_token,
             user=current_user, 
@@ -296,7 +301,7 @@ async def upload_file_api(
     file: UploadFile = File(...),
     is_save_file: bool = Form(False),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.create"))
 ):
     # 1. Kiểm tra hạn ngạch số văn bản đang pending của người dùng (tối đa 5)
     pending_count = count_user_pending_documents(db, str(current_user.user_id))
@@ -374,7 +379,7 @@ async def upload_file_api(
 def retry_document_api(
     document_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.create"))
 ):
     """Thử lại xử lý văn bản bị lỗi (W4)"""
     if not is_uuid(document_id):
@@ -393,7 +398,7 @@ def retry_document_api(
 def cancel_document_api(
     document_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(PermissionChecker("file.create"))
 ):
     """Hủy văn bản đang chờ trong hàng đợi (W4)"""
     if not is_uuid(document_id):

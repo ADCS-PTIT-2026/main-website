@@ -1,0 +1,609 @@
+[
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/auth.py",
+    "line": 11,
+    "method": "POST",
+    "path": "/login",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/auth.py",
+    "line": 16,
+    "method": "POST",
+    "path": "/register",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/auth.py",
+    "line": 21,
+    "method": "POST",
+    "path": "/refresh",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/auth.py",
+    "line": 29,
+    "method": "GET",
+    "path": "/sso/callback",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 26,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 31,
+    "method": "POST",
+    "path": "",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 39,
+    "method": "PUT",
+    "path": "/{id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 48,
+    "method": "DELETE",
+    "path": "/{id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 55,
+    "method": "GET",
+    "path": "/region",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/department.py",
+    "line": 63,
+    "method": "GET",
+    "path": "/mock_region",
+    "dependencies": []
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 52,
+    "method": "GET",
+    "path": "/stats",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 61,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 71,
+    "method": "GET",
+    "path": "/all",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 79,
+    "method": "GET",
+    "path": "/search",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 111,
+    "method": "GET",
+    "path": "/my",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 131,
+    "method": "GET",
+    "path": "/{document_id}",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 155,
+    "method": "GET",
+    "path": "/{document_id}/file",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 182,
+    "method": "DELETE",
+    "path": "/{document_id}",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 248,
+    "method": "PUT",
+    "path": "/{document_id}/ai-result",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 285,
+    "method": "WEBSOCKET",
+    "path": "/ws/{client_id}",
+    "dependencies": []
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 295,
+    "method": "POST",
+    "path": "/upload",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 374,
+    "method": "POST",
+    "path": "/{document_id}/retry",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/document.py",
+    "line": 393,
+    "method": "POST",
+    "path": "/{document_id}/cancel",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/feedback.py",
+    "line": 13,
+    "method": "POST",
+    "path": "",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/feedback.py",
+    "line": 22,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_current_user",
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/history.py",
+    "line": 17,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/history.py",
+    "line": 41,
+    "method": "GET",
+    "path": "/document/{document_id}/detail",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/history.py",
+    "line": 52,
+    "method": "POST",
+    "path": "/document/{document_id}/send-telegram",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/history.py",
+    "line": 63,
+    "method": "GET",
+    "path": "/{history_id}/detail",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/history.py",
+    "line": 74,
+    "method": "POST",
+    "path": "/{history_id}/send-telegram",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 18,
+    "method": "GET",
+    "path": "/roles",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 22,
+    "method": "POST",
+    "path": "/roles",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 26,
+    "method": "PUT",
+    "path": "/roles/{role_id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 30,
+    "method": "DELETE",
+    "path": "/roles/{role_id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 36,
+    "method": "GET",
+    "path": "/permissions",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 40,
+    "method": "POST",
+    "path": "/permissions",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 44,
+    "method": "PUT",
+    "path": "/permissions/{permission_id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 48,
+    "method": "DELETE",
+    "path": "/permissions/{permission_id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 54,
+    "method": "GET",
+    "path": "/roles/permissions-matrix",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/role_permission.py",
+    "line": 59,
+    "method": "PUT",
+    "path": "/roles/permissions-matrix",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/system_parameter.py",
+    "line": 17,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/system_parameter.py",
+    "line": 22,
+    "method": "PUT",
+    "path": "",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/telegram.py",
+    "line": 51,
+    "method": "POST",
+    "path": "/notify_by_roles",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/telegram.py",
+    "line": 114,
+    "method": "POST",
+    "path": "/webhook",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/telegram.py",
+    "line": 168,
+    "method": "POST",
+    "path": "/setup-webhook",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/telegram.py",
+    "line": 178,
+    "method": "GET",
+    "path": "/bot-info",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 14,
+    "method": "POST",
+    "path": "/upload",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 28,
+    "method": "GET",
+    "path": "/",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 32,
+    "method": "PUT",
+    "path": "/{log_id}/comment",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 40,
+    "method": "DELETE",
+    "path": "/{log_id}",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 44,
+    "method": "GET",
+    "path": "/{log_id}/download",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/translation.py",
+    "line": 56,
+    "method": "GET",
+    "path": "/download-all/zip",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 36,
+    "method": "GET",
+    "path": "/me",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 44,
+    "method": "PUT",
+    "path": "/me",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 53,
+    "method": "POST",
+    "path": "/change-password",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 63,
+    "method": "GET",
+    "path": "",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 68,
+    "method": "POST",
+    "path": "",
+    "dependencies": [
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 73,
+    "method": "PUT",
+    "path": "/{id}",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 78,
+    "method": "PUT",
+    "path": "/{id}/assign",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 83,
+    "method": "PUT",
+    "path": "/{id}/status",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 88,
+    "method": "DELETE",
+    "path": "/{id}",
+    "dependencies": [
+      "get_db",
+      "require_admin"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 93,
+    "method": "GET",
+    "path": "/connect_to_telegram",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 102,
+    "method": "GET",
+    "path": "/telegram_status",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  },
+  {
+    "file": "adcs-backend/app/api/v1/endpoints/user.py",
+    "line": 111,
+    "method": "POST",
+    "path": "/disconnect_telegram",
+    "dependencies": [
+      "get_current_user",
+      "get_db"
+    ]
+  }
+]

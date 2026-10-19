@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict
 
 from app.db.session import get_db
+from app.core.dependency import RoleChecker
 from app.schemas.role_permission import RoleCreate, RoleUpdate, RoleResponse, PermissionCreate, PermissionUpdate, PermissionResponse, MatrixUpdateResponse
 
 from app.services.role_permission import (
@@ -11,9 +12,18 @@ from app.services.role_permission import (
     get_matrix_service, update_matrix_service
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(RoleChecker(["admin"]))])
 
 # ----------------- ROLES -----------------
+# Static paths must precede /roles/{role_id} for PUT requests.
+@router.get("/roles/permissions-matrix", response_model=Dict[str, bool])
+def get_matrix(db: Session = Depends(get_db)):
+    return get_matrix_service(db)
+
+@router.put("/roles/permissions-matrix", response_model=MatrixUpdateResponse)
+def update_matrix(payload: Dict[str, bool], db: Session = Depends(get_db)):
+    return update_matrix_service(db, payload)
+
 @router.get("/roles", response_model=List[RoleResponse])
 def list_roles(db: Session = Depends(get_db)):
     return get_all_roles_service(db)
@@ -47,15 +57,3 @@ def edit_permission(permission_id: str, payload: PermissionUpdate, db: Session =
 @router.delete("/permissions/{permission_id}")
 def remove_permission(permission_id: str, db: Session = Depends(get_db)):
     return delete_permission_service(db, permission_id)
-
-
-# ----------------- MATRIX -----------------
-@router.get("/roles/permissions-matrix", response_model=Dict[str, bool])
-def get_matrix(db: Session = Depends(get_db)):
-    """Trả về cho frontend dạng: {"READ_DOC_role1": true, "EDIT_DOC_role2": true}"""
-    return get_matrix_service(db)
-
-@router.put("/roles/permissions-matrix", response_model=MatrixUpdateResponse)
-def update_matrix(payload: Dict[str, bool], db: Session = Depends(get_db)):
-    """Nhận payload từ frontend: {"READ_DOC_role1": true, "READ_DOC_role2": false}"""
-    return update_matrix_service(db, payload)
