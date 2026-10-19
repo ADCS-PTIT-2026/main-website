@@ -138,9 +138,11 @@
     }
   ],
   "qlvb": {
-    "enabled": false,
-    "replacement_received": false,
+    "enabled": true,
+    "existing_value_preserved_by_user_request": true,
+    "private_file_mode": "600",
+    "provider_key_rotated": false,
     "provider_revocation_confirmed": false
   },
-  "note": "No token or credential values are included. Provider QLVB work and GitHub cached old objects remain open."
+  "note": "QLVB key preserved at owner request, not revoked. GitHub cached old SHA objects require owner follow-up."
 }

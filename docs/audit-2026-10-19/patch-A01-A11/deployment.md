@@ -36,7 +36,7 @@ Telegram đã hoàn tất: nạp khóa mới cho đúng `@ptit_adcs_bot`, kiểm
 
 - `/home/hieudt/.local/share/adcs-security-20261019/qlvb-key-new`
 
-QLVB còn chờ file trên. Chủ hệ thống đã xác nhận sẽ thu hồi/cấp lại khóa trong hệ thống quản trị QLVB. Không gửi giá trị khóa qua chat. Khi có file, cần nạp vào cấu hình, tạo lại backend và kiểm chứng khóa cũ bị từ chối tại nhà cung cấp. **Đồng bộ QLVB hiện tạm tắt, không dùng khóa đã lộ. Chưa xác nhận thu hồi khóa QLVB tại nguồn.**
+Theo chỉ đạo cuối cùng của chủ hệ thống, **giữ nguyên giá trị khóa QLVB hiện tại** và chuyển vào file riêng trên (quyền 600), rồi nạp vào cấu hình backend. Đồng bộ QLVB đã bật lại. Không hardcode hoặc lưu giá trị khóa trong Git. **Khóa QLVB chưa được thay/thu hồi tại nhà cung cấp; đây vẫn là khóa từng bị lộ.** Không coi việc đổi nơi lưu là thu hồi khóa cũ. Chưa gửi tài liệu thật sang QLVB để kiểm thử luồng ghi dữ liệu.
 
 ## Lịch sử Git và bản sao khôi phục
 
