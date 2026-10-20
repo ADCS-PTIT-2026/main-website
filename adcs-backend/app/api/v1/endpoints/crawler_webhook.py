@@ -70,7 +70,8 @@ class CrawlerIngestRequest(BaseModel):
     created_at: Optional[str] = None
 
 
-def _check_service_key(x_service_key: Optional[str]) -> None:
+def _check_service_key(x_service_key: Optional[str] = Header(None, alias="X-Service-Key")) -> None:
+    """Chạy như dependency, trước khi kiểm body: gọi không có khóa chỉ nhận 403, không thấy tên các trường."""
     expected = os.getenv("SERVICE_INTERNAL_KEY")
     if not expected:
         raise HTTPException(status_code=503, detail="Chưa cấu hình khóa dịch vụ nội bộ")
@@ -112,14 +113,13 @@ def _cut(value: Optional[str], n: int) -> Optional[str]:
     return value[:n] if value else None
 
 
-@router.post("/webhook/crawler-ingest", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/webhook/crawler-ingest", status_code=status.HTTP_202_ACCEPTED,
+             dependencies=[Depends(_check_service_key)])
 def crawler_ingest(
     payload: CrawlerIngestRequest,
     db: Session = Depends(get_db),
-    x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
 ):
     """Crawler báo một văn bản mới: ghi vào hàng đợi xử lý với priority 3 (D2)."""
-    _check_service_key(x_service_key)
     duplicate = {"message": "Văn bản này đã được tiếp nhận trước đó", "document_id": str(payload.document_id)}
     if db.query(Document.document_id).filter(Document.document_id == payload.document_id).first():
         raise HTTPException(status_code=409, detail=duplicate)
