@@ -9,6 +9,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.v1.endpoints import auth, document, system_parameter, telegram, user, role_permission, department, history, translation, feedback
+from app.api.v1.endpoints import crawler_webhook
 from app.core.http_client import http_client
 from app.core.logger import request_id_var, generate_request_id, logger
 
@@ -101,6 +102,7 @@ def health_check():
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user.router, prefix="/api/users", tags=["Users"])
 app.include_router(document.router, prefix="/api/documents", tags=["Documents"])
+app.include_router(crawler_webhook.router, prefix="/api/documents", tags=["Crawler"])
 app.include_router(role_permission.router, prefix="/api/role-permissions", tags=["Role-Permissions"])
 app.include_router(department.router, prefix="/api/departments", tags=["Departments"])
 app.include_router(system_parameter.router, prefix="/api/system-parameters", tags="AI_Config")
