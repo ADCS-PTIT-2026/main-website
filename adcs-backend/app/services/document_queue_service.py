@@ -15,6 +15,13 @@ from app.models.department import Department
 
 MAX_CONCURRENT_DOCUMENTS = int(os.getenv("MAX_CONCURRENT_DOCUMENTS", 1))
 
+def _merge_field(existing, ai_value, from_crawler: bool):
+    """Văn bản crawler: giữ metadata đang có, AI chỉ điền chỗ trống. Văn bản khác: lấy kết quả AI như trước."""
+    if from_crawler:
+        return existing or ai_value
+    return ai_value
+
+
 class DocumentQueueManager:
     def __init__(self):
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT_DOCUMENTS)
@@ -123,7 +130,9 @@ class DocumentQueueManager:
             ai_res = await send_to_ai_service(
                 file_content=file_content,
                 filename=filename,
-                is_save_file=False,
+                # Văn bản crawler (priority 3) lưu luôn vào kho Data Service như crawler cũ (save_document=true);
+                # Data Service tự nhận ra văn bản trùng
+                is_save_file=(doc.priority == 3),
                 timeout=dynamic_timeout,
                 db=db,
                 document_id=str(document_id),
@@ -162,11 +171,14 @@ class DocumentQueueManager:
                     doc.storage_info = ai_res.get("storage_info")
 
                     ext = ai_res.get("extracted_fields", {})
-                    doc.so_ky_hieu = ext.get("so_hieu_van_ban")
-                    doc.don_vi_ban_hanh = ext.get("co_quan_ban_hanh")
-                    doc.ngay_van_ban = parse_date_string(ext.get("ngay_ban_hanh"))
-                    doc.trich_yeu = ext.get("trich_yeu")
-                    doc.do_khan = ext.get("do_khan")
+                    # Văn bản crawler (priority 3) đã có metadata do văn thư nhập trên iOffice: giữ nguyên,
+                    # AI chỉ điền chỗ còn trống. Văn bản khác: lấy kết quả AI như trước.
+                    from_crawler = doc.priority == 3
+                    doc.so_ky_hieu = _merge_field(doc.so_ky_hieu, ext.get("so_hieu_van_ban"), from_crawler)
+                    doc.don_vi_ban_hanh = _merge_field(doc.don_vi_ban_hanh, ext.get("co_quan_ban_hanh"), from_crawler)
+                    doc.ngay_van_ban = _merge_field(doc.ngay_van_ban, parse_date_string(ext.get("ngay_ban_hanh")), from_crawler)
+                    doc.trich_yeu = _merge_field(doc.trich_yeu, ext.get("trich_yeu"), from_crawler)
+                    doc.do_khan = _merge_field(doc.do_khan, ext.get("do_khan"), from_crawler)
                     doc.nguoi_ky = ext.get("nguoi_ky")
                     doc.chuc_vu_nguoi_ky = ext.get("chuc_vu_nguoi_ky")
                     doc.noi_nhan = ext.get("noi_nhan")

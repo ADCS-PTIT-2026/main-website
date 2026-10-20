@@ -10,9 +10,12 @@ dùng chung /mnt/data2tb/adcs/uploads rồi gọi:
 Văn bản được ghi vào bảng documents với status "queued", priority 3, rồi hàng đợi
 nền xử lý như văn bản người dùng tải lên. Văn bản người dùng (priority 1) luôn
 được lấy trước. Không cần đăng nhập hay quyền theo vai trò, chỉ cần khóa dịch vụ.
+Cột uploaded_by_user_id trong DB là NOT NULL, nên văn bản crawler được gắn cho tài
+khoản CRAWLER_OWNER_USERNAME (mặc định "admin").
 
 Mã trả về: 202 đã nhận; 409 đã nhận trước đó (crawler gửi lại từ outbox);
-403 sai khóa; 422 dữ liệu hoặc đường dẫn tệp không hợp lệ; 503 chưa cấu hình khóa.
+403 sai khóa; 422 dữ liệu hoặc tệp không hợp lệ (ngoài thư mục dùng chung, rỗng,
+quá 50 MB hay 100 trang); 503 chưa cấu hình khóa hoặc tài khoản nhận văn bản.
 """
 import io
 import os
@@ -29,6 +32,7 @@ from sqlalchemy.orm import Session
 from app.core.logger import logger
 from app.db.session import get_db
 from app.models.document import Document
+from app.models.user import User
 from app.services.document_queue_service import document_queue
 from app.services.document_service import parse_date_string
 
@@ -37,6 +41,8 @@ router = APIRouter()
 SHARED_UPLOAD_ROOT = os.path.realpath(os.getenv("CRAWLER_SHARED_ROOT", "/mnt/data2tb/adcs/uploads"))
 MAX_FILE_SIZE = 50 * 1024 * 1024        # cùng giới hạn với /upload
 MAX_PAGES = 100
+# Cột documents.uploaded_by_user_id trong DB là NOT NULL: văn bản crawler gắn cho tài khoản này
+CRAWLER_OWNER_USERNAME = os.getenv("CRAWLER_OWNER_USERNAME", "admin")
 
 
 class CrawlerIngestRequest(BaseModel):
@@ -93,6 +99,14 @@ def _page_count(path: str) -> int:
         return 1
 
 
+def _owner_id(db: Session):
+    user = db.query(User).filter(User.username == CRAWLER_OWNER_USERNAME).first()
+    if user is None:
+        raise HTTPException(status_code=503, detail=f"Chưa có tài khoản '{CRAWLER_OWNER_USERNAME}' để nhận văn bản "
+                                                    "crawler (đặt CRAWLER_OWNER_USERNAME)")
+    return user.user_id
+
+
 def _cut(value: Optional[str], n: int) -> Optional[str]:
     value = (value or "").strip()
     return value[:n] if value else None
@@ -112,6 +126,8 @@ def crawler_ingest(
 
     real = _shared_file(payload.file_path)
     size = os.path.getsize(real)
+    if size == 0:
+        raise HTTPException(status_code=422, detail="Tệp rỗng (0 byte), có thể tải về bị lỗi")
     if size > MAX_FILE_SIZE:
         raise HTTPException(status_code=422, detail=f"Tệp {size / (1024 * 1024):.1f} MB vượt giới hạn 50 MB")
     pages = _page_count(real)
@@ -123,7 +139,7 @@ def crawler_ingest(
         document_id=payload.document_id,
         status="queued",
         priority=payload.priority,
-        uploaded_by_user_id=None,
+        uploaded_by_user_id=_owner_id(db),
         original_filename=payload.filename[:500],
         file_path=real,
         file_size_bytes=size,
@@ -142,10 +158,13 @@ def crawler_ingest(
     db.add(doc)
     try:
         db.commit()
-    except IntegrityError:
-        # Hai lần gửi cùng document_id chạy song song: lần sau coi như đã nhận
+    except IntegrityError as e:
         db.rollback()
-        raise HTTPException(status_code=409, detail=duplicate)
+        # Hai lần gửi cùng document_id chạy song song: lần sau coi như đã nhận
+        if db.query(Document.document_id).filter(Document.document_id == payload.document_id).first():
+            raise HTTPException(status_code=409, detail=duplicate)
+        logger.error(f"[Crawler] Không ghi được văn bản {payload.document_id}: {getattr(e, 'orig', e)}")
+        raise HTTPException(status_code=500, detail="Không ghi được văn bản crawler vào DB Web")
 
     document_queue.notify()
     logger.info(f"[Crawler] Nhận văn bản {doc.document_id} ({payload.so_hieu_van_ban or payload.filename}, "
