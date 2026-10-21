@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks, Query
+from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks, Query, Form
 from fastapi.responses import FileResponse, StreamingResponse 
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,6 +15,8 @@ router = APIRouter()
 async def upload_for_translation(
     background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(...),
+    source_lang: str = Form("vi"),
+    target_lang: str = Form("en"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -22,7 +24,8 @@ async def upload_for_translation(
         files=files,
         user_id=current_user.user_id,
         db=db,
-        background_tasks=background_tasks
+        background_tasks=background_tasks,
+        source_lang=source_lang, target_lang=target_lang
     )
 
 @router.get("/", response_model=List[TranslationResponse])
@@ -68,3 +71,7 @@ def download_all_translated_files(
         media_type="application/zip", 
         headers={"Content-Disposition": "attachment; filename=Tat_ca_ban_dich_PTIT.zip"}
     )
+
+@router.post("/{log_id}/cancel")
+async def cancel_translation_api(log_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return await translation_service.cancel_translation(db, log_id, current_user)

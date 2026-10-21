@@ -15,6 +15,7 @@ const PAGE_METADATA: Record<string, { title: string; subtitle: string; icon: str
   '/profile': { title: 'Hồ sơ cá nhân', subtitle: 'Thông tin tài khoản, bảo mật & liên kết Telegram', icon: 'manage_accounts' },
   '/admin/users': { title: 'Quản lý Người dùng', subtitle: 'Quản trị tài khoản & phân quyền phòng ban', icon: 'group' },
   '/admin/roles': { title: 'Quản lý Nhóm quyền', subtitle: 'Thiết lập vai trò & ma trận phân quyền', icon: 'shield_person' },
+  '/admin/crawler-sources': { title: 'Nguồn và đồng bộ', subtitle: 'Ánh xạ crawler và theo dõi tác vụ', icon: 'sync' },
   '/admin/ai-config': { title: 'Cấu hình AI Hệ thống', subtitle: 'Tinh chỉnh System Prompt & tham số mô hình LLM', icon: 'tune' },
 };
 

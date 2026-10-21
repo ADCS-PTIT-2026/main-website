@@ -61,7 +61,7 @@ async def send_document_telegram_api(
 
 @router.get("/{history_id}/detail")
 async def get_history_detail_api(
-    history_id: int,
+    history_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(PermissionChecker("file.read"))
 ):
@@ -72,7 +72,7 @@ async def get_history_detail_api(
 
 @router.post("/{history_id}/send-telegram")
 async def send_history_telegram_api(
-    history_id: int,
+    history_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(PermissionChecker("file.read"))
 ):

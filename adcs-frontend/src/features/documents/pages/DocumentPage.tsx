@@ -1,3 +1,4 @@
+import DocumentIntegrationState from '../../integration/DocumentIntegrationState';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import toast from 'react-hot-toast';
@@ -5,6 +6,8 @@ import {
   getDocument,
   uploadDocument,
   approveAIResult,
+  buildAIResultUpdate,
+  documentUpdateError,
   type DocumentResponse,
 } from "../../../api/document";
 import { DocumentPreview } from "../components/DocumentPreview";
@@ -82,10 +85,13 @@ const DocumentPage: React.FC = () => {
       const match = flatDepartments.find(d => d.name.toLowerCase().includes(deptName.toLowerCase()) || (d.ten_hien_thi && d.ten_hien_thi.toLowerCase().includes(deptName.toLowerCase())));
       if (match) targetDeptId = match.department_id;
     }
-    const finalId = targetDeptId || deptCode || deptName || "";
+    if (!targetDeptId) {
+      toast.error('Không tìm thấy phòng ban được gợi ý. Vui lòng chọn phòng ban trong phần chỉnh sửa.');
+      return;
+    }
     setEditedData(prev => ({
       ...prev,
-      assigned_department_id: finalId
+      assigned_department_id: targetDeptId
     }));
     toast.success(`Đã chọn phòng ban: ${deptName || deptCode}`);
   };
@@ -149,6 +155,8 @@ const DocumentPage: React.FC = () => {
       const doc = await getDocument(documentId);
       setDocumentDetail(doc);
       setActiveDocumentId(documentId);
+      setEditedData({});
+      setIsEditing(false);
 
       if (doc.local_path) {
         const backendBaseUrl = "http://localhost:8000";
@@ -284,11 +292,12 @@ const DocumentPage: React.FC = () => {
     if (!activeDocumentId) return;
 
     setSaving(true);
+    setError('');
     const toastId = toast.loading("Đang gửi thông báo văn bản...");
 
     try {
       const res = await approveAIResult(activeDocumentId, {
-        ...editedData,
+        ...buildAIResultUpdate(editedData, documentDetail || undefined),
         status: "approved",
       });
 
@@ -308,9 +317,10 @@ const DocumentPage: React.FC = () => {
 
       setIsEditing(false);
       await loadDocument(activeDocumentId);
-    } catch (e: any) {
-      setError(e?.message || "Không thể cập nhật văn bản");
-      toast.error("Thao tác thất bại", { id: toastId });
+    } catch (e: unknown) {
+      const message = documentUpdateError(e);
+      setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -319,34 +329,37 @@ const DocumentPage: React.FC = () => {
   const handleSaveMetadata = async () => {
     if (!activeDocumentId) return;
     setSaving(true);
+    setError('');
     try {
-      const payload = { ...editedData };
-      delete payload.status;
+      const payload = buildAIResultUpdate(editedData, documentDetail || undefined);
       await approveAIResult(activeDocumentId, payload);
       setIsEditing(false);
       await loadDocument(activeDocumentId);
       toast.success('Đã lưu thông tin văn bản');
-    } catch {
-      toast.error('Không thể lưu thông tin văn bản');
+    } catch (e: unknown) {
+      const message = documentUpdateError(e);
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
   const toggleEdit = () => {
-    if (!isEditing) setEditedData(documentDetail || {});
+    if (!isEditing) setEditedData(prev => ({ ...documentDetail, ...prev }));
+    else setEditedData({});
     setIsEditing(!isEditing);
   };
 
   const handleFieldChange = (field: string, value: string, isArray?: boolean) => {
     setEditedData((prev) => ({
       ...prev,
-      [field]: isArray ? value.split(',').map(s => s.trim()) : value
+      [field]: isArray ? value.split(',').map(s => s.trim()).filter(Boolean) : value
     }));
   };
 
   const extractedRows = useMemo(() => {
-    const data = isEditing ? editedData : documentDetail;
+    const data = { ...documentDetail, ...editedData };
     const getValue = (val: any) => val ?? (isEditing ? "" : "—");
     const getArrayValue = (arr: any) => (Array.isArray(arr) && arr.length > 0) ? arr.join(", ") : (isEditing ? "" : "—");
 
@@ -567,6 +580,10 @@ const DocumentPage: React.FC = () => {
                   ? "Đang AI phân tích..."
                   : documentDetail?.status === 'failed'
                   ? "Phân tích thất bại"
+                  : documentDetail?.status === 'duplicate'
+                  ? "Đã ghi nhận bản trùng"
+                  : documentDetail?.status === 'needs_review'
+                  ? "Cần admin đối soát"
                   : "Xử lý hoàn tất"}
               </span>
             </div>
@@ -739,7 +756,7 @@ const DocumentPage: React.FC = () => {
                         ? documentDetail.suggested_departments
                         : documentDetail.goi_y_phong_ban
                         ? [{
-                            department_code: "",
+                            department_code: documentDetail.goi_y_phong_ban.phong_ban || "",
                             department_name: documentDetail.goi_y_phong_ban.ten_hien_thi || documentDetail.goi_y_phong_ban.phong_ban || "",
                             confidence_score: documentDetail.goi_y_phong_ban.diem_tin_cay || documentDetail.confidence || 0.88,
                             reasoning: documentDetail.goi_y_phong_ban.ly_do || "Văn bản phù hợp với nhiệm vụ của phòng ban này."
@@ -748,7 +765,7 @@ const DocumentPage: React.FC = () => {
 
                       return suggestions.map((item, idx) => {
                         const score = item.confidence_score ? (item.confidence_score > 1 ? item.confidence_score : item.confidence_score * 100) : 85;
-                        const currentAssigned = isEditing ? editedData.assigned_department_id : documentDetail.assigned_department_id;
+                        const currentAssigned = editedData.assigned_department_id !== undefined ? editedData.assigned_department_id : documentDetail.assigned_department_id;
                         const isSelected = currentAssigned && (
                           currentAssigned === item.department_code || 
                           getDepartmentName(currentAssigned).toLowerCase().includes((item.department_name || "").toLowerCase())
@@ -979,13 +996,14 @@ const DocumentPage: React.FC = () => {
             </div>
           )}
 
+          {documentDetail && <DocumentIntegrationState document={documentDetail} />}
           {/* 5. Nút Phê duyệt & Gửi thông báo Telegram */}
           <Authorized permission="doc:approve">
             <div className="pt-1 pb-4">
               <button
                 type="button"
                 onClick={handleApprove}
-                disabled={!activeDocumentId || saving || isPending}
+                disabled={!activeDocumentId || saving || isPending || documentDetail?.status === 'duplicate' || documentDetail?.status === 'needs_review'}
                 className={`w-full font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   isPending || !activeDocumentId
                     ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none'

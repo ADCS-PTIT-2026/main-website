@@ -1,3 +1,4 @@
+import CrawlerSourcesPage from './features/integration/CrawlerSourcesPage';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import LoginPage from './features/auth/pages/LoginPage';
 import SSOCallbackPage from './features/auth/pages/SSOCallbackPage';
@@ -52,6 +53,7 @@ function App() {
             <Route element={<AdminRouteGuard />}>
               <Route path="/admin/roles" element={<RoleManagementPage />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
+              <Route path="/admin/crawler-sources" element={<CrawlerSourcesPage />} />
               <Route path="/admin/ai-config" element={<AIConfigurationPage />} />
             </Route>
 

@@ -9,8 +9,19 @@ import {
 import { userApi } from '../../api/user';
 import toast from 'react-hot-toast';
 
+const processingStage = (status: string | null) => {
+  switch (status) {
+    case 'success': return { label: 'Hoàn tất', icon: 'check_circle', color: 'text-emerald-500' };
+    case 'failed': case 'error': return { label: 'Thất bại', icon: 'error', color: 'text-rose-500' };
+    case 'skipped': return { label: 'Không áp dụng', icon: 'remove_circle_outline', color: 'text-slate-400' };
+    case 'processing': return { label: 'Đang xử lý', icon: 'hourglass_top', color: 'text-amber-500' };
+    case 'pending': return { label: 'Chờ xử lý', icon: 'hourglass_top', color: 'text-amber-500' };
+    default: return { label: 'Chưa ghi nhận', icon: 'help_outline', color: 'text-slate-400' };
+  }
+};
+
 export interface ProcessingDetailModalProps {
-  historyId?: number | null;
+  historyId?: number | string | null;
   documentId?: string | null;
   isOpen: boolean;
   onClose: () => void;
@@ -353,47 +364,22 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
               {activeTab === 'technical' && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-400 uppercase">Phân tích LLM</span>
-                        <span className={`material-symbols-outlined text-lg ${
-                          detail.status_llm === 'success' ? 'text-emerald-500' : (detail.status_llm === 'failed' ? 'text-rose-500' : 'text-amber-500')
-                        }`}>
-                          {detail.status_llm === 'success' ? 'check_circle' : (detail.status_llm === 'failed' ? 'error' : 'hourglass_top')}
-                        </span>
-                      </div>
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 mt-2 capitalize">
-                        {detail.status_llm || 'Chưa ghi nhận'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-400 uppercase">Lưu trữ tệp</span>
-                        <span className={`material-symbols-outlined text-lg ${
-                          detail.status_save_file === 'success' ? 'text-emerald-500' : (detail.status_save_file === 'failed' ? 'text-rose-500' : 'text-amber-500')
-                        }`}>
-                          {detail.status_save_file === 'success' ? 'check_circle' : (detail.status_save_file === 'failed' ? 'error' : 'hourglass_top')}
-                        </span>
-                      </div>
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 mt-2 capitalize">
-                        {detail.status_save_file || 'Chưa ghi nhận'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-400 uppercase">Lưu trữ Vector</span>
-                        <span className={`material-symbols-outlined text-lg ${
-                          detail.status_save_vector === 'success' ? 'text-emerald-500' : (detail.status_save_vector === 'failed' ? 'text-rose-500' : 'text-amber-500')
-                        }`}>
-                          {detail.status_save_vector === 'success' ? 'check_circle' : (detail.status_save_vector === 'failed' ? 'error' : 'hourglass_top')}
-                        </span>
-                      </div>
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 mt-2 capitalize">
-                        {detail.status_save_vector || 'Chưa ghi nhận'}
-                      </p>
-                    </div>
+                    {[
+                      { title: 'Phân tích LLM', status: detail.status_llm },
+                      { title: 'Lưu trữ tệp', status: detail.status_save_file },
+                      { title: 'Lưu trữ Vector', status: detail.status_save_vector },
+                    ].map(({ title, status }) => {
+                      const stage = processingStage(status);
+                      return (
+                        <div key={title} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-400 uppercase">{title}</span>
+                            <span className={`material-symbols-outlined text-lg ${stage.color}`}>{stage.icon}</span>
+                          </div>
+                          <p className="font-bold text-sm text-slate-800 dark:text-slate-200 mt-2">{stage.label}</p>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Thông báo lỗi nếu có */}

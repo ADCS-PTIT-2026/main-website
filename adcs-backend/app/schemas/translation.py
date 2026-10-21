@@ -10,6 +10,15 @@ class TranslationResponse(BaseModel):
     status: str
     comment: Optional[str] = None
     result_file_url: Optional[str] = None
+    job_status: str = 'queued'
+    step: Optional[str] = None
+    progress_done: int = 0
+    progress_total: int = 0
+    queue_position: Optional[int] = None
+    error_code: Optional[str] = None
+    error_message: Optional[str] = None
+    source_language: str = 'vi'
+    target_language: str = 'en'
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

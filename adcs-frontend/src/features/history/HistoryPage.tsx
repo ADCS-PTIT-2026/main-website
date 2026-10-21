@@ -22,7 +22,7 @@ const ProcessingHistoryPage: React.FC = () => {
   const ITEMS_PER_PAGE = 10;
 
   // State xem chi tiết
-  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+  const [selectedRecordId, setSelectedRecordId] = useState<number | string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isTelegramConnected, setIsTelegramConnected] = useState(false);
 
@@ -83,7 +83,7 @@ const ProcessingHistoryPage: React.FC = () => {
     }
   };
 
-  const handleOpenDetail = (recordId: number) => {
+  const handleOpenDetail = (recordId: number | string) => {
     setSelectedRecordId(recordId);
     setIsDetailModalOpen(true);
   };

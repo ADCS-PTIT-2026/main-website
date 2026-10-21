@@ -1,3 +1,4 @@
+import DocumentIntegrationState from '../../integration/DocumentIntegrationState';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -463,6 +464,7 @@ const MyDocumentsPage: React.FC = () => {
                                 <span>{formatFileSize(doc.file_size_bytes)}</span>
                                 {doc.page_count && <span>• {doc.page_count} trang</span>}
                                 <span className="font-mono">• ID: {doc.document_id.slice(0, 8)}</span>
+                                <DocumentIntegrationState document={doc} />
                               </div>
                             </div>
                           </div>

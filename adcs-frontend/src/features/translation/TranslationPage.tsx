@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axiosClient from '../../api/axiosClient';
 import { 
-  uploadTranslationFiles, 
+  uploadTranslationFiles, cancelTranslation,
   getTranslations, 
   updateTranslationComment,
   deleteTranslation,
@@ -33,8 +33,8 @@ const TranslationPage: React.FC = () => {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && parsedUser.id) {
-          setUserId(parsedUser.id);
+        if (parsedUser && (parsedUser.user_id || parsedUser.id)) {
+          setUserId(parsedUser.user_id || parsedUser.id);
         }
       } catch (error) {
         console.error('Lỗi khi đọc thông tin người dùng:', error);
@@ -47,7 +47,7 @@ const TranslationPage: React.FC = () => {
   }, [userId]);
 
   useEffect(() => {
-    const hasActiveTasks = files.some(f => f.status === 'pending' || f.status === 'translating');
+    const hasActiveTasks = files.some(f => (f.status === 'pending' || f.status === 'translating') && f.job_status !== 'needs_review');
     let interval: ReturnType<typeof setInterval>;
 
     if (hasActiveTasks) {
@@ -73,7 +73,7 @@ const TranslationPage: React.FC = () => {
     const toastId = toast.loading("Đang tải tệp lên...");
 
     try {
-      const response = await uploadTranslationFiles(selectedFiles);
+      const response = await uploadTranslationFiles(selectedFiles, sourceLang, targetLang);
       
       if (response.duplicate_count > 0) {
         toast(`Phát hiện ${response.duplicate_count} tài liệu trùng lặp đã được loại bỏ.`, { icon: '⚠️', duration: 5000 });
@@ -212,7 +212,7 @@ const TranslationPage: React.FC = () => {
   };
 
   const completedCount = files.filter(f => f.status === 'success').length;
-  const activeCount = files.filter(f => f.status === 'pending' || f.status === 'translating').length;
+  const activeCount = files.filter(f => (f.status === 'pending' || f.status === 'translating') && f.job_status !== 'needs_review').length;
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 font-display text-slate-900 dark:text-slate-100">
@@ -305,7 +305,7 @@ const TranslationPage: React.FC = () => {
             multiple 
             ref={fileInputRef} 
             className="hidden" 
-            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
             onChange={handleFileSelect}
           />
           <div 
@@ -400,6 +400,13 @@ const TranslationPage: React.FC = () => {
                       </td>
                       
                       <td className="px-5 py-4">
+                        {file.status === 'cancelled' && <p>Đã hủy</p>}
+                        {file.job_status === 'needs_review' && <p>Cần admin đối soát</p>}
+                        {!!file.progress_total && <label className="block text-xs">Tiến độ {file.progress_done}/{file.progress_total}
+                          <progress className="w-full" aria-label={`Tiến độ dịch ${file.filename}`} value={file.progress_done || 0} max={file.progress_total} />
+                        </label>}
+                        {file.step && <p className="text-xs">Bước: {file.step}</p>}
+                        {!!file.queue_position && <p className="text-xs">Vị trí hàng đợi: {file.queue_position}</p>}
                         {file.status === 'success' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-[11px] font-bold rounded-full">
                             <span className="material-symbols-outlined text-[13px]">check_circle</span>
@@ -464,7 +471,12 @@ const TranslationPage: React.FC = () => {
                             </button>
                           )}
                           
+                          {['queued', 'pending'].includes(file.job_status || '') && <button className="underline text-xs" onClick={async () => {
+                            try { await cancelTranslation(file.id); await fetchFiles(); toast.success('Đã hủy'); }
+                            catch { toast.error('Job đã bắt đầu hoặc không thể hủy lúc này'); }
+                          }}>Hủy</button>}
                           <button 
+                            disabled={['pending', 'translating'].includes(file.status) || file.job_status === 'needs_review'}
                             onClick={() => setDeleteTarget({ id: file.id, filename: file.filename })}
                             className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-600 rounded-lg transition-colors outline-none cursor-pointer"
                             title="Xóa tệp"

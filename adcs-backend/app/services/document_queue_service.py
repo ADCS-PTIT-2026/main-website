@@ -1,7 +1,6 @@
 import os
 import asyncio
 import io
-import json
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -10,8 +9,9 @@ from app.models.document import Document
 from app.crud.document import claim_next_document_for_processing, recover_interrupted_documents
 from app.core.logger import logger
 from app.core.document_websocket import manager
-from app.services.document_service import send_to_ai_service, parse_date_string, repair_truncated_json, send_document_to_qlvb
+from app.services.document_service import send_to_ai_service, parse_date_string, normalize_ai_response, send_document_to_qlvb
 from app.models.department import Department
+from app.services.integration_service import enqueue_sync, mark_duplicate
 
 MAX_CONCURRENT_DOCUMENTS = int(os.getenv("MAX_CONCURRENT_DOCUMENTS", 1))
 
@@ -139,30 +139,39 @@ class DocumentQueueManager:
                 page_count=page_count
             )
 
-            # Sửa chuỗi JSON bị cắt cụt nếu có
-            if ai_res and "key_information" in ai_res and isinstance(ai_res["key_information"], str):
-                try:
-                    info_dict = json.loads(ai_res["key_information"])
-                    ai_res.update(info_dict)
-                except Exception:
-                    repaired = repair_truncated_json(ai_res["key_information"])
-                    try:
-                        info_dict = json.loads(repaired)
-                        ai_res.update(info_dict)
-                    except Exception:
-                        pass
+            db.close()  # send_to_ai_service may reopen the configuration session.
+
+            ai_res = normalize_ai_response(ai_res)
 
             client_id = str(doc.uploaded_by_user_id) if doc.uploaded_by_user_id else "system_user"
 
             db = SessionLocal()
             try:
                 doc = db.query(Document).filter(Document.document_id == document_id).first()
-                if not doc:
+                if not doc or doc.deleted_at or doc.status != "processing":
+                    return
+
+                if ai_res and ai_res.get('error_code') == 'AI_INVALID_RESPONSE':
+                    doc.status = 'needs_review'
+                    doc.error_message = 'Kết quả AI bị cắt hoặc không đúng cấu trúc JSON. Vui lòng xử lý lại tài liệu.'
+                    enqueue_sync(db, doc)
+                    db.commit()
+                    await manager.send_personal_message({
+                        'type': 'DOCUMENT_FAILED', 'document_id': str(document_id),
+                        'status': 'needs_review', 'message': doc.error_message,
+                    }, client_id)
                     return
 
                 if ai_res and ai_res.get("trang_thai") == "success":
+                    storage = ai_res.get('storage_info') or {}
+                    if storage.get('action') == 'duplicate' or storage.get('is_duplicate'):
+                        mark_duplicate(doc, storage)
+                        doc.storage_info = storage
+                        db.commit()
+                        return
                     doc.status = "processed"
                     doc.summary = ai_res.get("tom_tat")
+                    doc.error_message = None
                     doc.key_points = ai_res.get("key_points")
                     doc.confidence = ai_res.get("diem_tin_cay")
                     doc.muc_tin_cay = ai_res.get("muc_tin_cay")
@@ -191,7 +200,7 @@ class DocumentQueueManager:
                     suggested_code = None
                     suggested_name = None
                     if isinstance(goi_y_pb, dict):
-                        suggested_code = goi_y_pb.get("department_code") or goi_y_pb.get("code") or goi_y_pb.get("ma_phong_ban")
+                        suggested_code = goi_y_pb.get("department_code") or goi_y_pb.get("code") or goi_y_pb.get("ma_phong_ban") or goi_y_pb.get('phong_ban') or goi_y_pb.get('ma_don_vi')
                         suggested_name = goi_y_pb.get("ten_hien_thi") or goi_y_pb.get("name") or goi_y_pb.get("ten_phong_ban")
 
                     suggested_list = ai_res.get("suggested_departments", [])
@@ -207,15 +216,18 @@ class DocumentQueueManager:
                         if not department and str(suggested_code).isdigit():
                             department = db.query(Department).filter(Department.id == int(suggested_code)).first()
 
+                    if not department and isinstance(goi_y_pb, dict) and isinstance(goi_y_pb.get('id_phong_ban'), int):
+                        department = db.query(Department).filter(Department.id == goi_y_pb['id_phong_ban']).first()
+
                     if not department and suggested_name:
                         department = db.query(Department).filter(
                             (Department.name.ilike(f"%{suggested_name}%")) | 
                             (Department.ten_hien_thi.ilike(f"%{suggested_name}%"))
                         ).first()
 
-                    if department:
+                    if department and doc.source_type != "crawler":
                         doc.assigned_department_id = str(department.department_id)
-                    else:
+                    elif doc.source_type != "crawler":
                         doc.assigned_department_id = None
 
                     # Top-3 Suggested Departments
@@ -272,6 +284,9 @@ class DocumentQueueManager:
                         except Exception:
                             pass
 
+                    from datetime import timezone
+                    doc.updated_at = datetime.now(timezone.utc)
+                    enqueue_sync(db, doc)
                     db.commit()
                     logger.info(f"✅ [Queue] Xử lý thành công văn bản {document_id}")
 

@@ -72,7 +72,16 @@ app = FastAPI()
 async def startup_event():
     http_client.client = httpx.AsyncClient(timeout=300.0)
     from app.services.document_queue_service import document_queue
-    document_queue.start()
+    from app.core.data_service import enabled
+    if enabled('INTEGRATION_WORKER_ENABLED') and not enabled('DS_SYNC_ENABLED'):
+        raise RuntimeError('Standalone worker requires DS_SYNC_ENABLED')
+    if enabled('INTEGRATION_WORKER_ENABLED') and enabled('LEGACY_DOCUMENT_WORKER_ENABLED'):
+        raise RuntimeError('Disable legacy document worker before enabling integration worker')
+    if os.getenv('LEGACY_DOCUMENT_WORKER_ENABLED', 'true').lower() == 'true' and not enabled('INTEGRATION_WORKER_ENABLED'):
+        document_queue.start()
+    from app.core.document_websocket import listen_notifications
+    import asyncio
+    app.state.notification_task = asyncio.create_task(listen_notifications())
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,6 +108,9 @@ def health_check():
             content={"status": "unhealthy", "database": "disconnected", "error": str(e)}
         )
 
+from app.api.v1.endpoints import integration
+app.include_router(integration.router, prefix='/api', tags=['Integration'])
+
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user.router, prefix="/api/users", tags=["Users"])
 app.include_router(document.router, prefix="/api/documents", tags=["Documents"])
@@ -121,8 +133,14 @@ async def validation_exception_handler(request, exc):
         content={"detail": errors},
     )
 
-@app.on_event("shutdown")
-async def shutdown_event():
+@app.on_event('shutdown')
+async def shutdown_integrations():
+    import asyncio
+    task = getattr(app.state, 'notification_task', None)
+    if task:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
     from app.services.document_queue_service import document_queue
     await document_queue.stop()
-    await http_client.client.aclose()
+    if http_client.client:
+        await http_client.client.aclose()

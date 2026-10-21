@@ -54,25 +54,31 @@ def build_department_tree(departments):
     return roots
 
 
-def get_active_departments_for_ai(db: Session) -> list:
+def get_active_departments_for_ai(db: Session) -> dict:
     """
     Truy vấn danh mục phòng ban động từ CSDL để cung cấp ngữ cảnh cho mô hình AI.
-    Mỗi phòng ban gồm có: code, name, description.
+    Dùng catalog `units` để AI Service có thể bỏ mô tả ở bước compact.
+    Gợi ý đơn vị tiếp nhận cấp 1/2; bộ môn/tổ con vẫn chọn được trên Web.
     """
     departments = list_departments(db)
-    dept_payload = []
+    units = []
     for d in departments:
+        if d.level_number is not None and d.level_number > 2:
+            continue
         desc = d.description
         if not desc or not desc.strip():
             parent_info = f" trực thuộc {d.parent_name}" if d.parent_name else ""
             desc = f"Đơn vị / Phòng ban '{d.name}' (Mã: {d.code or d.id}){parent_info} của Học viện Công nghệ Bưu chính Viễn thông."
         
-        dept_payload.append({
-            "code": d.code or (f"DEPT_{d.id}" if d.id else str(d.department_id)),
-            "name": d.name,
-            "description": desc.strip()
+        units.append({
+            "ma_don_vi": d.code or (str(d.id) if d.id is not None else str(d.department_id)),
+            "id": d.id,
+            "ten_hien_thi": d.ten_hien_thi or d.name,
+            "nhom": d.loai_don_vi or "Đơn vị tiếp nhận",
+            "mo_ta": desc.strip(),
+            "has_seal": bool(d.has_seal),
         })
-    return dept_payload
+    return {"label": "Danh mục đơn vị tiếp nhận từ Web", "units": units}
 
 
 def get_all_departments_service(db: Session):

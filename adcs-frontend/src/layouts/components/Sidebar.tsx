@@ -27,6 +27,7 @@ const NAV_ITEMS = [
     children: [
       { icon: 'group', label: 'Tài khoản', path: '/admin/users' },
       { icon: 'shield_person', label: 'Nhóm quyền', path: '/admin/roles' },
+      { icon: 'sync', label: 'Nguồn và đồng bộ', path: '/admin/crawler-sources' },
       { icon: 'tune', label: 'Cấu hình AI', path: '/admin/ai-config' },
     ],
   },

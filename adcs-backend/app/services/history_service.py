@@ -1,3 +1,4 @@
+from app.core.data_service import data_service
 import os
 import html
 import httpx
@@ -49,14 +50,16 @@ async def fetch_processing_history(
 
     raw_data = {"total": 0, "results": []}
     try:
-        async with httpx.AsyncClient() as client:
+        async with data_service as client:
             response = await client.get(url, params=params, timeout=10.0)
             if response.status_code == 200:
                 raw_data = response.json()
             else:
                 logger.warning(f"Data Service trả về mã {response.status_code}")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.warning(f"Lỗi kết nối khi gọi Data Service (History API): {e}")
+        raise HTTPException(502, 'Phản hồi lịch sử từ Data Service không hợp lệ') from None
 
     # Nếu là Admin, trả về toàn bộ dữ liệu từ Data Service
     if is_admin:
@@ -68,14 +71,16 @@ async def fetch_processing_history(
     user_docs = []
     if db and user:
         user_docs = db.query(Document).filter(
-            Document.uploaded_by_user_id == str(user.user_id)
+            Document.uploaded_by_user_id == str(user.user_id), Document.deleted_at.is_(None)
         ).order_by(Document.created_at.desc()).all()
 
     user_doc_ids = {str(doc.document_id).lower() for doc in user_docs}
     filtered_results = []
     seen_matched_ids = set()
     for item in results:
-        did = str(item.get("document_id") or "").strip().lower()
+        did = str(item.get("web_document_id") or item.get("document_id") or "").strip().lower()
+        if did in user_doc_ids:
+            item = dict(item, document_id=did)
         if did in user_doc_ids:
             filtered_results.append(item)
             seen_matched_ids.add(did)
@@ -89,7 +94,7 @@ async def fetch_processing_history(
             vec_stat = "success" if status_val in ["processed", "approved"] else "pending"
             
             filtered_results.append({
-                "id": hash(str(doc.document_id)) % 10000000,
+                "id": "web:" + str(doc.document_id),
                 "request_id": str(doc.document_id)[:8],
                 "action_type": "upload",
                 "filename": doc.original_filename,
@@ -122,7 +127,13 @@ async def fetch_processing_history(
 
 
 
-async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict:
+async def fetch_history_detail(history_id: str, db: Session, user: User) -> dict:
+    if str(history_id).startswith('web:'):
+        return await fetch_document_processing_detail(str(history_id)[4:], db, user)
+    try:
+        history_id = int(history_id)
+    except (TypeError, ValueError):
+        raise HTTPException(422, 'Mã lịch sử không hợp lệ')
     """
     Lấy chi tiết một lượt xử lý từ Data Service và làm giàu bằng dữ liệu từ Web DB.
     """
@@ -130,7 +141,7 @@ async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict
     raw_history_item = None
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with data_service as client:
             # Lấy danh sách lịch sử để tìm record theo id
             res = await client.get(url, params={"limit": 200})
             if res.status_code == 200:
@@ -140,6 +151,8 @@ async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict
                     if item.get("id") == history_id:
                         raw_history_item = item
                         break
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning(f"Lỗi khi truy vấn Data Service history list: {e}")
 
@@ -155,10 +168,12 @@ async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict
     if doc_id:
         try:
             doc_detail_url = f"{DATA_SERVICE_URL}/api/v1/documents/{doc_id}/detail"
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with data_service as client:
                 res_doc = await client.get(doc_detail_url)
                 if res_doc.status_code == 200:
                     doc_data = res_doc.json()
+        except HTTPException:
+            raise
         except Exception as e:
             logger.warning(f"Không thể lấy chi tiết document_id={doc_id} từ Data Service: {e}")
 
@@ -166,7 +181,7 @@ async def fetch_history_detail(history_id: int, db: Session, user: User) -> dict
     # Filenames and summaries are not evidence of ownership.
     if not isinstance(doc_data, dict):
         doc_data = {}
-    canonical_id = doc_id if is_uuid(doc_id) else (doc_data.get("web_document_id") or doc_data.get("document_id"))
+    canonical_id = raw_history_item.get("web_document_id") or (doc_id if is_uuid(doc_id) else (doc_data.get("web_document_id") or doc_data.get("document_id")))
     doc_web = get_document_by_id(db, canonical_id) if is_uuid(canonical_id) else None
     if not is_system_admin(user) and (not doc_web or not can_user_access_document(doc_web, user)):
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập lịch sử tài liệu này")
@@ -325,15 +340,17 @@ async def fetch_document_processing_detail(document_id: str, db: Session, user: 
     history_item = None
     try:
         url = f"{DATA_SERVICE_URL}/api/v1/history"
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with data_service as client:
             res = await client.get(url, params={"limit": 200})
             if res.status_code == 200:
                 data = res.json()
                 results = data.get("results", []) if isinstance(data, dict) else data
                 for item in results:
-                    if item.get("document_id") and str(item.get("document_id")) == str(doc_web.document_id):
+                    if str(item.get("web_document_id") or item.get("document_id")) == str(doc_web.document_id):
                         history_item = item
                         break
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning(f"Không thể tra cứu Data Service history cho document_id={document_id}: {e}")
 

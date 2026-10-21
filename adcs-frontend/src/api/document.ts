@@ -1,4 +1,5 @@
 import axiosClient from "./axiosClient";
+import { isAxiosError } from 'axios';
 
 export type UploadResponse = {
   document_id: string;
@@ -6,6 +7,15 @@ export type UploadResponse = {
 };
 
 export type DocumentResponse = {
+  source_type?: string;
+  source_name?: string;
+  sync_status?: string;
+  sync_warnings?: string[];
+  duplicate_document_id?: string | null;
+  duplicate_reasons?: string[];
+  possible_duplicate_count?: number;
+  similarity?: number | null;
+
   document_id: string;
   title?: string | null;
   document_number?: string | null;
@@ -80,7 +90,44 @@ export type DocumentResponse = {
   local_path?: string | null;
 };
 
-export type ApproveAIResultRequest = Partial<DocumentResponse>;
+const editableFields = [
+  'assigned_department_id', 'assigned_user_id', 'so_den', 'so_ky_hieu', 'trich_yeu',
+  'loai_van_ban_text', 'don_vi_ban_hanh', 'nguoi_ky', 'chuc_vu_nguoi_ky',
+  'ngay_van_ban', 'ngay_het_han', 'do_khan', 'noi_nhan', 'can_cu_phap_ly',
+  'yeu_cau_hanh_dong', 'summary',
+] as const;
+
+export type ApproveAIResultRequest = Partial<Pick<DocumentResponse, typeof editableFields[number]>> & {
+  status?: 'approved';
+};
+
+export function buildAIResultUpdate(data: Partial<DocumentResponse>, original?: DocumentResponse): ApproveAIResultRequest {
+  const entries = editableFields.flatMap(field => {
+    if (data[field] === undefined) return [];
+    let value = data[field];
+    if (['assigned_department_id', 'assigned_user_id', 'ngay_van_ban', 'ngay_het_han'].includes(field) && value === '') value = null;
+    if (Array.isArray(value)) value = value.map(item => item.trim()).filter(Boolean);
+    if (original && JSON.stringify(value) === JSON.stringify(original[field] ?? null)) return [];
+    return [[field, value]];
+  });
+  return Object.fromEntries(entries);
+}
+
+export function documentUpdateError(error: unknown): string {
+  if (isAxiosError(error)) {
+    const detail = error.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      const labels: Record<string, string> = {
+        assigned_department_id: 'Phòng ban xử lý', assigned_user_id: 'Người xử lý',
+        ngay_van_ban: 'Ngày ban hành', ngay_het_han: 'Ngày hết hạn', ngay_den: 'Ngày đến',
+      };
+      const fields = detail.map(item => labels[item.loc?.[1]] || item.loc?.[1]).filter(Boolean);
+      if (fields.length) return `Vui lòng kiểm tra thông tin: ${[...new Set(fields)].join(', ')}.`;
+    }
+  }
+  return error instanceof Error ? error.message : 'Không thể cập nhật văn bản';
+}
 
 export type ApproveAIResultResponse = {
   message: string;
@@ -102,7 +149,11 @@ export interface SearchParams {
   department_id?: string;
   document_type?: string;
   document_type_ids?: string[];
-  sort_by?: 'confidence' | 'newest';
+  sort_by?: 'confidence' | 'relevance' | 'newest';
+  search_mode?: 'hybrid' | 'semantic' | 'keyword' | 'exact';
+  source_type?: string;
+  status?: string;
+  do_khan?: string;
   page?: number;
   limit?: number;
   page_size?: number;
@@ -116,6 +167,7 @@ export interface SearchAIResponse {
   page?: number;
   page_size?: number;
   total_pages?: number;
+  warnings?: string[];
 }
 
 export async function uploadDocument(file: File, is_save_file: boolean): Promise<UploadResponse> {
@@ -133,7 +185,10 @@ export async function approveAIResult(
   documentId: string,
   payload: ApproveAIResultRequest
 ): Promise<ApproveAIResultResponse> {
-  return axiosClient.put(`/documents/${documentId}/ai-result`, payload);
+  return axiosClient.put(`/documents/${documentId}/ai-result`, {
+    ...buildAIResultUpdate(payload),
+    ...(payload.status === 'approved' ? { status: 'approved' } : {}),
+  });
 }
 
 export async function getDashboardStats(): Promise<DashboardStatsResponse> {
@@ -156,6 +211,9 @@ export async function deleteDocument(documentId: string, force: boolean = false)
 export async function searchDocuments(params: SearchParams): Promise<SearchAIResponse> {
   const query = new URLSearchParams();
   
+  for (const key of ['search_mode', 'source_type', 'status', 'do_khan'] as const) {
+    if (params[key]) query.append(key, params[key]);
+  }
   if (params.query) query.append('query', params.query);
   if (params.start_date) query.append('start_date', params.start_date);
   if (params.end_date) query.append('end_date', params.end_date);
@@ -173,6 +231,15 @@ export async function searchDocuments(params: SearchParams): Promise<SearchAIRes
 }
 
 export type MyDocumentItem = {
+  source_type?: string;
+  source_name?: string;
+  sync_status?: string;
+  sync_warnings?: string[];
+  duplicate_document_id?: string | null;
+  duplicate_reasons?: string[];
+  possible_duplicate_count?: number;
+  similarity?: number | null;
+
   document_id: string;
   original_filename: string;
   file_size_bytes?: number | null;

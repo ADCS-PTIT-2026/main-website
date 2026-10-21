@@ -1,80 +1,87 @@
-import httpx
 import io
 import zipfile
 import hashlib
 import os
 from pathlib import Path
-from fastapi import BackgroundTasks, HTTPException, UploadFile
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 from dotenv import load_dotenv
 
-from app.db.session import SessionLocal
-from app.core.document_websocket import manager
 from app.crud import translation as crud_translation
 from app.core.logger import logger
 from app.core.authorization import is_system_admin
 
 load_dotenv()
-DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
-DATA_SERVICE_TRANSLATE_URL = f"{DATA_SERVICE_URL}/api/v1/translate"
 
 def get_file_hash(content: bytes) -> str:
-    """Tạo mã băm MD5 để kiểm tra nội dung file có trùng lặp không."""
-    return hashlib.md5(content).hexdigest()
+    return hashlib.sha256(content).hexdigest()
 
-async def handle_translation_upload(
-    files: List[UploadFile],
-    user_id: str,
-    db: Session,
-    background_tasks: BackgroundTasks
-):
-    """Xử lý logic tải file lên, kiểm tra trùng lặp và đẩy vào hàng đợi dịch thuật."""
-    logger.info(f"Bắt đầu xử lý upload {len(files)} file dịch thuật cho user_id: {user_id}")
-    
-    existing_hashes = crud_translation.get_user_translation_hashes(db, user_id)
-    
-    duplicate_count = 0
-    processed_files = []
 
-    for file in files:
-        content = await file.read()
-        file_hash = get_file_hash(content)
+async def handle_translation_upload(files, user_id, db, background_tasks=None, source_lang="vi", target_lang="en"):
+    from uuid import uuid4
+    from sqlalchemy import text
+    from app.core.data_service import enabled
+    from app.models.translation import TranslationLog
+    from app.services.integration_service import enqueue_processing
+    if not enabled('DS_TRANSLATION_JOBS_ENABLED') or not enabled('INTEGRATION_WORKER_ENABLED') or not enabled('DS_JOB_IDEMPOTENCY_CONFIRMED'):
+        raise HTTPException(503, 'Dịch bất đồng bộ chưa được bật hoặc chưa xác nhận hợp đồng chống tạo job lặp')
+    languages = {'vi', 'en', 'zh', 'fr', 'ru'}
+    if source_lang not in languages | {'auto'} or target_lang not in languages or source_lang == target_lang:
+        raise HTTPException(422, 'Ngôn ngữ nguồn/đích không hợp lệ')
+    root = Path(os.getenv('TRANSLATION_INPUT_DIR', '/mnt/data2tb/adcs/uploads/translations')).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    processed, duplicates, written = [], 0, []
+    try:
+        # Serializes same-user concurrent uploads; uniqueness includes language pair.
+        db.execute(text('SELECT pg_advisory_xact_lock(hashtext(:user))'), {'user': 'translation:'+str(user_id)})
+        for file in files:
+            content = await file.read(int(os.getenv('TRANSLATION_MAX_BYTES', '52428800')) + 1)
+            if not content or len(content) > int(os.getenv('TRANSLATION_MAX_BYTES', '52428800')):
+                raise HTTPException(413, 'Tệp rỗng hoặc vượt giới hạn dung lượng')
+            ext = Path(file.filename or '').suffix.lower()
+            if ext not in {'.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg'}:
+                raise HTTPException(422, 'Định dạng tệp không được hỗ trợ')
+            digest = get_file_hash(content)
+            db.flush()
+            duplicate = db.query(TranslationLog).filter_by(user_id=str(user_id), file_hash=digest,
+                source_language=source_lang, target_language=target_lang).filter(TranslationLog.status.notin_(['failed', 'cancelled'])).first()
+            if duplicate:
+                duplicates += 1
+                continue
+            ref = uuid4()
+            path = root / f'{ref}{ext}'
+            path.write_bytes(content)
+            path.chmod(0o600)
+            written.append(path)
+            log = TranslationLog(id=ref, user_id=user_id, filename=Path(file.filename).name, file_type=ext[1:],
+                file_hash=digest, source_language=source_lang, target_language=target_lang, input_path=str(path), status='pending', job_status='queued')
+            db.add(log)
+            enqueue_processing(db, ref, kind='translation', priority=2)
+            processed.append(log)
+        db.commit()
+    except Exception:
+        db.rollback()
+        for path in written:
+            path.unlink(missing_ok=True)
+        raise
+    return {'message': 'Đã tiếp nhận tài liệu vào hàng đợi', 'duplicate_count': duplicates, 'processed_files': processed}
 
-        if file_hash in existing_hashes:
-            duplicate_count += 1
-            logger.info(f"Bỏ qua file trùng lặp: {file.filename} (Hash: {file_hash})")
-            continue
 
-        file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else 'unknown'
-        
-        new_log = crud_translation.create_translation_log(
-            db=db, 
-            user_id=user_id, 
-            filename=file.filename, 
-            file_type=file_ext, 
-            file_hash=file_hash
-        )
-        
-        processed_files.append(new_log)
-        existing_hashes.add(file_hash)
-        
-        logger.info(f"Đã tạo bản ghi dịch thuật: {new_log.id} cho file {file.filename}")
-
-        background_tasks.add_task(
-            process_translation_background,
-            log_id=str(new_log.id),
-            file_content=content,
-            filename=file.filename,
-            client_id=user_id
-        )
-
-    logger.info(f"Hoàn tất upload cho user_id {user_id}. Thành công: {len(processed_files)}, Trùng lặp: {duplicate_count}")
-    return {
-        "message": "Đã tiếp nhận danh sách tài liệu",
-        "duplicate_count": duplicate_count,
-        "processed_files": processed_files
-    }
+async def cancel_translation(db, log_id, current_user):
+    from app.core.data_service import data_service
+    from app.models.integration import ProcessingJob
+    log = _authorized_translation_log(db, log_id, current_user)
+    job = db.query(ProcessingJob).filter_by(reference_id=log.id).with_for_update().first()
+    if not job or job.status not in ('queued', 'processing', 'retry_wait'):
+        raise HTTPException(409, 'Chỉ hủy được bản dịch đang chờ')
+    if log.ds_job_id:
+        await data_service.post(f'/api/v1/translate/jobs/{log.ds_job_id}/cancel')
+    elif job.status != 'queued':
+        raise HTTPException(409, 'Job đang được gửi; vui lòng thử lại sau khi có trạng thái')
+    log.status = log.job_status = 'cancelled'
+    job.status = 'cancelled'
+    db.commit()
+    return {'message': 'Đã hủy bản dịch'}
 
 def get_user_translation_list(db: Session, current_user, user_id=None):
     """Lấy danh sách bản dịch của user."""
@@ -110,65 +117,15 @@ def delete_translation_service(db: Session, log_id: str, current_user):
         logger.warning(f"Thất bại khi xóa: Không tìm thấy log_id {log_id}")
         raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi")
     
+    from app.models.integration import ProcessingJob
+    job = db.query(ProcessingJob).filter_by(reference_id=log.id).first()
+    if job and job.status in ('queued', 'processing', 'retry_wait', 'needs_review'):
+        raise HTTPException(409, 'Hãy hủy hoặc đối soát tác vụ trước khi xóa')
+    if job:
+        db.delete(job)
     crud_translation.delete_translation_log(db, log_id)
     logger.info(f"Đã xóa thành công bản ghi dịch thuật log_id: {log_id}")
     return {"message": "Đã xóa tài liệu thành công"}
-
-async def process_translation_background(log_id: str, file_content: bytes, filename: str, client_id: str):
-    """Background Task: Giao tiếp với Data Service để dịch thuật."""
-    db = SessionLocal()
-    logger.info(f"[Background Task] Bắt đầu xử lý dịch thuật cho log_id: {log_id} ({filename})")
-    
-    try:
-        log = crud_translation.get_translation_log_by_id(db, log_id)
-        if not log: 
-            logger.error(f"[Background Task] Không tìm thấy log_id {log_id} trong DB")
-            return
-
-        crud_translation.update_translation_status(db, log, status="translating")
-
-        async with httpx.AsyncClient(timeout=600.0) as client:
-            files = {"file": (filename, file_content)}
-            data = {"source_lang": log.source_language, "target_lang": log.target_language}
-            
-            logger.info(f"[Background Task] Đang gửi {filename} sang Data Service...")
-            response = await client.post(DATA_SERVICE_TRANSLATE_URL, files=files, data=data)
-            response.raise_for_status()
-            
-            content_type = response.headers.get("content-type", "")
-            
-            if "application/json" in content_type:
-                res_data = response.json()
-                result_url = res_data.get("download_url")
-            else:
-                logger.info(f"[Background Task] Data Service trả về file nhị phân ({content_type}). Đang lưu file...")
-                
-                save_dir = os.getenv("TRANSLATION_DOWNLOAD_DIR", "static/downloads")
-                os.makedirs(save_dir, exist_ok=True)
-                
-                file_path = os.path.join(save_dir, f"translated_{log_id}.docx")
-                with open(file_path, "wb") as f:
-                    f.write(response.content)
-                
-                result_url = f"/{file_path}"
-
-        crud_translation.update_translation_status(db, log, status="success", result_url=result_url)
-        logger.info(f"[Background Task] Hoàn tất dịch thuật log_id: {log_id}. Trạng thái: success")
-
-        await manager.send_personal_message({"type": "TRANSLATION_SUCCESS", "id": log_id}, client_id)
-
-    except httpx.HTTPStatusError as e:
-        logger.error(f"[Background Task] Lỗi HTTP từ Data Service (log_id: {log_id}): {e.response.status_code} - {e.response.text}")
-        log = crud_translation.get_translation_log_by_id(db, log_id)
-        if log:
-            crud_translation.update_translation_status(db, log, status="failed")
-    except Exception as e:
-        logger.error(f"[Background Task] Lỗi hệ thống khi xử lý dịch thuật (log_id: {log_id}): {str(e)}", exc_info=True)
-        log = crud_translation.get_translation_log_by_id(db, log_id)
-        if log:
-            crud_translation.update_translation_status(db, log, status="failed")
-    finally:
-        db.close()
 
 def _download_path(value: str):
     root = Path(os.getenv("TRANSLATION_DOWNLOAD_DIR", "static/downloads")).resolve()

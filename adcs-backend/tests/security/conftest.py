@@ -24,7 +24,7 @@ os.environ.update({
     "TELEGRAM_BOT_TOKEN": "synthetic-telegram-token", "TELEGRAM_WEBHOOK_SECRET": "synthetic-webhook-secret",
     "TELEGRAM_BOT_NAME": "audit_bot", "SERVICE_INTERNAL_KEY": "synthetic-service-key",
     "QLVB_API_KEY": "synthetic-qlvb-key", "QLVB_BASE_URL": "https://qlvb.invalid",
-    "AI_SERVICE_URL": "https://ai.invalid/analyze", "DATA_SERVICE_URL": "https://data.invalid",
+    "DATA_SERVICE_API_KEY": "synthetic-backend-key", "AI_SERVICE_URL": "https://ai.invalid/analyze", "DATA_SERVICE_URL": "https://data.invalid",
     "PTIT_CLIENT_ID": "audit-client", "PTIT_REDIRECT_URI": "http://127.0.0.1:15173/auth/callback",
     "PTIT_ISSUER": "https://sso.invalid/realms/ptit",
     "PTIT_AUTH_ENDPOINT": "https://sso.invalid/realms/ptit/protocol/openid-connect/auth",
@@ -151,5 +151,5 @@ def history_data(monkeypatch):
             async def __aexit__(self, *args): pass
             async def get(self, url, **kwargs):
                 return SimpleNamespace(status_code=200, json=lambda: {"results": results} if url.endswith("/history") else (detail or {}))
-        monkeypatch.setattr("app.services.history_service.httpx.AsyncClient", FakeClient)
+        monkeypatch.setattr("app.services.history_service.data_service", FakeClient())
     return set_results

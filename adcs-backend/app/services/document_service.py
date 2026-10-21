@@ -124,6 +124,41 @@ def repair_truncated_json(json_str: str) -> str:
     return json_str
 
 
+def normalize_ai_response(result):
+    """Unwrap legacy JSON without accepting a truncated summary as full analysis."""
+    if not isinstance(result, dict):
+        return None
+    result = dict(result)
+    storage = result.get('storage_info') or {}
+    if storage.get('action') == 'duplicate' or storage.get('is_duplicate'):
+        return result
+    nested = result.get('key_information')
+    invalid_json = False
+    if isinstance(nested, str) and nested.strip():
+        raw = nested.strip()
+        if raw.startswith('```'):
+            raw = '\n'.join(raw.splitlines()[1:])
+            raw = raw.removesuffix('```').strip()
+        try:
+            parsed = json.loads(raw)
+        except (ValueError, TypeError):
+            try:
+                parsed = json.loads(repair_truncated_json(raw))
+            except (ValueError, TypeError):
+                parsed = None
+        if isinstance(parsed, dict):
+            result.update(parsed)
+        else:
+            invalid_json = True
+        # Repair can recover the summary alone while the metadata was never generated.
+        invalid_json = invalid_json or not isinstance(result.get('extracted_fields'), dict) or (
+            isinstance(parsed, dict) and 'extracted_fields' not in parsed and not result.get('extracted_fields')
+        )
+        if invalid_json and not result.get('extracted_fields'):
+            result.update(trang_thai='error', error_code='AI_INVALID_RESPONSE')
+    return result
+
+
 async def send_to_ai_service(
     file_content: bytes, 
     filename: str, 
@@ -315,21 +350,7 @@ async def process_document_background(
     db = SessionLocal()
     try:
         ai_res = await send_to_ai_service(file_content, filename, is_save_file)
-        logger.info(f"AI results: {ai_res}")
-        
-        # Thử sửa lỗi và parse key_information nếu AI Service trả về chuỗi JSON lỗi
-        if ai_res and "key_information" in ai_res and isinstance(ai_res["key_information"], str):
-            try:
-                info_dict = json.loads(ai_res["key_information"])
-                ai_res.update(info_dict)
-            except json.JSONDecodeError:
-                repaired_json = repair_truncated_json(ai_res["key_information"])
-                try:
-                    info_dict = json.loads(repaired_json)
-                    logger.info(f"Đã sửa đổi và parse thành công key_information bị cắt cụt: {info_dict}")
-                    ai_res.update(info_dict)
-                except Exception as parse_err:
-                    logger.warning(f"Không thể parse key_information kể cả sau khi sửa: {str(parse_err)}")
+        ai_res = normalize_ai_response(ai_res)
 
         doc = db.query(Document).filter(Document.document_id == document_id).first()
         if not doc:
@@ -516,91 +537,28 @@ def get_dashboard_stats_service(db: Session, user: Optional[User] = None):
     return get_document_stats(db, user=user)
 
 def get_recent_documents_service(db: Session, limit: int = 5, user: Optional[User] = None):
-    return get_documents(db, limit=limit, user=user)
+    from app.services.integration_service import serialize_document
+    return [serialize_document(db, doc, user) for doc in get_documents(db, limit=limit, user=user)]
 
 def get_all_documents(db: Session, user: Optional[User] = None):
-    return get_documents(db, user=user)
+    from app.services.integration_service import serialize_document
+    return [serialize_document(db, doc, user) for doc in get_documents(db, user=user)]
 
 
-async def search_in_data_service(query: str, start_date: str = None, end_date: str = None, muc: str = None):
-    req_id = request_id_var.get()
-    logger.info(f"Gửi yêu cầu tìm kiếm tới Data Service. query='{query}'")
-    
-    payload = {"query": query, "from_date": start_date, "to_date": end_date, "muc": muc}
-    headers = {"X-Request-ID": req_id}
-    
-    try:
-        response = await http_client.client.post(
-            DATA_SERVICE_SEARCH_URL, 
-            json=payload, 
-            timeout=30,
-            headers=headers
-        )
-        response.raise_for_status()
-        logger.info(f"Tìm kiếm AI thành công.")
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
-        return {"error": "Data Service không phản hồi đúng cách"}
-    except Exception as e:
-        logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
-        return {"error": "Không thể kết nối đến Data Service"}
-        
+async def search_in_data_service(query: str, start_date=None, end_date=None, muc=None):
+    from app.core.data_service import data_service
+    return (await data_service.post('/api/v1/search/documents', json={
+        'query': query, 'from_date': start_date, 'to_date': end_date, 'muc': muc})).json()
+
 
 async def delete_in_data_service(document_id: str):
-    req_id = request_id_var.get()
-    logger.info(f"Yêu cầu xóa tài liệu khỏi Vector DB. document_id={document_id}")
-    
-    headers = {"X-Request-ID": req_id}
-    try:
-        url = f"{DATA_SERVICE_DOCUMENT_URL}/{document_id}"
+    from app.core.data_service import data_service
+    return (await data_service.delete(f'/api/v1/documents/{document_id}')).json()
 
-        response = await http_client.client.delete(
-            url, 
-            timeout=10.0,
-            headers=headers
-        )
-        response.raise_for_status()
-        
-        logger.info(f"Xóa tài liệu thành công trên Data Service. document_id={document_id}")
-        return response.json()
 
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Data Service từ chối xóa tài liệu {document_id}. Lỗi: {e.response.text}")
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"Data Service error: {e.response.text}"
-        )
-    except Exception as e:
-        logger.error(f"Lỗi hệ thống khi cố gắng gọi API xóa tài liệu {document_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Lỗi hệ thống xử lý dữ liệu: {str(e)}"
-        )
-    
 async def get_detail_document_in_data_service(document_id: str):
-    req_id = request_id_var.get()
-    logger.info(f"Gửi yêu cầu lấy chi tiết tài liệu tới Data Service. document_id={document_id}")
-
-    headers = {"X-Request-ID": req_id}
-    
-    try:
-        url = f"{DATA_SERVICE_DOCUMENT_URL}/{document_id}/detail"
-        response = await http_client.client.get(
-            url, 
-            timeout=10,
-            headers=headers
-        )
-        response.raise_for_status()
-
-        logger.info(f"Lấy chi tiết tài liệu thành công trên Data Service. document_id={document_id}")
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Lỗi HTTP từ Data Service (Search): {e.response.text}")
-        return {"error": "Data Service không phản hồi đúng cách"}
-    except Exception as e:
-        logger.error(f"Lỗi kết nối khi gọi Data Service (Search): {str(e)}", exc_info=True)
-        return {"error": "Không thể kết nối đến Data Service"}
+    from app.core.data_service import data_service
+    return (await data_service.get(f'/api/v1/documents/{document_id}/detail')).json()
 
 
 def search_documents_combined_service(
@@ -613,7 +571,8 @@ def search_documents_combined_service(
     document_type: Optional[str] = None,
     page: int = 1,
     page_size: int = 20,
-    sort_by: Optional[str] = "newest"
+    sort_by: Optional[str] = "newest",
+    source_type=None, document_status=None, do_khan=None
 ):
     from app.crud.document import build_document_scope_query
     from sqlalchemy import or_, func
@@ -668,6 +627,12 @@ def search_documents_combined_service(
     if document_type and document_type.strip() and document_type.lower() != "all":
         db_query = db_query.filter(Document.loai_van_ban_text.ilike(f"%{document_type.strip()}%"))
 
+    if source_type:
+        db_query = db_query.filter(Document.source_type == source_type)
+    if document_status:
+        db_query = db_query.filter(Document.status == document_status)
+    if do_khan:
+        db_query = db_query.filter(Document.do_khan == do_khan)
     total = db_query.count()
 
     # Sắp xếp

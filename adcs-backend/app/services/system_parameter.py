@@ -19,6 +19,13 @@ def get_system_parameters_service(db: Session) -> Dict[str, str]:
 
 def validate_system_parameters(payload: Dict[str, str]):
     """Kiểm tra tính hợp lệ của các tham số cấu hình AI (W13)"""
+    if "searchSimilarityThreshold" in payload:
+        try:
+            value = float(payload['searchSimilarityThreshold'])
+            if not 0 <= value <= 1:
+                raise ValueError()
+        except (TypeError, ValueError):
+            raise HTTPException(422, 'Ngưỡng tìm kiếm phải từ 0 đến 1')
     if "temperature" in payload:
         try:
             val = float(payload["temperature"])

@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 
 export interface HistoryRecord {
-  id: number;
+  id: number | string;
   request_id: string;
   action_type: string;
   filename: string;
@@ -11,7 +11,7 @@ export interface HistoryRecord {
   status_save_vector: string | null;
   document_type: string;
   suggested_department: string | null;
-  document_id: number | null;
+  document_id: number | string | null;
   attachment_id: number | null;
   error_message: string | null;
   created_at: string;
@@ -25,7 +25,7 @@ export interface HistoryQueryParams {
 }
 
 export interface ProcessingDetail {
-  id: number;
+  id: number | string;
   request_id: string;
   filename: string;
   file_type: string;
@@ -54,7 +54,7 @@ export interface ProcessingDetail {
   processing_time?: number | null;
   source_pages?: number | null;
   attachments?: Array<{
-    attachment_id: number;
+    attachment_id: number | string;
     filename: string;
     file_type: string;
     local_path?: string;
@@ -75,7 +75,7 @@ export async function getProcessingHistory(params: HistoryQueryParams): Promise<
   return axiosClient.get(`/history?${query.toString()}`);
 }
 
-export async function getProcessingDetail(historyId: number): Promise<ProcessingDetail> {
+export async function getProcessingDetail(historyId: number | string): Promise<ProcessingDetail> {
   return axiosClient.get(`/history/${historyId}/detail`);
 }
 
@@ -83,7 +83,7 @@ export async function getDocumentProcessingDetail(documentId: string): Promise<P
   return axiosClient.get(`/history/document/${documentId}/detail`);
 }
 
-export async function sendHistoryTelegram(historyId: number): Promise<{ status: string; message: string }> {
+export async function sendHistoryTelegram(historyId: number | string): Promise<{ status: string; message: string }> {
   return axiosClient.post(`/history/${historyId}/send-telegram`);
 }
 

@@ -1,3 +1,5 @@
+from uuid import UUID
+from typing import Literal
 import os
 import io
 import uuid
@@ -80,16 +82,21 @@ async def search_document_api(
     query: Optional[str] = Query(None, description="Nội dung câu hỏi hoặc từ khóa tìm kiếm"),
     start_date: Optional[str] = Query(None, description="Ngày bắt đầu (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Ngày kết thúc (YYYY-MM-DD)"),
-    department_id: Optional[str] = Query(None, description="Lọc theo phòng ban"),
+    department_id: Optional[UUID] = Query(None, description="Lọc theo phòng ban"),
     document_type: Optional[str] = Query(None, description="Lọc theo loại văn bản"),
     page: int = Query(1, ge=1, description="Trang hiện tại"),
     page_size: int = Query(20, ge=1, le=100, description="Kích thước mỗi trang"),
-    sort_by: Optional[str] = Query("newest", description="Sắp xếp: newest hoặc confidence"),
+    sort_by: Literal['newest', 'confidence', 'relevance'] = Query('newest'),
+    search_mode: Optional[Literal['hybrid', 'semantic', 'keyword', 'exact']] = Query(None),
+    source_type: Optional[Literal['user_upload', 'crawler']] = Query(None),
+    document_status: Optional[str] = Query(None, alias='status'),
+    do_khan: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(PermissionChecker("file.read"))
 ):
     try:
-        results = search_documents_combined_service(
+        from app.services.repository_search import search_repository
+        results = await search_repository(
             db=db,
             current_user=current_user,
             query=query,
@@ -99,9 +106,11 @@ async def search_document_api(
             document_type=document_type,
             page=page,
             page_size=page_size,
-            sort_by=sort_by
+            sort_by=sort_by, search_mode=search_mode, source_type=source_type, document_status=document_status, do_khan=do_khan
         )
         return results
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Lỗi khi tìm kiếm tài liệu: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Lỗi khi tìm kiếm tài liệu: {str(e)}")
@@ -119,7 +128,7 @@ def get_my_documents_api(
     """API lấy danh sách văn bản do chính user tải lên kèm vị trí hàng đợi (W4)"""
     return get_my_documents(
         db=db,
-        user_id=current_user.user_id,
+        user_id=current_user.user_id, user=current_user,
         page=page,
         page_size=page_size,
         status=status,
@@ -134,7 +143,11 @@ async def get_document_detail(
     current_user: User = Depends(PermissionChecker("file.read"))
 ):
     doc, external = await _resolve_document_access(document_id, db, current_user)
-    return doc if doc is not None else external
+    if doc is not None:
+        from fastapi.encoders import jsonable_encoder
+        from app.services.integration_service import serialize_document
+        return serialize_document(db, doc, current_user)
+    return external
 
 
 async def _resolve_document_access(document_id: str, db: Session, user: User):
@@ -145,6 +158,11 @@ async def _resolve_document_access(document_id: str, db: Session, user: User):
         if not isinstance(external, dict) or "error" in external:
             raise HTTPException(status_code=502, detail="Không thể lấy tài liệu từ dịch vụ dữ liệu")
         canonical_id = external.get("web_document_id") or external.get("document_id")
+    if is_uuid(canonical_id):
+        from app.models.document import Document
+        original = db.get(Document, canonical_id)
+        if original and original.deleted_at:
+            raise HTTPException(404, 'Tài liệu đã được xóa')
     doc = get_document_by_id(db, canonical_id) if is_uuid(canonical_id) else None
     if doc:
         if not can_user_access_document(doc, user):
@@ -191,6 +209,14 @@ async def delete_document_api(
         if is_uuid(document_id):
             doc = get_document_by_id(db, document_id)
         
+        from app.models.document import Document
+        if doc is None and is_uuid(document_id):
+            hidden = db.get(Document, document_id)
+            if hidden and hidden.deleted_at:
+                if is_system_admin(current_user) or str(hidden.uploaded_by_user_id) == str(current_user.user_id):
+                    return {'message': 'Yêu cầu xóa đã được ghi nhận trước đó'}
+                raise HTTPException(403, 'Bạn không có quyền xóa tài liệu này')
+
         # Kiểm tra quyền
         is_admin = is_system_admin(current_user)
         if doc:
@@ -200,6 +226,21 @@ async def delete_document_api(
         else:
             if not is_admin:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Chỉ Quản trị viên mới được xóa tài liệu không thuộc phạm vi.")
+
+        from app.core.data_service import enabled
+        if doc and enabled('DS_SYNC_ENABLED'):
+            from datetime import datetime, timezone
+            from app.services.integration_service import enqueue_sync
+            from app.models.integration import ProcessingJob
+            job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).with_for_update().first()
+            if job and job.status in ('processing', 'retry_wait', 'needs_review'):
+                raise HTTPException(409, 'Tác vụ đang chạy hoặc cần đối soát; chưa thể xóa')
+            doc.deleted_at = datetime.now(timezone.utc)
+            enqueue_sync(db, doc, 'delete')
+            if job:
+                job.status = 'cancelled'
+            db.commit()
+            return {'message': 'Đã ẩn tài liệu và ghi nhận yêu cầu đồng bộ xóa'}
 
         # Bước 1: Gọi Data Service để xóa file và vector embedding
         try:
@@ -263,6 +304,8 @@ def update_ai_result_api(
     if not can_user_access_document(doc, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bạn không có quyền chỉnh sửa tài liệu này.")
 
+    if doc.status == 'duplicate' and request.status == 'approved':
+        raise HTTPException(409, 'Tài liệu trùng đã được lưu lịch sử; không phê duyệt lại')
     update_data = request.model_dump(exclude_unset=True)
     updated_doc = update_ai_result(db, document_id, update_data)
 
@@ -279,9 +322,10 @@ def update_ai_result_api(
     else:
         telegram_status = "bot_not_found"
 
+    from app.services.integration_service import serialize_document
     return {
         "message": "Cập nhật thông tin tài liệu thành công!",
-        "document": updated_doc,
+        "document": serialize_document(db, updated_doc, current_user),
         "telegram_notification": telegram_status
     }
 

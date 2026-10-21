@@ -1,3 +1,4 @@
+import DocumentIntegrationState from '../../integration/DocumentIntegrationState';
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { searchDocuments, deleteDocument, type DocumentResponse } from '../../../api/document';
@@ -45,7 +46,20 @@ const COMMON_DOC_TYPES = [
 const DocumentRepositoryPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'confidence' | 'newest'>('newest');
+  const [searchMode, setSearchMode] = useState<'hybrid' | 'semantic' | 'keyword' | 'exact'>('keyword');
+  const [dsSearch, setDsSearch] = useState(false);
+  const [sourceType, setSourceType] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [urgency, setUrgency] = useState('');
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [searchError, setSearchError] = useState('');
+  useEffect(() => {
+    axiosClient.get<never, { data_service_search: boolean }>('/documents/search-capabilities').then((response) => {
+      setDsSearch(Boolean(response.data_service_search));
+      if (response.data_service_search) setSearchMode('hybrid');
+    }).catch(() => setDsSearch(false));
+  }, []);
+  const [sortBy, setSortBy] = useState<'relevance' | 'newest'>('newest');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [selectedDocType, setSelectedDocType] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -98,6 +112,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   const fetchDocuments = async () => {
     setIsLoading(true);
+    setSearchError('');
     try {
       const response = await searchDocuments({
         query: activeQuery.trim() ? activeQuery.trim() : undefined,
@@ -105,11 +120,12 @@ const DocumentRepositoryPage: React.FC = () => {
         end_date: endDate || undefined,
         department_id: selectedDepartment !== 'all' ? selectedDepartment : undefined,
         document_type: selectedDocType !== 'all' ? selectedDocType : undefined,
-        sort_by: sortBy,
+        sort_by: sortBy, search_mode: searchMode, source_type: sourceType || undefined, status: statusFilter || undefined, do_khan: urgency || undefined,
         page: currentPage,
         page_size: ITEMS_PER_PAGE,
       });
 
+      setWarnings(response.warnings || []);
       let resultData: DocumentResponse[] = [];
       let total = 0;
       let pages = 1;
@@ -121,16 +137,7 @@ const DocumentRepositoryPage: React.FC = () => {
       } else if (response) {
         const rawItems = response.data || (response as any).results || (response as any).items || [];
 
-        resultData = rawItems.map((item: any) => {
-          if (item.document) {
-            return {
-              document_id: item.document_id,
-              confidence: item.best_similarity,
-              ...item.document,
-            };
-          }
-          return item;
-        });
+        resultData = rawItems;
 
         total = response.total ?? resultData.length;
         pages = response.total_pages ?? Math.ceil(total / ITEMS_PER_PAGE);
@@ -140,6 +147,8 @@ const DocumentRepositoryPage: React.FC = () => {
       setTotalItems(total);
       setTotalPages(pages > 0 ? pages : 1);
     } catch {
+      setSearchError('Không thể tìm kiếm lúc này. Vui lòng thử lại; kết quả chưa được cập nhật.');
+      setWarnings([]);
       setDocuments([]);
       setTotalItems(0);
       setTotalPages(1);
@@ -150,7 +159,7 @@ const DocumentRepositoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [activeQuery, currentPage, selectedDocType, selectedDepartment, startDate, endDate, sortBy]);
+  }, [activeQuery, currentPage, selectedDocType, selectedDepartment, startDate, endDate, sortBy, searchMode, sourceType, statusFilter, urgency]);
 
   useEffect(() => {
     if (selectedDocument) {
@@ -264,6 +273,16 @@ const DocumentRepositoryPage: React.FC = () => {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-display text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {searchError && <p role="alert" className="text-rose-600 dark:text-rose-400">{searchError} <button className="underline" onClick={() => void fetchDocuments()}>Thử lại</button></p>}
+        {!!warnings.length && <p role="status">Tìm kiếm ngữ nghĩa tạm không khả dụng; kết quả đang dùng tìm kiếm từ khóa.</p>}
+        <div className="grid sm:grid-cols-4 gap-3">
+          <label>Chế độ tìm kiếm<select className="block w-full rounded-lg p-2 bg-white dark:bg-slate-800 border" value={searchMode} onChange={e => { setSearchMode(e.target.value as typeof searchMode); setCurrentPage(1); }}>
+            <option value="keyword">Từ khóa</option><option disabled={!dsSearch} value="hybrid">Kết hợp</option><option disabled={!dsSearch} value="semantic">Ngữ nghĩa</option><option disabled={!dsSearch} value="exact">Cụm từ chính xác</option>
+          </select></label>
+          <label>Nguồn<select className="block w-full rounded-lg p-2 bg-white dark:bg-slate-800 border" value={sourceType} onChange={e => { setSourceType(e.target.value); setCurrentPage(1); }}><option value="">Mọi nguồn</option><option value="user_upload">Người dùng</option><option value="crawler">Crawler</option></select></label>
+          <label>Trạng thái<select className="block w-full rounded-lg p-2 bg-white dark:bg-slate-800 border" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}><option value="">Mặc định</option><option value="processed">Đã xử lý</option><option value="approved">Đã duyệt</option><option value="queued">Đang chờ</option><option value="failed">Lỗi</option></select></label>
+          <label>Độ khẩn<select className="block w-full rounded-lg p-2 bg-white dark:bg-slate-800 border" value={urgency} onChange={e => { setUrgency(e.target.value); setCurrentPage(1); }}><option value="">Mọi mức</option><option value="Thường">Thường</option><option value="Khẩn">Khẩn</option><option value="Thượng khẩn">Thượng khẩn</option><option value="Hỏa tốc">Hỏa tốc</option></select></label>
+        </div>
         {/* Khối Tìm kiếm Ngữ nghĩa & Bộ lọc đa chiều */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
           {/* Thanh tìm kiếm lớn */}
@@ -418,8 +437,8 @@ const DocumentRepositoryPage: React.FC = () => {
                 <option value="newest" className="bg-white dark:bg-slate-900">
                   Mới nhất trước
                 </option>
-                <option value="confidence" className="bg-white dark:bg-slate-900">
-                  Độ tương đồng AI
+                <option disabled={!dsSearch} value="relevance" className="bg-white dark:bg-slate-900">
+                  Độ liên quan
                 </option>
               </select>
             </div>
@@ -489,20 +508,21 @@ const DocumentRepositoryPage: React.FC = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
+                      <DocumentIntegrationState document={doc} />
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                         <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors line-clamp-2">
                           {doc.trich_yeu || doc.so_ky_hieu || `Văn bản #${doc.document_id.substring(0, 8)}`}
                         </h3>
 
-                        {doc.confidence != null && (
+                        {doc.similarity != null && (
                           <span
                             className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 self-start ${
-                              doc.confidence >= 0.845
+                              doc.similarity >= 0.845
                                 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
                                 : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'
                             }`}
                           >
-                            AI Match: {Math.round(doc.confidence * 100)}%
+                            Tương đồng: {Math.round(doc.similarity * 100)}%
                           </span>
                         )}
                       </div>
@@ -733,9 +753,9 @@ const DocumentRepositoryPage: React.FC = () => {
                       <span className="material-symbols-outlined text-[16px]">smart_toy</span>
                       Tóm tắt AI
                     </h3>
-                    {selectedDocument.confidence != null && (
+                    {selectedDocument.similarity != null && (
                       <span className="text-[10px] font-bold px-2.5 py-0.5 bg-white dark:bg-slate-800 text-primary rounded-full shadow-sm">
-                        Độ tương đồng: {Math.round(selectedDocument.confidence * 100)}%
+                        Độ tương đồng: {Math.round(selectedDocument.similarity * 100)}%
                       </span>
                     )}
                   </div>

@@ -27,7 +27,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  backend:
+  backend: &backend
     build:
       context: ./adcs-backend
     container_name: backend
@@ -35,7 +35,7 @@ services:
     user: "${ADCS_UID:-1004}:${ADCS_GID:-1004}"
     env_file:
       - ./adcs-backend/.env
-    environment:
+    environment: &backend_environment
       DB_HOST: db
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-postgres}
@@ -67,6 +67,25 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  integration-worker:
+    <<: *backend
+    container_name: adcs-integration-worker
+    profiles: [integration]
+    command: [python, -m, app.services.integration_worker]
+    networks:
+      - adcs_web_network
+    environment:
+      <<: *backend_environment
+      INTEGRATION_WORKER_ENABLED: "true"
+      DS_SYNC_ENABLED: "true"
+      LEGACY_DOCUMENT_WORKER_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import time,pathlib; assert time.time()-pathlib.Path('/tmp/adcs-worker-heartbeat').stat().st_mtime<180"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   frontend:
     build:

@@ -12,10 +12,10 @@
 | Hạng mục | Nội dung kỹ thuật phối hợp với Data Service |
 | :--- | :--- |
 | **Đồng bộ 2 Cơ sở dữ liệu (Dual DB Sync)** | Thiết lập cơ chế **đồng bộ dữ liệu 2 chiều** giữa DB Web (`adcs_db_2` - PostgreSQL) và DB riêng của Data Service. Đảm bảo tính nhất quán (Eventual Consistency) khi có sự kiện: Tạo mới, Cập nhật Metadata, Phê duyệt AI, và Xóa. |
-| **[W11] Chuẩn hóa ID & Xóa đồng bộ 2 nơi** | Bắt buộc dùng chung **`document_id` (chuẩn UUID v4)** làm khóa chính trên cả 2 DB và Vector DB. Khi xóa trên Web, Data Service xóa triệt để cả bản ghi DB, File vật lý và Vector Embeddings. |
+| **[W11] Chuẩn hóa ID & Xóa đồng bộ 2 nơi** | Dùng UUID Web làm định danh chung: `document_id` tại Web và `web_document_id` tại DS; DS giữ khóa chính số nội bộ. Khi xóa trên Web, Data Service xóa triệt để cả bản ghi DB, File vật lý và Vector Embeddings. |
 | **[W10] Nâng cấp API Kho văn bản** | Cập nhật API `POST /api/v1/search/documents`: Hỗ trợ **`query` rỗng** (trả danh sách mặc định mới nhất), hỗ trợ **lọc độc lập theo ngày tháng, phòng ban, loại văn bản** mà không bắt buộc có từ khóa. |
 | **[W3] Phân luồng hàng đợi (User vs Crawler)** | Thống nhất trường độ ưu tiên (`priority`). Văn bản do người dùng tải lên trực tiếp được ưu tiên xử lý trước (`priority=1`), văn bản từ bot crawler xếp sau (`priority=3`). |
-| **[W13] Đồng bộ Cấu hình Tìm kiếm** | Data Service tiếp nhận các tham số tìm kiếm (ngưỡng tương đồng `similarity_threshold`, số lượng văn bản tối đa `top_k`) từ Web. |
+| **[W13] Đồng bộ Cấu hình Tìm kiếm** | Data Service tiếp nhận `similarity_threshold` và phân trang `page/page_size`; `top_k` là alias cũ của `page_size`, không thay thế cấu hình LLM `topK`. |
 | **Cơ chế Đối soát & Bù trừ dữ liệu (Reconciliation)** | Cung cấp API đối soát định kỳ và cơ chế Outbox/Retry để tự phục hồi khi có sự cố mạng giữa 2 service. |
 
 ---
@@ -46,8 +46,8 @@ sequenceDiagram
     DS-->>Web: 200 OK
 
     Note over Web, DS: CHIỀU 2: BOT CRAWLER CÀO ĐƯỢC VĂN BẢN MỚI TỪ BỘ NGÀNH
-    DS->>DS: Crawler thu thập văn bản mới, lưu DB Data Service (priority=3)
-    DS->>Web: POST /api/v1/documents/webhook/crawler-ingest
+    DS->>DS: Crawler sinh UUID, chép tệp dùng chung, lưu outbox giao Web
+    DS->>Web: POST /api/documents/webhook/crawler-ingest
     Web->>Web: Lưu bản ghi tương ứng vào DB Web (hiển thị trên Kho & Dashboard)
     Web-->>DS: 200 OK
 
@@ -68,7 +68,7 @@ Cả 2 cơ sở dữ liệu cần đảm bảo khớp các trường thông tin 
 
 | Tên trường (Field) | Kiểu dữ liệu | Ý nghĩa | Chiều ưu tiên nguồn dữ liệu gốc (Single Source of Truth) |
 | :--- | :--- | :--- | :--- |
-| `document_id` | UUID v4 (string) | **Khóa chính dùng chung** | Sinh ra bởi bên tiếp nhận đầu tiên (Web hoặc Crawler) |
+| `document_id` | UUID v4 (string) | **Định danh chung**; tại DS lưu trong `web_document_id` | Sinh ra bởi bên tiếp nhận đầu tiên (Web hoặc Crawler) |
 | `so_hieu_van_ban` | varchar(255) | Số/Ký hiệu văn bản (VD: `125/QĐ-HV`) | Web cập nhật sau khi Admin/Người dùng duyệt |
 | `so_den` | varchar(255) | Số đến theo sổ văn thư | Web cập nhật |
 | `trich_yeu` | text | Tóm tắt trích yếu nội dung văn bản | Web cập nhật |
@@ -173,8 +173,8 @@ Khi người dùng/chuyên viên kiểm tra, chỉnh sửa thông tin trích xu�
 ### 4.3. [Chiều Data Service -> Web] Webhook Báo Văn bản Thu thập từ Crawler
 Khi bot crawler của Data Service thu thập được văn bản mới từ các cơ quan bên ngoài, Data Service gọi webhook sang Web Backend để ghi nhận vào DB Web:
 * **Method:** `POST`
-* **URL:** `http://<WEB_BACKEND_HOST>:8000/api/v1/documents/webhook/crawler-ingest`
-* **Headers:** `Content-Type: application/json`, `X-Service-Key: <SECRET_KEY>`
+* **URL:** `http://<WEB_BACKEND_HOST>:8000/api/documents/webhook/crawler-ingest`
+* **Headers:** `Content-Type: application/json`, `X-Service-Key: <SERVICE_INTERNAL_KEY của Web>`
 
 #### Request Payload:
 ```json
@@ -302,3 +302,12 @@ API tìm kiếm được nâng cấp để hỗ trợ **`query` rỗng** (mặc 
 
 ---
 
+
+
+## Bổ sung hợp đồng Web sau phản hồi DS 5.0 — 20/10/2026
+
+Web giữ UUID làm định danh dùng chung; DS giữ khóa chính số và trả `web_document_id` để ghép. Mọi request Web → DS gửi khóa `backend` qua `X-Service-Key`; khóa request DS/crawler → Web là `SERVICE_INTERNAL_KEY`, độc lập với JWT và khóa DS.
+
+Web đã bổ sung mã sync/outbox/reconcile, crawler theo phòng ban nguồn, hàng đợi chung, dịch job và giữ lịch sử bản trùng. Hai phần cần DS bổ sung trước khi bật: **lọc `allowed_web_document_ids` trước truy hồi/COUNT/phân trang** (kèm `sort_by=newest|relevance`), và **tạo job dịch idempotent theo `(caller, external_ref)`**, xung đột nội dung/ngôn ngữ trả 409. Các trường chưa hỗ trợ không được bỏ qua âm thầm.
+
+Chi tiết API, cờ tính năng, nghiệm thu và runbook: [Web tích hợp Data Service 5.0](data-service-v5-2026-10-20/README.md). Đây là trạng thái mã Web, chưa phải xác nhận production đã triển khai hoặc đã bật `enforce`.

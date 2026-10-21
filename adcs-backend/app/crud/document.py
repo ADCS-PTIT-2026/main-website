@@ -16,7 +16,7 @@ def build_document_scope_query(db: Session, user: Optional[User] = None):
     - Nếu user có phòng ban: xem văn bản do mình upload HOẶC được gán cho phòng ban của mình.
     - Nếu user không có phòng ban: chỉ xem văn bản do mình upload.
     """
-    query = db.query(Document)
+    query = db.query(Document).filter(Document.deleted_at.is_(None))
     if not user:
         return query
 
@@ -31,7 +31,7 @@ def build_document_scope_query(db: Session, user: Optional[User] = None):
 
 def can_user_access_document(document: Document, user: User) -> bool:
     """Kiểm tra người dùng có quyền truy cập văn bản cụ thể hay không."""
-    if not user:
+    if not user or document.deleted_at:
         return False
     if is_system_admin(user):
         return True
@@ -69,6 +69,9 @@ def create_queued_document(
         is_chua_doc=True
     )
     db.add(doc)
+    from app.services.integration_service import enqueue_sync, enqueue_processing
+    enqueue_sync(db, doc, 'create')
+    enqueue_processing(db, doc.document_id, priority=priority)
     db.commit()
     db.refresh(doc)
     return doc
@@ -77,6 +80,7 @@ def count_user_pending_documents(db: Session, user_id: str) -> int:
     """Đếm số lượng văn bản đang trong hàng đợi hoặc đang xử lý của một người dùng."""
     return db.query(Document).filter(
         Document.uploaded_by_user_id == str(user_id),
+        Document.deleted_at.is_(None),
         Document.status.in_(["queued", "processing", "pending"])
     ).count()
 
@@ -127,14 +131,16 @@ def recover_interrupted_documents(db: Session) -> int:
 
 def get_document_by_id(db: Session, document_id: str) -> Optional[Document]:
     """Lấy thông tin văn bản theo ID."""
-    return db.query(Document).filter(Document.document_id == str(document_id)).first()
+    return db.query(Document).filter(Document.document_id == str(document_id), Document.deleted_at.is_(None)).first()
 
 def update_document_metadata(db: Session, document: Document, data: Dict[str, Any]) -> Document:
     """Cập nhật các trường nghiệp vụ cho bản ghi Document."""
     for field, value in data.items():
-        if hasattr(document, field) and value is not None:
+        if hasattr(document, field):
             setattr(document, field, value)
 
+    from app.services.integration_service import enqueue_sync
+    enqueue_sync(db, document, fields=data.keys())
     db.add(document)
     db.commit()
     db.refresh(document)
@@ -176,10 +182,11 @@ def get_my_documents(
     page: int = 1,
     page_size: int = 20,
     status: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    user: Optional[User] = None
 ) -> dict:
     """Lấy danh sách các tài liệu do chính user tải lên kèm vị trí hàng đợi"""
-    query = db.query(Document).filter(Document.uploaded_by_user_id == user_id)
+    query = db.query(Document).filter(Document.uploaded_by_user_id == user_id, Document.deleted_at.is_(None))
 
     if status and status.strip() != "" and status.lower() != "all":
         query = query.filter(Document.status == status.strip().lower())
@@ -207,6 +214,7 @@ def get_my_documents(
         Document.created_at.desc()
     ).offset(offset).limit(page_size).all()
 
+    from app.services.integration_service import document_public_state
     items = []
     for doc in documents:
         queue_pos = None
@@ -224,6 +232,7 @@ def get_my_documents(
             "file_size_bytes": doc.file_size_bytes,
             "page_count": doc.page_count,
             "status": doc.status,
+            **document_public_state(db, doc, user),
             "queue_position": queue_pos,
             "priority": doc.priority or 1,
             "retry_count": doc.retry_count or 0,
@@ -248,7 +257,7 @@ def get_my_documents(
 
 def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     """Thử lại xử lý văn bản bị lỗi"""
-    doc = db.query(Document).filter(Document.document_id == document_id).first()
+    doc = db.query(Document).filter(Document.document_id == document_id, Document.deleted_at.is_(None)).with_for_update().first()
     if not doc:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu!")
 
@@ -266,13 +275,23 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     doc.error_message = None
     doc.processing_started_at = None
     doc.updated_at = datetime.utcnow()
+    from app.services.integration_service import enqueue_sync
+    enqueue_sync(db, doc)
+    from app.core.data_service import enabled
+    if enabled('INTEGRATION_WORKER_ENABLED'):
+        from app.models.integration import ProcessingJob
+        job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).first()
+        if job and job.status == 'needs_review':
+            raise HTTPException(409, 'Tác vụ có kết quả chưa xác định; cần đối soát trước khi thử lại')
+        if job:
+            job.status = 'queued' if doc.status == 'queued' else 'cancelled'
     db.commit()
     db.refresh(doc)
     return doc
 
 def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     """Hủy văn bản đang chờ trong hàng đợi"""
-    doc = db.query(Document).filter(Document.document_id == document_id).first()
+    doc = db.query(Document).filter(Document.document_id == document_id, Document.deleted_at.is_(None)).with_for_update().first()
     if not doc:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu!")
 
@@ -287,6 +306,16 @@ def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     doc.status = "failed"
     doc.error_message = "Đã hủy bởi người dùng"
     doc.updated_at = datetime.utcnow()
+    from app.services.integration_service import enqueue_sync
+    enqueue_sync(db, doc)
+    from app.core.data_service import enabled
+    if enabled('INTEGRATION_WORKER_ENABLED'):
+        from app.models.integration import ProcessingJob
+        job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).first()
+        if job and job.status == 'needs_review':
+            raise HTTPException(409, 'Tác vụ có kết quả chưa xác định; cần đối soát trước khi thử lại')
+        if job:
+            job.status = 'queued' if doc.status == 'queued' else 'cancelled'
     db.commit()
     db.refresh(doc)
     return doc

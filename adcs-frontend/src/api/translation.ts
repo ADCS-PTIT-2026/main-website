@@ -1,6 +1,6 @@
 import axiosClient from "./axiosClient";
 
-export type FileStatus = 'pending' | 'translating' | 'success' | 'failed';
+export type FileStatus = 'pending' | 'translating' | 'success' | 'failed' | 'cancelled';
 
 export interface TranslationFile {
   id: string;
@@ -10,6 +10,14 @@ export interface TranslationFile {
   comment: string;
   result_file_url?: string;
   error_message?: string;
+  job_status?: string;
+  step?: string;
+  progress_done?: number;
+  progress_total?: number;
+  queue_position?: number;
+  error_code?: string;
+  source_language?: string;
+  target_language?: string;
   created_at: string;
 }
 
@@ -20,8 +28,10 @@ export interface UploadTranslationResponse {
 }
 
 // Gửi file lên backend (Sử dụng FormData)
-export async function uploadTranslationFiles(files: File[]): Promise<UploadTranslationResponse> {
+export async function uploadTranslationFiles(files: File[], sourceLang = 'vi', targetLang = 'en'): Promise<UploadTranslationResponse> {
   const formData = new FormData();
+  formData.append('source_lang', sourceLang);
+  formData.append('target_lang', targetLang);
   files.forEach(file => {
     formData.append("files", file); 
   });
@@ -47,4 +57,7 @@ export async function downloadAllTranslationsZip(): Promise<any> {
   return axiosClient.get(`/translations/download-all/zip`, { 
     responseType: 'blob' 
   });
+}
+export async function cancelTranslation(id: string): Promise<{ message: string }> {
+  return axiosClient.post(`/translations/${id}/cancel`);
 }

@@ -1,4 +1,5 @@
 adcs-backend/.env
+adcs-backend/.env.example
 .env
 .env.security-next
 adcs-frontend/.env
@@ -8,4 +9,6 @@ adcs-backend/logs/
 docs/COORDINATION_AI_SERVICE.md
 docs/COORDINATION_DATA_SERVICE.md
 docs/PLAN_IMPLEMENTATION_DETAIL.md  
-docs/
+docs/*
+!docs/data-service-v5-2026-10-20/
+!docs/data-service-v5-2026-10-20/**
