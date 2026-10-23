@@ -324,6 +324,37 @@ def test_queue_priority_and_waiting_sync_does_not_block_ready_work(document, mon
         assert str(db.get(ProcessingJob, claimed).reference_id) == refs[0]
 
 
+def test_fair_share_round_robin_between_users(document, monkeypatch):
+    from app.services.integration_worker import claim_next_job
+    flags(monkeypatch)
+    ref_a1 = document(owner="owner")
+    ref_a2 = document(owner="owner")
+    ref_b1 = document(owner="other")
+    with SessionLocal() as db:
+        for ref in (ref_a1, ref_a2, ref_b1):
+            doc = db.get(Document, ref)
+            doc.status = 'queued'
+            doc.sync_status = 'synced'
+            enqueue_processing(db, doc.document_id, priority=1)
+        db.commit()
+
+        # Claim 1: Phải là A1 (lượt 1 của owner)
+        claimed_1 = claim_next_job(db)
+        assert str(db.get(ProcessingJob, claimed_1).reference_id) == ref_a1
+        db.get(ProcessingJob, claimed_1).status = 'done'
+        db.commit()
+
+        # Claim 2: Phải là B1 (lượt 1 của other, dù B1 tạo sau A2!)
+        claimed_2 = claim_next_job(db)
+        assert str(db.get(ProcessingJob, claimed_2).reference_id) == ref_b1
+        db.get(ProcessingJob, claimed_2).status = 'done'
+        db.commit()
+
+        # Claim 3: Phải là A2 (lượt 2 của owner)
+        claimed_3 = claim_next_job(db)
+        assert str(db.get(ProcessingJob, claimed_3).reference_id) == ref_a2
+
+
 def test_needs_review_does_not_hold_other_work(document, monkeypatch):
     from app.services.integration_worker import claim_next_job
     flags(monkeypatch); ref = document()

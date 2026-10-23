@@ -297,10 +297,53 @@ def claim_next_job(db):
     if not blocked and waiting and waiting.lease_until <= now():
         job = waiting
     elif not blocked:
-        job = db.query(ProcessingJob).filter(ProcessingJob.status == 'queued').filter(
-            (ProcessingJob.kind == 'translation') | ProcessingJob.reference_id.in_(
-                db.query(Document.document_id).filter(Document.sync_status == 'synced', Document.deleted_at.is_(None), Document.status == 'queued')
-            )).order_by(ProcessingJob.priority, ProcessingJob.created_at, ProcessingJob.id).with_for_update(skip_locked=True).first()
+        fair_share_sql = text("""
+            WITH ready_jobs AS (
+                SELECT 
+                    j.id,
+                    j.priority,
+                    j.created_at,
+                    COALESCE(d.uploaded_by_user_id, t.user_id, '00000000-0000-0000-0000-000000000000'::uuid) AS owner_id,
+                    COALESCE(
+                        CASE 
+                            WHEN j.kind = 'document' THEN (SELECT MAX(processing_started_at) FROM documents WHERE uploaded_by_user_id = d.uploaded_by_user_id)
+                            ELSE (SELECT MAX(updated_at) FROM translation_logs WHERE user_id = t.user_id AND status IN ('translating', 'success'))
+                        END,
+                        '1970-01-01'::timestamptz
+                    ) AS last_served_at
+                FROM processing_jobs j
+                LEFT JOIN documents d ON j.kind = 'document' AND j.reference_id = d.document_id
+                LEFT JOIN translation_logs t ON j.kind = 'translation' AND j.reference_id = t.id
+                WHERE j.status = 'queued'
+                  AND (
+                      (j.kind = 'document' AND d.sync_status = 'synced' AND d.deleted_at IS NULL AND d.status = 'queued')
+                      OR (j.kind = 'translation')
+                  )
+            ),
+            user_top_job AS (
+                SELECT 
+                    id,
+                    priority,
+                    last_served_at,
+                    created_at,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY priority, owner_id 
+                        ORDER BY created_at ASC, id ASC
+                    ) AS user_doc_seq
+                FROM ready_jobs
+            )
+            SELECT id FROM processing_jobs 
+            WHERE id = (
+                SELECT id FROM user_top_job 
+                WHERE user_doc_seq = 1
+                ORDER BY priority ASC, last_served_at ASC, created_at ASC, id ASC 
+                LIMIT 1
+            )
+            FOR UPDATE SKIP LOCKED;
+        """)
+        next_job_id = db.execute(fair_share_sql).scalar()
+        if next_job_id:
+            job = db.get(ProcessingJob, next_job_id)
     if job and job.kind == 'document':
         doc = db.get(Document, job.reference_id)
         if not doc or doc.deleted_at or doc.status == 'duplicate':
@@ -310,6 +353,11 @@ def claim_next_job(db):
             job = None
         else:
             doc.status = 'processing'
+            doc.processing_started_at = now()
+    elif job and job.kind == 'translation':
+        log = db.get(TranslationLog, job.reference_id)
+        if log:
+            log.updated_at = now()
     if job:
         job.status, job.lease_until = 'processing', now() + timedelta(seconds=60)
         job_id = job.id

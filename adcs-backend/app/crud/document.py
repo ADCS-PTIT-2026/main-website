@@ -86,14 +86,42 @@ def count_user_pending_documents(db: Session, user_id: str) -> int:
 
 def claim_next_document_for_processing(db: Session) -> Optional[Document]:
     """
-    Lấy và khóa 1 văn bản có độ ưu tiên cao nhất, chờ lâu nhất trong hàng đợi
-    sử dụng PostgreSQL FOR UPDATE SKIP LOCKED để tránh xung đột giữa các worker.
+    Lấy và khóa 1 văn bản theo cơ chế hàng đợi luân phiên công bằng giữa các user (Fair-Share Round-Robin).
+    Sử dụng PostgreSQL FOR UPDATE SKIP LOCKED để tránh xung đột giữa các worker.
     """
     sql = text("""
+        WITH ready_docs AS (
+            SELECT 
+                document_id,
+                COALESCE(priority, 1) AS prio,
+                created_at,
+                COALESCE(uploaded_by_user_id, '00000000-0000-0000-0000-000000000000'::uuid) AS owner_id,
+                COALESCE(
+                    (SELECT MAX(processing_started_at) FROM documents sub WHERE sub.uploaded_by_user_id = documents.uploaded_by_user_id),
+                    '1970-01-01'::timestamptz
+                ) AS last_served_at
+            FROM documents
+            WHERE status = 'queued' AND retry_count < 3 AND deleted_at IS NULL
+        ),
+        user_top_doc AS (
+            SELECT 
+                document_id,
+                prio,
+                last_served_at,
+                created_at,
+                ROW_NUMBER() OVER (
+                    PARTITION BY prio, owner_id 
+                    ORDER BY created_at ASC, document_id ASC
+                ) AS user_doc_seq
+            FROM ready_docs
+        )
         SELECT document_id FROM documents
-        WHERE status = 'queued' AND retry_count < 3
-        ORDER BY priority ASC, created_at ASC
-        LIMIT 1
+        WHERE document_id = (
+            SELECT document_id FROM user_top_doc
+            WHERE user_doc_seq = 1
+            ORDER BY prio ASC, last_served_at ASC, created_at ASC, document_id ASC
+            LIMIT 1
+        )
         FOR UPDATE SKIP LOCKED;
     """)
     result = db.execute(sql).fetchone()
@@ -214,17 +242,39 @@ def get_my_documents(
         Document.created_at.desc()
     ).offset(offset).limit(page_size).all()
 
+    # Tính trước thứ tự hàng đợi fair-share round-robin cho toàn bộ văn bản queued
+    queued_ranks = {}
+    if any(doc.status == "queued" for doc in documents):
+        fair_share_rank_sql = text("""
+            WITH user_seq AS (
+                SELECT 
+                    d.document_id,
+                    COALESCE(d.priority, 1) AS prio,
+                    d.created_at,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY COALESCE(d.priority, 1), COALESCE(d.uploaded_by_user_id, '00000000-0000-0000-0000-000000000000'::uuid) 
+                        ORDER BY d.created_at ASC, d.document_id ASC
+                    ) AS seq
+                FROM documents d
+                WHERE d.status = 'queued' AND d.deleted_at IS NULL
+            ),
+            ranked AS (
+                SELECT 
+                    document_id,
+                    ROW_NUMBER() OVER (
+                        ORDER BY prio ASC, seq ASC, created_at ASC, document_id ASC
+                    ) AS pos
+                FROM user_seq
+            )
+            SELECT document_id, pos FROM ranked;
+        """)
+        for row in db.execute(fair_share_rank_sql).fetchall():
+            queued_ranks[row.document_id] = row.pos
+
     from app.services.integration_service import document_public_state
     items = []
     for doc in documents:
-        queue_pos = None
-        if doc.status == "queued":
-            # Tính vị trí của tài liệu này trong hàng đợi
-            queue_pos = db.query(func.count(Document.document_id)).filter(
-                Document.status == "queued",
-                (Document.priority < doc.priority) |
-                ((Document.priority == doc.priority) & (Document.created_at <= doc.created_at))
-            ).scalar() or 1
+        queue_pos = queued_ranks.get(doc.document_id) if doc.status == "queued" else None
 
         items.append({
             "document_id": doc.document_id,
