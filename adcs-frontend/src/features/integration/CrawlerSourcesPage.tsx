@@ -86,7 +86,7 @@ export default function CrawlerSourcesPage() {
         </div>)}
       </section>
       <section className="space-y-3"><h2 className="text-lg font-semibold">Tác vụ cần đối soát</h2>
-        <p className="text-sm">Chỉ tiếp tục sau khi xác minh tác vụ cũ đã kết thúc. Tác vụ cần đối soát đang giữ các tác vụ nặng mới ở trạng thái chờ.</p>
+        <p className="text-sm">Xác minh tác vụ để tiếp tục xử lý lại hoặc kết thúc lỗi. Tác vụ cần đối soát không làm ảnh hưởng tới các tác vụ khác trong hàng đợi.</p>
         {health.jobs.filter(job => job.status === 'needs_review').map(job => <div key={job.id} className="border rounded-xl p-3 space-x-3">
           <span>{job.kind} · {job.error_code || job.status}</span>
           <button disabled={saving} className="underline" onClick={() => void action(`/integration/jobs/${job.id}/resolve`, { action: 'resume' })}>Đã xác minh, tiếp tục</button>

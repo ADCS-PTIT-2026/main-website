@@ -324,14 +324,16 @@ def test_queue_priority_and_waiting_sync_does_not_block_ready_work(document, mon
         assert str(db.get(ProcessingJob, claimed).reference_id) == refs[0]
 
 
-def test_needs_review_holds_all_heavy_work(document, monkeypatch):
+def test_needs_review_does_not_hold_other_work(document, monkeypatch):
     from app.services.integration_worker import claim_next_job
     flags(monkeypatch); ref = document()
     with SessionLocal() as db:
         db.add(ProcessingJob(kind='document', reference_id=uuid4(), priority=3, status='needs_review'))
         doc = db.get(Document, ref); doc.status = 'queued'; doc.sync_status = 'synced'
         enqueue_processing(db, doc.document_id); db.commit()
-        assert claim_next_job(db) is None
+        claimed = claim_next_job(db)
+        assert claimed is not None
+        assert db.get(ProcessingJob, claimed).reference_id == doc.document_id
 
 
 def test_sync_ack_preserves_business_timestamp(document, monkeypatch):
@@ -420,7 +422,8 @@ def test_recover_only_expired_leases_and_resume_translation_without_recreating_j
         live.lease_until = datetime.now(timezone.utc)-timedelta(seconds=1); db.commit()
         recover_expired_jobs(db)
         assert live.status == 'needs_review' and db.get(Document, ref).status == 'needs_review'
-        assert claim_next_job(db) is None
+        claimed = claim_next_job(db)
+        assert claimed == expired_translation.id
 
 
 def test_backfill_is_resumable_and_never_requeues_processed_ai(document, monkeypatch):

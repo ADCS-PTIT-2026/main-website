@@ -233,8 +233,8 @@ async def delete_document_api(
             from app.services.integration_service import enqueue_sync
             from app.models.integration import ProcessingJob
             job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).with_for_update().first()
-            if job and job.status in ('processing', 'retry_wait', 'needs_review'):
-                raise HTTPException(409, 'Tác vụ đang chạy hoặc cần đối soát; chưa thể xóa')
+            if job and job.status in ('processing', 'retry_wait'):
+                raise HTTPException(409, 'Tác vụ đang chạy hoặc đang chờ thử lại; chưa thể xóa')
             doc.deleted_at = datetime.now(timezone.utc)
             enqueue_sync(db, doc, 'delete')
             if job:

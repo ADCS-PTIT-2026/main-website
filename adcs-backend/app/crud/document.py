@@ -267,8 +267,8 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if not is_admin and str(doc.uploaded_by_user_id) != str(user.user_id):
         raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện lại xử lý cho tài liệu này!")
 
-    if doc.status not in ["failed", "error"]:
-        raise HTTPException(status_code=400, detail="Chỉ có thể thử lại các văn bản đang ở trạng thái lỗi (failed)!")
+    if doc.status not in ["failed", "error", "needs_review"]:
+        raise HTTPException(status_code=400, detail="Chỉ có thể thử lại các văn bản đang ở trạng thái lỗi hoặc cần đối soát!")
 
     doc.status = "queued"
     doc.retry_count = 0
@@ -281,10 +281,10 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if enabled('INTEGRATION_WORKER_ENABLED'):
         from app.models.integration import ProcessingJob
         job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).first()
-        if job and job.status == 'needs_review':
-            raise HTTPException(409, 'Tác vụ có kết quả chưa xác định; cần đối soát trước khi thử lại')
         if job:
-            job.status = 'queued' if doc.status == 'queued' else 'cancelled'
+            job.status = 'queued'
+            job.error_code = None
+            job.lease_until = None
     db.commit()
     db.refresh(doc)
     return doc
@@ -300,8 +300,8 @@ def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if not is_admin and str(doc.uploaded_by_user_id) != str(user.user_id):
         raise HTTPException(status_code=403, detail="Bạn không có quyền hủy tài liệu này!")
 
-    if doc.status != "queued":
-        raise HTTPException(status_code=400, detail="Chỉ có thể hủy văn bản khi đang ở trạng thái chờ trong hàng đợi (queued)!")
+    if doc.status not in ["queued", "needs_review"]:
+        raise HTTPException(status_code=400, detail="Chỉ có thể hủy văn bản khi đang ở trạng thái chờ trong hàng đợi hoặc cần đối soát!")
 
     doc.status = "failed"
     doc.error_message = "Đã hủy bởi người dùng"
@@ -312,10 +312,10 @@ def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if enabled('INTEGRATION_WORKER_ENABLED'):
         from app.models.integration import ProcessingJob
         job = db.query(ProcessingJob).filter_by(reference_id=doc.document_id).first()
-        if job and job.status == 'needs_review':
-            raise HTTPException(409, 'Tác vụ có kết quả chưa xác định; cần đối soát trước khi thử lại')
         if job:
-            job.status = 'queued' if doc.status == 'queued' else 'cancelled'
+            job.status = 'cancelled'
+            job.error_code = None
+            job.lease_until = None
     db.commit()
     db.refresh(doc)
     return doc

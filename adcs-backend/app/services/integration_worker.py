@@ -217,10 +217,17 @@ async def run_heavy(job_id):
                 return
             doc = db.get(Document, ref) if kind == 'document' else None
             if doc and doc.status not in ('processed', 'approved', 'duplicate'):
-                job.status, job.error_code = 'needs_review', 'AI_RESULT_UNCERTAIN'
-                doc.status = 'needs_review'
+                if doc.status == 'queued':
+                    job.status = 'queued'
+                    job.error_code = 'RETRYING'
+                elif doc.status == 'failed':
+                    job.status, job.error_code = 'failed', 'AI_RESULT_FAILED'
+                else:
+                    job.status, job.error_code = 'needs_review', 'AI_RESULT_UNCERTAIN'
+                    doc.status = 'needs_review'
             else:
                 job.status = 'done'
+                job.error_code = None
             job.lease_until = None
             db.execute(text("SELECT pg_notify('adcs_events', :body)"), {'body': json.dumps({'reference_id': str(ref), 'kind': kind})})
             db.commit()
@@ -284,12 +291,12 @@ def recover_expired_jobs(db):
 
 
 def claim_next_job(db):
-    blocked = db.query(ProcessingJob).filter(ProcessingJob.status.in_(['needs_review', 'processing'])).first()
+    blocked = db.query(ProcessingJob).filter(ProcessingJob.status == 'processing').first()
     waiting = db.query(ProcessingJob).filter_by(status='retry_wait').first()
     job = None
     if not blocked and waiting and waiting.lease_until <= now():
         job = waiting
-    elif not blocked and not waiting:
+    elif not blocked:
         job = db.query(ProcessingJob).filter(ProcessingJob.status == 'queued').filter(
             (ProcessingJob.kind == 'translation') | ProcessingJob.reference_id.in_(
                 db.query(Document.document_id).filter(Document.sync_status == 'synced', Document.deleted_at.is_(None), Document.status == 'queued')
