@@ -1,7 +1,13 @@
 import os
 import asyncio
 import io
-from datetime import datetime
+from datetime import datetime, timezone
+from uuid import uuid4
+from app.core import error_contract as ec
+from app.core.logger import request_id_var
+from app.models.processing_attempt import ProcessingAttempt
+from app.models.integration import ProcessingJob
+from app.services.processing_errors import apply_failure
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
@@ -96,7 +102,17 @@ class DocumentQueueManager:
 
     async def _process_single_document(self, document_id: str):
         """Xử lý một tài liệu đơn lẻ và giải phóng semaphore ngay khi hoàn thành"""
+        attempt_id = uuid4()
+        req_id = str(uuid4())
+        log_token = request_id_var.set(req_id)
+        ctx_token = ec.begin(req_id, 'web-backend', document_id=document_id, attempt_id=str(attempt_id))
+        job_id = None
         try:
+            with SessionLocal() as tracking:
+                job = tracking.query(ProcessingJob).filter_by(reference_id=document_id).first()
+                job_id = job.id if job else None
+                tracking.add(ProcessingAttempt(id=attempt_id, document_id=document_id, job_id=job_id, request_id=req_id))
+                tracking.commit()
             logger.info(f"▶️ [Queue] Bắt đầu xử lý văn bản document_id={document_id}")
             db = SessionLocal()
             doc = None
@@ -113,8 +129,7 @@ class DocumentQueueManager:
             file_path = doc.file_path
             if not file_path or not os.path.exists(file_path):
                 logger.error(f"[Queue] File vật lý không tồn tại tại đường dẫn: {file_path}")
-                self._update_doc_status(document_id, "failed", error_message="Không tìm thấy tệp vật lý trên máy chủ")
-                return
+                raise FileNotFoundError('Input file missing')
 
             with open(file_path, "rb") as f:
                 file_content = f.read()
@@ -151,17 +166,6 @@ class DocumentQueueManager:
                 if not doc or doc.deleted_at or doc.status != "processing":
                     return
 
-                if ai_res and ai_res.get('error_code') == 'AI_INVALID_RESPONSE':
-                    doc.status = 'needs_review'
-                    doc.error_message = 'Kết quả AI bị cắt hoặc không đúng cấu trúc JSON. Vui lòng xử lý lại tài liệu.'
-                    enqueue_sync(db, doc)
-                    db.commit()
-                    await manager.send_personal_message({
-                        'type': 'DOCUMENT_FAILED', 'document_id': str(document_id),
-                        'status': 'needs_review', 'message': doc.error_message,
-                    }, client_id)
-                    return
-
                 if ai_res and ai_res.get("trang_thai") == "success":
                     storage = ai_res.get('storage_info') or {}
                     if storage.get('action') == 'duplicate' or storage.get('is_duplicate'):
@@ -169,9 +173,16 @@ class DocumentQueueManager:
                         doc.storage_info = storage
                         db.commit()
                         return
+                    attempt = db.get(ProcessingAttempt, attempt_id)
+                    if attempt:
+                        attempt.status = 'succeeded'
+                        attempt.warnings = ai_res.get('warnings', [])
+                        attempt.finished_at = datetime.now(timezone.utc)
                     doc.status = "processed"
                     doc.summary = ai_res.get("tom_tat")
                     doc.error_message = None
+                    doc.error_details = None
+                    doc.next_attempt_at = None
                     doc.key_points = ai_res.get("key_points")
                     doc.confidence = ai_res.get("diem_tin_cay")
                     doc.muc_tin_cay = ai_res.get("muc_tin_cay")
@@ -284,7 +295,6 @@ class DocumentQueueManager:
                         except Exception:
                             pass
 
-                    from datetime import timezone
                     doc.updated_at = datetime.now(timezone.utc)
                     enqueue_sync(db, doc)
                     db.commit()
@@ -305,16 +315,15 @@ class DocumentQueueManager:
 
                 else:
                     # Xử lý thất bại hoặc lỗi AI
-                    retry_count = (doc.retry_count or 0) + 1
-                    doc.retry_count = retry_count
-                    if retry_count < 3:
-                        doc.status = "queued"
-                        doc.error_message = f"AI Service phản hồi lỗi (lần {retry_count}), tự động xếp hàng thử lại."
-                        logger.warning(f"⚠️ [Queue] Thử lại văn bản {document_id} lần {retry_count}")
-                    else:
-                        doc.status = "failed"
-                        doc.error_message = "AI Service không thể phân tích văn bản sau 3 lần thử."
-                        logger.error(f"❌ [Queue] Thất bại vĩnh viễn văn bản {document_id}")
+                    failure = ai_res if ai_res and ai_res.get('error_code') else ec.error('LLM_INVALID_RESPONSE', service='web-backend')
+                    if failure.get('error_code') == 'AI_INVALID_RESPONSE':
+                        failure = ec.error('LLM_INVALID_RESPONSE', service='web-backend')
+                    apply_failure(doc, failure, attempt_id, job_id)
+                    enqueue_sync(db, doc)
+                    attempt = db.get(ProcessingAttempt, attempt_id)
+                    if attempt:
+                        attempt.status, attempt.error = doc.status, doc.error_details
+                        attempt.finished_at = datetime.now(timezone.utc)
 
                     db.commit()
 
@@ -328,16 +337,37 @@ class DocumentQueueManager:
             except Exception as e:
                 logger.error(f"[Queue] Lỗi khi cập nhật kết quả vào DB: {e}", exc_info=True)
                 db.rollback()
+                raise
             finally:
                 db.close()
 
         except Exception as e:
             logger.error(f"[Queue] Lỗi không mong muốn khi xử lý document {document_id}: {e}", exc_info=True)
-            self._update_doc_status(document_id, "failed", error_message=str(e))
+            with SessionLocal() as tracking:
+                doc = tracking.get(Document, document_id)
+                if doc:
+                    apply_failure(doc, ec.error('INVALID_FILE' if isinstance(e, FileNotFoundError) else 'INTERNAL_ERROR', service='web-backend'), attempt_id, job_id)
+                    attempt = tracking.get(ProcessingAttempt, attempt_id)
+                    if attempt:
+                        attempt.status, attempt.error = doc.status, doc.error_details
+                        attempt.finished_at = datetime.now(timezone.utc)
+                    tracking.commit()
         finally:
+            try:
+                with SessionLocal() as tracking:
+                    attempt = tracking.get(ProcessingAttempt, attempt_id)
+                    if attempt and attempt.status == 'running':
+                        current_doc = tracking.get(Document, document_id)
+                        attempt.status = current_doc.status if current_doc else 'cancelled'
+                        attempt.finished_at = datetime.now(timezone.utc)
+                        tracking.commit()
+            except Exception:
+                logger.exception('Could not finalize processing attempt')
             # Giải phóng Semaphore ngay lập tức để văn bản tiếp theo vào xử lý
             self.semaphore.release()
             logger.info(f"⏹️ [Queue] Hoàn thành lượt xử lý document_id={document_id}, giải phóng slot worker.")
+            ec.context.reset(ctx_token)
+            request_id_var.reset(log_token)
 
     def _update_doc_status(self, document_id: str, status: str, error_message: str = None):
         db = SessionLocal()

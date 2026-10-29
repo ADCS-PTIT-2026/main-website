@@ -2,6 +2,8 @@ from fastapi import FastAPI
 import httpx
 import time
 import os
+from app.core import error_contract as ec
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -18,7 +20,8 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
         if request.url.path in ["/health", "/docs", "/openapi.json"]:
             return await call_next(request)
 
-        req_id = generate_request_id()
+        req_id = ec.request_id(request.headers.get("X-Request-ID"))
+        ctx_token = ec.begin(req_id, "web-backend")
         token = request_id_var.set(req_id)
 
         start_time = time.time()
@@ -43,6 +46,7 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
             raise
         finally:
             request_id_var.reset(token)
+            ec.context.reset(ctx_token)
 
 MAX_ACTIVE_CONCURRENCY = int(os.getenv("MAX_ACTIVE_CONCURRENCY", 500))
 active_requests_count = 0
@@ -57,7 +61,7 @@ class LoadSheddingMiddleware(BaseHTTPMiddleware):
             logger.warning(f"⚠️ Quá tải hệ thống ({active_requests_count}/{MAX_ACTIVE_CONCURRENCY} requests). Từ chối request.")
             return JSONResponse(
                 status_code=503,
-                content={"detail": "Hệ thống đang quá tải do lượng truy cập cao. Vui lòng thử lại sau giây lát."}
+                content=ec.error("SERVER_BUSY", service="web-backend")
             )
 
         active_requests_count += 1
@@ -130,7 +134,7 @@ async def validation_exception_handler(request, exc):
               for error in exc.errors()]
     return JSONResponse(
         status_code=422,
-        content={"detail": errors},
+        content={**ec.error('INVALID_REQUEST', service='web-backend', http_status=422), "detail": errors},
     )
 
 @app.on_event('shutdown')
@@ -144,3 +148,17 @@ async def shutdown_integrations():
     await document_queue.stop()
     if http_client.client:
         await http_client.client.aclose()
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc):
+    data = ec.normalize(exc.detail if isinstance(exc.detail, dict) else {}, exc.status_code, service='web-backend')
+    data['detail'] = exc.detail  # preserve existing business messages/clients
+    return JSONResponse(data, status_code=exc.status_code, headers=exc.headers)
+
+
+@app.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc):
+    logger.exception('Unhandled HTTP error')
+    data = ec.error('INTERNAL_ERROR', service='web-backend')
+    return JSONResponse(data, status_code=500, headers={'X-Request-ID': data['request_id']})

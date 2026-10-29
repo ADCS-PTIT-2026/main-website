@@ -219,11 +219,11 @@ async def run_heavy(job_id):
             if doc and doc.status not in ('processed', 'approved', 'duplicate'):
                 if doc.status == 'queued':
                     job.status = 'queued'
-                    job.error_code = 'RETRYING'
+                    job.error_code = (doc.error_details or {}).get('error_code', 'RETRYING')
                 elif doc.status == 'failed':
-                    job.status, job.error_code = 'failed', 'AI_RESULT_FAILED'
+                    job.status, job.error_code = 'failed', (doc.error_details or {}).get('error_code', 'AI_RESULT_FAILED')
                 else:
-                    job.status, job.error_code = 'needs_review', 'AI_RESULT_UNCERTAIN'
+                    job.status, job.error_code = 'needs_review', (doc.error_details or {}).get('error_code', 'AI_RESULT_UNCERTAIN')
                     doc.status = 'needs_review'
             else:
                 job.status = 'done'
@@ -316,7 +316,7 @@ def claim_next_job(db):
                 LEFT JOIN translation_logs t ON j.kind = 'translation' AND j.reference_id = t.id
                 WHERE j.status = 'queued'
                   AND (
-                      (j.kind = 'document' AND d.sync_status = 'synced' AND d.deleted_at IS NULL AND d.status = 'queued')
+                      (j.kind = 'document' AND d.sync_status = 'synced' AND d.deleted_at IS NULL AND d.status = 'queued' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= now()))
                       OR (j.kind = 'translation')
                   )
             ),

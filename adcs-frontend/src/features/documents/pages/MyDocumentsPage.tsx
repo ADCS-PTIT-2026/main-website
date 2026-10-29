@@ -1,3 +1,4 @@
+import ProcessingErrorPanel from '../ProcessingErrorPanel';
 import DocumentIntegrationState from '../../integration/DocumentIntegrationState';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -679,9 +680,7 @@ const MyDocumentsPage: React.FC = () => {
                 <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg text-rose-900 dark:text-rose-200 font-mono whitespace-pre-wrap">
                   {errorDetailTarget.error_message || 'Không có mô tả lỗi cụ thể từ máy chủ AI.'}
                 </div>
-                <p className="text-slate-500 text-[11px]">
-                  Gợi ý: Kiểm tra lại xem tệp có bị khóa mật khẩu không, chất lượng ảnh quét OCR hoặc thử bấm nút "Thử lại" sau ít phút.
-                </p>
+                <ProcessingErrorPanel documentId={errorDetailTarget.document_id} error={errorDetailTarget.error_details} />
               </div>
               <div className="flex items-center justify-end gap-3 mt-6">
                 <button

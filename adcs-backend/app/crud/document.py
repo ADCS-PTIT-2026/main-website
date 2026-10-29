@@ -102,6 +102,7 @@ def claim_next_document_for_processing(db: Session) -> Optional[Document]:
                 ) AS last_served_at
             FROM documents
             WHERE status = 'queued' AND retry_count < 3 AND deleted_at IS NULL
+                AND (next_attempt_at IS NULL OR next_attempt_at <= now())
         ),
         user_top_doc AS (
             SELECT 
@@ -287,6 +288,8 @@ def get_my_documents(
             "priority": doc.priority or 1,
             "retry_count": doc.retry_count or 0,
             "error_message": doc.error_message,
+            "error_details": doc.error_details,
+            "next_attempt_at": doc.next_attempt_at,
             "so_ky_hieu": doc.so_ky_hieu,
             "trich_yeu": doc.trich_yeu,
             "don_vi_ban_hanh": doc.don_vi_ban_hanh,
@@ -323,6 +326,8 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     doc.status = "queued"
     doc.retry_count = 0
     doc.error_message = None
+    doc.error_details = None
+    doc.next_attempt_at = None
     doc.processing_started_at = None
     doc.updated_at = datetime.utcnow()
     from app.services.integration_service import enqueue_sync
