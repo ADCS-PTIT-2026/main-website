@@ -46,6 +46,9 @@ class DocumentResponse(BaseModel):
     duplicate_reasons: List[str] = []
     possible_duplicate_count: int = 0
     status: Optional[str] = None
+    error_message: Optional[str] = None
+    error_details: Optional[Dict[str, Any]] = None
+    next_attempt_at: Optional[datetime] = None
     summary: Optional[str] = None
     key_points: Optional[List[str]] = None
     confidence: Optional[float] = None
@@ -179,6 +182,8 @@ class MyDocumentItemResponse(BaseModel):
     priority: int = 1
     retry_count: int = 0
     error_message: Optional[str] = None
+    error_details: Optional[Dict[str, Any]] = None
+    next_attempt_at: Optional[datetime] = None
     
     so_ky_hieu: Optional[str] = None
     trich_yeu: Optional[str] = None

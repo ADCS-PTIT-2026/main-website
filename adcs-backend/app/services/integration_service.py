@@ -38,7 +38,7 @@ def metadata_payload(db, doc, fields=None):
         payload.update(assigned_department_code=department.code if department else None,
                        assigned_department_name=department.name if department else None)
     if 'status' in payload:
-        payload['status'] = {'success': 'processed', 'pending': 'queued', 'needs_review': 'failed', 'error': 'failed'}.get(payload['status'], payload['status'])
+        payload['status'] = {'success': 'processed', 'pending': 'queued', 'needs_review': 'failed', 'error': 'failed', 'cancelled': 'failed'}.get(payload['status'], payload['status'])
     if fields is None and payload.get('trich_yeu') is None:
         payload.pop('trich_yeu', None)
     payload['updated_at'] = doc.updated_at or datetime.now(timezone.utc)

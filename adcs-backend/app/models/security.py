@@ -32,3 +32,13 @@ class SSOLoginAttempt(Base):
     code_verifier = Column(String(128), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
     used_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class LoginAttempt(Base):
+    __tablename__ = "login_attempts"
+    key = Column(String(255), primary_key=True)
+    failures = Column(Integer, nullable=False, default=1)
+    window_start = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    locked_until = Column(DateTime(timezone=True), nullable=True, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+

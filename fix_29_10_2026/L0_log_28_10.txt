@@ -1,0 +1,302 @@
+[2026-10-28 10:30:52,318] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1
+[2026-10-28 10:30:52,336] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:30:52,336] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1)
+[2026-10-28 10:30:52,357] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:31:52,696] [SYSTEM] [ERROR] Lỗi kết nối httpx tới AI Service: 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 223, in send_to_ai_service
+    response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+
+[2026-10-28 10:31:53,133] [SYSTEM] [WARNING] ⚠️ [Queue] Thử lại văn bản e4b70c9e-4239-4693-8190-c50b2294e7a1 lần 1
+[2026-10-28 10:31:53,142] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1, giải phóng slot worker.
+[2026-10-28 10:31:54,720] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1
+[2026-10-28 10:31:54,721] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:31:54,721] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1)
+[2026-10-28 10:31:54,727] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:32:54,741] [SYSTEM] [ERROR] Lỗi kết nối httpx tới AI Service: 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 223, in send_to_ai_service
+    response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+
+[2026-10-28 10:32:54,747] [SYSTEM] [WARNING] ⚠️ [Queue] Thử lại văn bản e4b70c9e-4239-4693-8190-c50b2294e7a1 lần 2
+[2026-10-28 10:32:54,765] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1, giải phóng slot worker.
+[2026-10-28 10:32:55,688] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1
+[2026-10-28 10:32:55,703] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:32:55,703] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1)
+[2026-10-28 10:32:55,715] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:33:55,892] [SYSTEM] [ERROR] Lỗi kết nối httpx tới AI Service: 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 223, in send_to_ai_service
+    response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+
+[2026-10-28 10:33:55,909] [SYSTEM] [ERROR] ❌ [Queue] Thất bại vĩnh viễn văn bản e4b70c9e-4239-4693-8190-c50b2294e7a1
+[2026-10-28 10:33:55,917] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=e4b70c9e-4239-4693-8190-c50b2294e7a1, giải phóng slot worker.
+[2026-10-28 10:34:28,433] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5
+[2026-10-28 10:34:28,435] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:34:28,435] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5)
+[2026-10-28 10:34:28,442] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:35:28,452] [SYSTEM] [ERROR] Lỗi kết nối httpx tới AI Service: 
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/app/services/document_service.py", line 223, in send_to_ai_service
+    response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+
+[2026-10-28 10:35:28,456] [SYSTEM] [WARNING] ⚠️ [Queue] Thử lại văn bản 5b362d20-1a9e-431a-8587-9bc0ac9765c5 lần 1
+[2026-10-28 10:35:28,458] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5, giải phóng slot worker.
+[2026-10-28 10:35:30,466] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5
+[2026-10-28 10:35:30,468] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:35:30,468] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5)
+[2026-10-28 10:35:30,471] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:35:30,485] [SYSTEM] [ERROR] Lỗi HTTP từ AI Service (503): {"status":"error","error_code":"SERVER_BUSY","message":"AI Service đang xử lý tối đa 4 văn bản đồng thời, vui lòng thử lại sau.","details":{"document_id":null,"suggested_action":"Thử lại sau 15 giây.","active_requests":4,"max_concurrent_requests":4,"retry_after_seconds":15},"detail":"AI Service đang xử lý tối đa 4 văn bản đồng thời, vui lòng thử lại sau."}
+[2026-10-28 10:35:30,486] [SYSTEM] [WARNING] ⚠️ [Queue] Thử lại văn bản 5b362d20-1a9e-431a-8587-9bc0ac9765c5 lần 2
+[2026-10-28 10:35:30,493] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5, giải phóng slot worker.
+[2026-10-28 10:35:32,807] [SYSTEM] [INFO] ▶️ [Queue] Bắt đầu xử lý văn bản document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5
+[2026-10-28 10:35:32,809] [SYSTEM] [INFO] ⏱️ [Queue] Thiết lập timeout cho qa_huy_1.pdf (1 trang): 60.0s
+[2026-10-28 10:35:32,809] [SYSTEM] [INFO] Bắt đầu gửi file 'qa_huy_1.pdf' tới AI Service (save_document=False, timeout=60.0s, document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5)
+[2026-10-28 10:35:32,819] [SYSTEM] [INFO] Đã nạp ai_parameters vào payload gửi AI: {'temperature': 0.7, 'max_tokens': 2048, 'top_p': 0.9, 'top_k': 40, 'system_prompt': ''}
+[2026-10-28 10:35:32,834] [SYSTEM] [ERROR] Lỗi HTTP từ AI Service (503): {"status":"error","error_code":"SERVER_BUSY","message":"AI Service đang xử lý tối đa 4 văn bản đồng thời, vui lòng thử lại sau.","details":{"document_id":null,"suggested_action":"Thử lại sau 15 giây.","active_requests":4,"max_concurrent_requests":4,"retry_after_seconds":15},"detail":"AI Service đang xử lý tối đa 4 văn bản đồng thời, vui lòng thử lại sau."}
+[2026-10-28 10:35:32,843] [SYSTEM] [ERROR] ❌ [Queue] Thất bại vĩnh viễn văn bản 5b362d20-1a9e-431a-8587-9bc0ac9765c5
+[2026-10-28 10:35:32,849] [SYSTEM] [INFO] ⏹️ [Queue] Hoàn thành lượt xử lý document_id=5b362d20-1a9e-431a-8587-9bc0ac9765c5, giải phóng slot worker.

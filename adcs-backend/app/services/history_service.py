@@ -2,6 +2,7 @@ from app.core.data_service import data_service
 import os
 import html
 import httpx
+import mimetypes
 from typing import Optional, List, Dict, Any
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -14,6 +15,27 @@ from app.core.document_websocket import is_uuid
 from app.api.v1.endpoints.telegram import get_system_bot_token, send_telegram_notification
 
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
+
+def guess_mime_type(filename: Optional[str]) -> str:
+    if not filename:
+        return "application/pdf"
+    mime, _ = mimetypes.guess_type(filename)
+    return mime or "application/pdf"
+
+def item_matches_search(item: dict, search: Optional[str]) -> bool:
+    if not search or not search.strip():
+        return True
+    kw = search.strip().lower()
+    targets = [
+        item.get("filename"),
+        item.get("so_ky_hieu"),
+        item.get("so_hieu_van_ban"),
+        item.get("trich_yeu"),
+        item.get("document_type"),
+        item.get("loai_van_ban"),
+        item.get("suggested_department"),
+    ]
+    return any(kw in str(t).lower() for t in targets if t)
 
 async def fetch_processing_history(
     limit: int = 10,
@@ -32,7 +54,7 @@ async def fetch_processing_history(
 
     is_admin = is_system_admin(user)
 
-    fetch_limit = limit if is_admin else 200
+    fetch_limit = 200 if (is_admin and search) else (limit if is_admin else 200)
     params = {
         "limit": fetch_limit
     }
@@ -61,9 +83,18 @@ async def fetch_processing_history(
     except Exception as e:
         raise HTTPException(502, 'Phản hồi lịch sử từ Data Service không hợp lệ') from None
 
-    # Nếu là Admin, trả về toàn bộ dữ liệu từ Data Service
+    # Nếu là Admin, trả về toàn bộ dữ liệu từ Data Service (lọc từ khóa nếu có)
     if is_admin:
-        return raw_data
+        results = raw_data.get("results", []) if isinstance(raw_data, dict) else (raw_data if isinstance(raw_data, list) else [])
+        if search:
+            results = [r for r in results if item_matches_search(r, search)]
+        final_results = results[:limit]
+        return {
+            "total": len(results),
+            "limit": limit,
+            "offset": 0,
+            "results": final_results
+        }
 
     # VỚI USER THƯỜNG: Lọc chỉ lấy tài liệu do user này sở hữu trong Web DB
     results = raw_data.get("results", []) if isinstance(raw_data, dict) else (raw_data if isinstance(raw_data, list) else [])
@@ -89,7 +120,7 @@ async def fetch_processing_history(
     for doc in user_docs:
         if str(doc.document_id).lower() not in seen_matched_ids:
             status_val = doc.status or "queued"
-            llm_stat = "success" if status_val in ["processed", "approved"] else ("failed" if status_val == "failed" else "pending")
+            llm_stat = "success" if status_val in ["processed", "approved"] else ("failed" if status_val in ["failed", "cancelled"] else "pending")
             file_stat = "success" if status_val in ["processed", "approved"] else "pending"
             vec_stat = "success" if status_val in ["processed", "approved"] else "pending"
             
@@ -98,7 +129,7 @@ async def fetch_processing_history(
                 "request_id": str(doc.document_id)[:8],
                 "action_type": "upload",
                 "filename": doc.original_filename,
-                "file_type": "application/pdf",
+                "file_type": guess_mime_type(doc.original_filename),
                 "status_llm": llm_stat,
                 "status_save_file": file_stat,
                 "status_save_vector": vec_stat,
@@ -110,6 +141,9 @@ async def fetch_processing_history(
                 "created_at": str(doc.created_at) if doc.created_at else ""
             })
             seen_matched_ids.add(str(doc.document_id).lower())
+
+    if search:
+        filtered_results = [r for r in filtered_results if item_matches_search(r, search)]
 
     # Sắp xếp bản ghi mới nhất lên đầu
     def get_sort_key(item):
@@ -200,12 +234,15 @@ async def fetch_history_detail(history_id: str, db: Session, user: User) -> dict
     else:
         overall_status = "success"
 
+    if doc_web and doc_web.status in ["failed", "cancelled", "needs_review"]:
+        status_llm = "failed" if doc_web.status in ["failed", "cancelled"] else "needs_review"
+
     # 4. Tổng hợp payload chi tiết
     detail = {
         "id": raw_history_item.get("id"),
         "request_id": raw_history_item.get("request_id"),
         "filename": filename or (doc_web.original_filename if doc_web else "Tài liệu không tên"),
-        "file_type": raw_history_item.get("file_type") or "application/pdf",
+        "file_type": raw_history_item.get("file_type") or guess_mime_type(filename or (doc_web.original_filename if doc_web else None)),
         "action_type": raw_history_item.get("action_type") or "process",
         "status": overall_status,
         "status_llm": status_llm,
@@ -358,7 +395,10 @@ async def fetch_document_processing_detail(document_id: str, db: Session, user: 
     if overall_status == "processed":
         overall_status = "success"
 
-    status_llm = history_item.get("status_llm") if history_item else ("success" if overall_status in ["success", "approved"] else ("failed" if overall_status == "failed" else "processing"))
+    if overall_status in ["failed", "cancelled", "needs_review"]:
+        status_llm = "failed" if overall_status in ["failed", "cancelled"] else "needs_review"
+    else:
+        status_llm = history_item.get("status_llm") if history_item else ("success" if overall_status in ["success", "approved"] else "processing")
     status_file = history_item.get("status_save_file") if history_item else ("success" if overall_status in ["success", "approved"] else "pending")
     status_vector = history_item.get("status_save_vector") if history_item else ("success" if overall_status in ["success", "approved"] else "pending")
 
@@ -366,7 +406,7 @@ async def fetch_document_processing_detail(document_id: str, db: Session, user: 
         "id": history_item.get("id") if history_item else (hash(str(doc_web.document_id)) % 10000000),
         "request_id": history_item.get("request_id") if history_item else str(doc_web.document_id)[:8],
         "filename": doc_web.original_filename or doc_web.title or "Tài liệu",
-        "file_type": "application/pdf",
+        "file_type": guess_mime_type(doc_web.original_filename or doc_web.title),
         "action_type": history_item.get("action_type") if history_item else "upload",
         "status": overall_status,
         "status_llm": status_llm,

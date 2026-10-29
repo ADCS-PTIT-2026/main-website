@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../../assets/ptit-logo.png';
 import { authAPI } from '../../../api/auth';
+import { getApiError } from '../../../api/errors';
 
 const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,9 +26,11 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     setErrorMsg(null);
 
-    // Validate Email
-    if (!formData.email.endsWith('@ptit.edu.vn')) {
-      setErrorMsg('Email phải có định dạng đuôi @ptit.edu.vn');
+    // Validate Email PTIT
+    const lowerEmail = formData.email.trim().toLowerCase();
+    const isPtitEmail = lowerEmail.endsWith('@ptit.edu.vn') || lowerEmail.endsWith('@stu.ptit.edu.vn');
+    if (!isPtitEmail) {
+      setErrorMsg('Chỉ chấp nhận email thuộc Học viện (@ptit.edu.vn hoặc @stu.ptit.edu.vn)');
       return;
     }
 
@@ -40,15 +43,11 @@ const RegisterPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const res: any = await authAPI.register(formData.name, formData.email, formData.password);
+      const res: any = await authAPI.register(formData.name.trim(), lowerEmail, formData.password);
       setSuccessMessage(res?.message || 'Đăng ký thành công! Tài khoản của bạn đang chờ Quản trị viên phê duyệt.');
       setIsSuccess(true);
     } catch (error: any) {
-      if (error.response && error.response.data && error.response.data.detail) {
-         setErrorMsg(error.response.data.detail);
-      } else {
-         setErrorMsg('Đã có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại sau.');
-      }
+      setErrorMsg(getApiError(error, 'Đã có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại sau.'));
     } finally {
       setIsLoading(false);
     }
@@ -125,11 +124,11 @@ const RegisterPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email công ty</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Học viện (@ptit.edu.vn / @stu.ptit.edu.vn)</label>
                 <input 
                   name="email" value={formData.email} onChange={handleChange} required 
                   className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 focus:border-primary focus:ring-primary focus:ring-1 outline-none transition-all p-3 text-base placeholder:text-slate-400" 
-                  placeholder="name@ptit.edu.vn" type="email" 
+                  placeholder="canbo@ptit.edu.vn hoặc sv@stu.ptit.edu.vn" type="email" 
                 />
               </div>
 

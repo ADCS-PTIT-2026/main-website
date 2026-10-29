@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axiosClient from '../../api/axiosClient';
+import { getApiError } from '../../api/errors';
 import { 
   uploadTranslationFiles, cancelTranslation,
   getTranslations, 
@@ -16,6 +17,18 @@ const TranslationPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<{ enabled: boolean; message?: string | null } | null>(null);
+
+  useEffect(() => {
+    axiosClient.get<{ enabled: boolean; message?: string | null }>('/translations/capabilities')
+      .then((res: any) => {
+        setCapabilities(res.data || res);
+      })
+      .catch(() => {
+        // Mặc định coi như bật nếu không gọi được
+        setCapabilities({ enabled: true });
+      });
+  }, []);
 
   const fetchFiles = async () => {
     if (!userId) return; 
@@ -68,6 +81,10 @@ const TranslationPage: React.FC = () => {
 
   const processSelectedFiles = async (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
+    if (capabilities && !capabilities.enabled) {
+      toast.error(capabilities.message || 'Tính năng dịch thuật đang tạm ngưng bảo trì.');
+      return;
+    }
     
     setIsUploading(true);
     const toastId = toast.loading("Đang tải tệp lên...");
@@ -82,8 +99,8 @@ const TranslationPage: React.FC = () => {
       toast.success("Đã đẩy tệp vào hàng đợi dịch!", { id: toastId });
 
       fetchFiles();
-    } catch (error) {
-      toast.error("Lỗi khi tải tệp lên. Vui lòng thử lại.", { id: toastId });
+    } catch (error: any) {
+      toast.error(getApiError(error, "Lỗi khi tải tệp lên. Vui lòng thử lại."), { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -247,8 +264,23 @@ const TranslationPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Banner thông báo nếu chức năng dịch bị vô hiệu hóa */}
+        {capabilities && !capabilities.enabled && (
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-center gap-3 text-amber-800 dark:text-amber-200">
+            <span className="material-symbols-outlined text-2xl text-amber-600 dark:text-amber-400 shrink-0">
+              construction
+            </span>
+            <div className="text-xs sm:text-sm">
+              <span className="font-bold">Tính năng dịch thuật đang tạm ngưng: </span>
+              {capabilities.message || 'Hệ thống đang bảo trì dịch vụ đồng bộ hoặc nâng cấp mô hình.'}
+            </div>
+          </div>
+        )}
+
         {/* Khối Cấu hình Ngôn ngữ & Tải tệp tích hợp */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 space-y-5">
+        <section className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 space-y-5 ${
+          capabilities && !capabilities.enabled ? 'opacity-60 pointer-events-none' : ''
+        }`}>
           {/* Thanh chọn cặp ngôn ngữ */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">

@@ -32,6 +32,17 @@ async def upload_for_translation(
 def get_translation_list(user_id: UUID | None = Query(None), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     return translation_service.get_user_translation_list(db, current_user, user_id)
 
+@router.get("/capabilities")
+def translation_capabilities(current_user=Depends(get_current_user)):
+    from app.core.data_service import enabled
+    is_enabled = (
+        enabled('DS_TRANSLATION_JOBS_ENABLED')
+        and enabled('INTEGRATION_WORKER_ENABLED')
+        and enabled('DS_JOB_IDEMPOTENCY_CONFIRMED')
+    )
+    msg = None if is_enabled else "Chức năng dịch tạm ngừng hoạt động do dịch vụ dữ liệu đang bảo trì hoặc chưa hoàn tất đồng bộ."
+    return {"enabled": is_enabled, "message": msg}
+
 @router.put("/{log_id}/comment")
 def update_translation_comment_api(
     log_id: UUID,

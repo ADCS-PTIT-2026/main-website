@@ -312,8 +312,8 @@ const ActiveDashboardPage: React.FC = () => {
       color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200/60 dark:border-blue-800/50',
     },
     {
-      title: 'Kho văn bản thông minh',
-      desc: 'Tra cứu ngữ nghĩa (Semantic Search) toàn hệ thống',
+      title: 'Kho lưu trữ văn bản',
+      desc: 'Tra cứu và quản lý văn bản tập trung toàn hệ thống',
       icon: 'manage_search',
       path: '/document-repository',
       color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60 dark:border-emerald-800/50',

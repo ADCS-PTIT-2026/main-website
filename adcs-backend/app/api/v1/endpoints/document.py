@@ -2,6 +2,8 @@ from uuid import UUID
 from typing import Literal
 import os
 import io
+import time
+import hashlib
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query, Form, WebSocket, WebSocketDisconnect, status
@@ -347,6 +349,7 @@ async def upload_file_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(PermissionChecker("file.create"))
 ):
+    t_start = time.perf_counter()
     # 1. Kiểm tra hạn ngạch số văn bản đang pending của người dùng (tối đa 5)
     pending_count = count_user_pending_documents(db, str(current_user.user_id))
     if pending_count >= 5:
@@ -357,7 +360,10 @@ async def upload_file_api(
 
     # 2. Đọc file và kiểm tra dung lượng tối đa (50MB)
     MAX_FILE_SIZE = 50 * 1024 * 1024
+    t_before_read = time.perf_counter()
     file_content = await file.read()
+    t_read = time.perf_counter() - t_before_read
+
     file_size = len(file_content)
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
@@ -365,7 +371,10 @@ async def upload_file_api(
             detail=f"Dung lượng tệp ({file_size / (1024*1024):.1f}MB) vượt quá giới hạn tối đa 50MB."
         )
 
+    file_hash = hashlib.sha256(file_content).hexdigest()
+
     # 3. Đếm số trang sơ bộ và kiểm tra giới hạn (tối đa 100 trang)
+    t_before_pdf = time.perf_counter()
     page_count = 1
     if file.filename.lower().endswith(".pdf"):
         try:
@@ -375,6 +384,7 @@ async def upload_file_api(
         except Exception as pe:
             logger.warning(f"Không thể đọc số trang PDF qua pypdf: {pe}")
             page_count = 1
+    t_pdf = time.perf_counter() - t_before_pdf
 
     if page_count > 100:
         raise HTTPException(
@@ -383,6 +393,7 @@ async def upload_file_api(
         )
 
     # 4. Lưu file vật lý xuống ổ đĩa máy chủ ngay lập tức
+    t_before_write = time.perf_counter()
     upload_dir = "/mnt/data2tb/adcs/uploads"
     if not os.path.exists(upload_dir):
         # Fallback thư mục nội bộ
@@ -395,10 +406,10 @@ async def upload_file_api(
 
     with open(target_path, "wb") as f_out:
         f_out.write(file_content)
-
-    logger.info(f"💾 Đã lưu tệp tải lên tại: {target_path} (Dung lượng: {file_size} bytes, Số trang: {page_count})")
+    t_write = time.perf_counter() - t_before_write
 
     # 5. Tạo bản ghi Document với trạng thái 'queued' và độ ưu tiên người dùng = 1
+    t_before_db = time.perf_counter()
     doc = create_queued_document(
         db=db,
         user_id=str(current_user.user_id),
@@ -406,7 +417,15 @@ async def upload_file_api(
         file_path=target_path,
         file_size_bytes=file_size,
         page_count=page_count,
-        priority=1
+        priority=1,
+        file_hash=file_hash
+    )
+    t_db = time.perf_counter() - t_before_db
+    t_total = time.perf_counter() - t_start
+
+    logger.info(
+        "💾 [Upload] %s (Dung lượng: %d B, %d trang) | timings: read=%.3fs, pdf=%.3fs, write=%.3fs, db=%.3fs, total=%.3fs",
+        file.filename, file_size, page_count, t_read, t_pdf, t_write, t_db, t_total
     )
 
     # 6. Đánh thức Background Queue Worker xử lý ngay
@@ -453,4 +472,35 @@ def cancel_document_api(
         "message": "Đã hủy văn bản khỏi hàng đợi thành công!",
         "document_id": str(doc.document_id),
         "status": doc.status
+    }
+
+
+@router.get('/{document_id}/processing-attempts')
+def document_processing_attempts(
+    document_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(PermissionChecker('file.read'))
+):
+    from app.models.processing_attempt import ProcessingAttempt
+    doc = get_document_by_id(db, str(document_id))
+    if not doc:
+        raise HTTPException(404, 'Không tìm thấy văn bản')
+    if not can_user_access_document(doc, current_user):
+        raise HTTPException(403, 'Không có quyền xem văn bản')
+    rows = db.query(ProcessingAttempt).filter_by(document_id=document_id).order_by(ProcessingAttempt.started_at.desc()).limit(50).all()
+    return {
+        'document_id': str(document_id),
+        'attempts': [
+            {
+                'attempt_id': str(row.id),
+                'job_id': str(row.job_id) if row.job_id else None,
+                'request_id': row.request_id,
+                'status': row.status,
+                'error': row.error,
+                'warnings': row.warnings or [],
+                'started_at': row.started_at,
+                'finished_at': row.finished_at
+            }
+            for row in rows
+        ]
     }

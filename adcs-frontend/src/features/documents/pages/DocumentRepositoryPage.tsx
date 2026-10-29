@@ -294,7 +294,7 @@ const DocumentRepositoryPage: React.FC = () => {
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-sm sm:text-base text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
-                placeholder="Tìm kiếm ngữ nghĩa (Semantic Search) theo nội dung, số hiệu, trích yếu..."
+                placeholder={dsSearch ? "Tìm kiếm nâng cao theo nội dung, số hiệu, trích yếu..." : "Tìm kiếm văn bản theo nội dung, số hiệu, trích yếu..."}
               />
               {searchInput && (
                 <button

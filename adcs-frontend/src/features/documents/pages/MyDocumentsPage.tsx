@@ -1,8 +1,10 @@
 import DocumentIntegrationState from '../../integration/DocumentIntegrationState';
+import ProcessingErrorPanel from '../ProcessingErrorPanel';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { usePermission } from '../../../hooks/usePermission';
+import { getApiError } from '../../../api/errors';
 import {
   getMyDocuments,
   retryDocument,
@@ -136,7 +138,7 @@ const MyDocumentsPage: React.FC = () => {
         );
         successCount++;
       } catch (err: any) {
-        const msg = err.response?.data?.detail || 'Không thể tải tệp lên';
+        const msg = getApiError(err, 'Không thể tải tệp lên');
         setUploadQueue((prev: UploadingFile[]) =>
           prev.map((q: UploadingFile, idx: number) =>
             idx === i ? { ...q, status: 'error', errorMessage: msg } : q
@@ -167,7 +169,7 @@ const MyDocumentsPage: React.FC = () => {
     }
   };
 
-  // Thử lại văn bản lỗi
+  // Thử lại văn bản lỗi / đã hủy / cần kiểm tra
   const handleRetry = async (doc: MyDocumentItem) => {
     const toastId = toast.loading(`Đang đưa "${doc.original_filename}" vào lại hàng đợi...`);
     try {
@@ -175,8 +177,7 @@ const MyDocumentsPage: React.FC = () => {
       toast.success('Đã đưa văn bản vào hàng đợi xử lý lại!', { id: toastId });
       fetchMyDocuments(true);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Không thể thực hiện lại';
-      toast.error(`Thất bại: ${msg}`, { id: toastId });
+      toast.error(`Thất bại: ${getApiError(err, 'Không thể thực hiện lại')}`, { id: toastId });
     }
   };
 
@@ -188,8 +189,7 @@ const MyDocumentsPage: React.FC = () => {
       toast.success('Đã hủy văn bản khỏi hàng đợi!', { id: toastId });
       fetchMyDocuments(true);
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Không thể hủy';
-      toast.error(`Thất bại: ${msg}`, { id: toastId });
+      toast.error(`Thất bại: ${getApiError(err, 'Không thể hủy')}`, { id: toastId });
     }
   };
 
@@ -204,8 +204,7 @@ const MyDocumentsPage: React.FC = () => {
       setDeleteTarget(null);
       fetchMyDocuments();
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Không thể xóa văn bản';
-      toast.error(`Xóa thất bại: ${msg}`, { id: toastId });
+      toast.error(`Xóa thất bại: ${getApiError(err, 'Không thể xóa văn bản')}`, { id: toastId });
     } finally {
       setIsDeleting(false);
     }
@@ -364,7 +363,9 @@ const MyDocumentsPage: React.FC = () => {
               { id: 'queued', label: 'Chờ xử lý' },
               { id: 'processing', label: 'Đang phân tích' },
               { id: 'processed', label: 'Hoàn tất' },
+              { id: 'needs_review', label: 'Cần kiểm tra' },
               { id: 'failed', label: 'Thất bại' },
+              { id: 'cancelled', label: 'Đã hủy' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -439,7 +440,10 @@ const MyDocumentsPage: React.FC = () => {
                     const isQueued = doc.status === 'queued';
                     const isProcessing = doc.status === 'processing' || doc.status === 'pending';
                     const isCompleted = doc.status === 'processed' || doc.status === 'success' || doc.status === 'approved';
+                    const isNeedsReview = doc.status === 'needs_review';
                     const isFailed = doc.status === 'failed' || doc.status === 'error';
+                    const isCancelled = doc.status === 'cancelled';
+                    const isRetryScheduled = isQueued && doc.next_attempt_at && new Date(doc.next_attempt_at).getTime() > Date.now();
 
                     return (
                       <tr
@@ -502,10 +506,17 @@ const MyDocumentsPage: React.FC = () => {
                         <td className="py-3.5 px-4">
                           {isQueued && (
                             <div className="space-y-1">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                                <span className="material-symbols-outlined text-[13px] animate-pulse">hourglass_top</span>
-                                Chờ trong hàng đợi
-                              </span>
+                              {isRetryScheduled ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60" title={`Hẹn chạy lại: ${formatDate(doc.next_attempt_at)}`}>
+                                  <span className="material-symbols-outlined text-[13px] animate-pulse">schedule</span>
+                                  Chờ thử lại ({new Date(doc.next_attempt_at!).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                  <span className="material-symbols-outlined text-[13px] animate-pulse">hourglass_top</span>
+                                  Chờ trong hàng đợi
+                                </span>
+                              )}
                               {doc.queue_position && (
                                 <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
                                   Vị trí #{doc.queue_position} trong hàng đợi
@@ -531,6 +542,18 @@ const MyDocumentsPage: React.FC = () => {
                             </span>
                           )}
 
+                          {isNeedsReview && (
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => setErrorDetailTarget(doc)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">warning</span>
+                                Cần kiểm tra (Xem)
+                              </button>
+                            </div>
+                          )}
+
                           {isFailed && (
                             <div className="space-y-1">
                               <button
@@ -541,6 +564,13 @@ const MyDocumentsPage: React.FC = () => {
                                 Lỗi xử lý (Xem)
                               </button>
                             </div>
+                          )}
+
+                          {isCancelled && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              <span className="material-symbols-outlined text-[13px]">block</span>
+                              Đã hủy
+                            </span>
                           )}
                         </td>
 
@@ -556,8 +586,8 @@ const MyDocumentsPage: React.FC = () => {
                               <span className="material-symbols-outlined text-[18px]">visibility</span>
                             </button>
 
-                            {/* Nút Thử lại (chỉ khi failed) */}
-                            {isFailed && (
+                            {/* Nút Thử lại (khi failed, cancelled, hoặc needs_review) */}
+                            {(isFailed || isCancelled || isNeedsReview) && (
                               <button
                                 onClick={() => handleRetry(doc)}
                                 className="p-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 rounded-lg transition-colors cursor-pointer"
@@ -656,41 +686,44 @@ const MyDocumentsPage: React.FC = () => {
         {/* Modal Xem chi tiết lỗi */}
         {errorDetailTarget && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-rose-600">
                   <span className="material-symbols-outlined text-2xl">error</span>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">Chi tiết lỗi xử lý AI</h3>
                 </div>
                 <button
                   onClick={() => setErrorDetailTarget(null)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <span className="text-slate-400">Tệp: </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {errorDetailTarget.original_filename}
-                  </span>
-                </div>
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg text-rose-900 dark:text-rose-200 font-mono whitespace-pre-wrap">
-                  {errorDetailTarget.error_message || 'Không có mô tả lỗi cụ thể từ máy chủ AI.'}
-                </div>
-                <p className="text-slate-500 text-[11px]">
-                  Gợi ý: Kiểm tra lại xem tệp có bị khóa mật khẩu không, chất lượng ảnh quét OCR hoặc thử bấm nút "Thử lại" sau ít phút.
-                </p>
+
+              <div className="text-xs text-slate-500 mb-4 truncate">
+                Tệp: <strong className="text-slate-800 dark:text-slate-200">{errorDetailTarget.original_filename}</strong>
               </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
+
+              <ProcessingErrorPanel
+                documentId={errorDetailTarget.document_id}
+                error={errorDetailTarget.error_details}
+                errorMessage={errorDetailTarget.error_message}
+              />
+
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  onClick={() => setErrorDetailTarget(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
                 <button
                   onClick={() => {
                     const doc = errorDetailTarget;
                     setErrorDetailTarget(null);
                     handleRetry(doc);
                   }}
-                  className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">replay</span>
                   Thử lại ngay

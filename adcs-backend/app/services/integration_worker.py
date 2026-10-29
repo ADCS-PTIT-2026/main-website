@@ -19,6 +19,9 @@ from app.models.integration import IntegrationOutbox, ProcessingJob
 from app.services.integration_service import enqueue_sync, mark_duplicate, create_payload, metadata_payload
 
 
+DOCUMENT_CONCURRENCY = max(1, min(4, int(os.getenv("MAX_CONCURRENT_DOCUMENTS", 2))))
+
+
 def now():
     return datetime.now(timezone.utc)
 
@@ -44,7 +47,7 @@ async def deliver_one():
                 AND p.sequence<o.sequence AND p.status<>'done')
             ORDER BY o.created_at,o.sequence LIMIT 1 FOR UPDATE SKIP LOCKED''')).first()
         if not row:
-            return
+            return False
         event = db.get(IntegrationOutbox, row[0])
         event_id, ref, op, payload = event.id, event.document_id, event.operation, dict(event.payload)
         historical = payload.pop('_historical', False)
@@ -55,7 +58,7 @@ async def deliver_one():
             from sqlalchemy.orm.attributes import flag_modified
             flag_modified(doc, 'updated_at')
             db.commit()
-            return
+            return True
     try:
         if op == 'create':
             result = (await data_service.post('/api/v1/documents/sync', json=payload)).json()
@@ -109,6 +112,7 @@ async def deliver_one():
                         clean_owned_file(db, extra, doc)
                 doc.sync_status = 'synced' if doc.sync_version == event.sequence else 'pending'
             db.commit()
+            return True
     except HTTPException as exc:
         with SessionLocal() as db:
             event = db.get(IntegrationOutbox, event_id)
@@ -125,6 +129,7 @@ async def deliver_one():
                 from sqlalchemy.orm.attributes import flag_modified
                 flag_modified(doc, 'updated_at')
             db.commit()
+            return True
 
     except (ValueError, KeyError, TypeError, OSError) as exc:
         with SessionLocal() as db:
@@ -137,6 +142,17 @@ async def deliver_one():
                 from sqlalchemy.orm.attributes import flag_modified
                 flag_modified(doc, 'updated_at')
             db.commit()
+            return True
+
+
+async def deliver_batch(limit=20):
+    count = 0
+    while count < limit:
+        delivered = await deliver_one()
+        if not delivered:
+            break
+        count += 1
+    return count
 
 
 async def run_translation(ref):
@@ -219,11 +235,13 @@ async def run_heavy(job_id):
             if doc and doc.status not in ('processed', 'approved', 'duplicate'):
                 if doc.status == 'queued':
                     job.status = 'queued'
-                    job.error_code = 'RETRYING'
+                    job.error_code = (doc.error_details or {}).get('error_code', 'RETRYING')
                 elif doc.status == 'failed':
-                    job.status, job.error_code = 'failed', 'AI_RESULT_FAILED'
+                    job.status, job.error_code = 'failed', (doc.error_details or {}).get('error_code', 'AI_RESULT_FAILED')
+                elif doc.status == 'cancelled':
+                    job.status, job.error_code = 'cancelled', None
                 else:
-                    job.status, job.error_code = 'needs_review', 'AI_RESULT_UNCERTAIN'
+                    job.status, job.error_code = 'needs_review', (doc.error_details or {}).get('error_code', 'AI_RESULT_UNCERTAIN')
                     doc.status = 'needs_review'
             else:
                 job.status = 'done'
@@ -264,7 +282,7 @@ async def reconcile():
             if not docs:
                 return
             last = docs[-1].document_id
-            payload = {'documents': [{'document_id': str(d.document_id), 'updated_at': d.updated_at.isoformat(), 'status': {'success': 'processed', 'pending': 'queued', 'needs_review': 'failed', 'error': 'failed'}.get(d.status, d.status)} for d in docs]}
+            payload = {'documents': [{'document_id': str(d.document_id), 'updated_at': d.updated_at.isoformat(), 'status': {'success': 'processed', 'pending': 'queued', 'needs_review': 'failed', 'error': 'failed', 'cancelled': 'failed'}.get(d.status, d.status)} for d in docs]}
         result = (await data_service.post('/api/v1/sync/reconcile', json=payload)).json()
         missing = result.get('missing_in_data_service', [])
         outdated = [item['document_id'] for item in result.get('outdated_in_data_service', [])] + [item['document_id'] for item in result.get('status_mismatch', [])]
@@ -290,13 +308,19 @@ def recover_expired_jobs(db):
     db.commit()
 
 
-def claim_next_job(db):
-    blocked = db.query(ProcessingJob).filter(ProcessingJob.status == 'processing').first()
-    waiting = db.query(ProcessingJob).filter_by(status='retry_wait').first()
+def claim_next_job(db, active_doc_count: int = 0, active_trans_count: int = 0):
+    can_doc = active_doc_count < DOCUMENT_CONCURRENCY
+    can_trans = active_trans_count < 1
+    if not can_doc and not can_trans:
+        return None
+
     job = None
-    if not blocked and waiting and waiting.lease_until <= now():
-        job = waiting
-    elif not blocked:
+    if can_trans:
+        waiting = db.query(ProcessingJob).filter_by(status='retry_wait').first()
+        if waiting and waiting.lease_until <= now():
+            job = waiting
+
+    if not job:
         fair_share_sql = text("""
             WITH ready_jobs AS (
                 SELECT 
@@ -316,8 +340,8 @@ def claim_next_job(db):
                 LEFT JOIN translation_logs t ON j.kind = 'translation' AND j.reference_id = t.id
                 WHERE j.status = 'queued'
                   AND (
-                      (j.kind = 'document' AND d.sync_status = 'synced' AND d.deleted_at IS NULL AND d.status = 'queued')
-                      OR (j.kind = 'translation')
+                      (:can_doc AND j.kind = 'document' AND d.sync_status = 'synced' AND d.deleted_at IS NULL AND d.status = 'queued' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= now()))
+                      OR (:can_trans AND j.kind = 'translation')
                   )
             ),
             user_top_job AS (
@@ -341,12 +365,12 @@ def claim_next_job(db):
             )
             FOR UPDATE SKIP LOCKED;
         """)
-        next_job_id = db.execute(fair_share_sql).scalar()
+        next_job_id = db.execute(fair_share_sql, {'can_doc': can_doc, 'can_trans': can_trans}).scalar()
         if next_job_id:
             job = db.get(ProcessingJob, next_job_id)
     if job and job.kind == 'document':
         doc = db.get(Document, job.reference_id)
-        if not doc or doc.deleted_at or doc.status == 'duplicate':
+        if not doc or doc.deleted_at or doc.status in ('duplicate', 'cancelled'):
             job.status = 'cancelled'
             job = None
         elif doc.sync_status != 'synced':
@@ -377,8 +401,7 @@ async def main():
         guard.commit()
         with SessionLocal() as db:
             recover_expired_jobs(db)
-        active = None
-        active_id = None
+        active_tasks: dict = {}
         last_reconcile = None
         stop = asyncio.Event()
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -389,20 +412,61 @@ async def main():
                 guard.execute(text('SELECT 1'))
                 guard.commit()
                 Path('/tmp/adcs-worker-heartbeat').touch()
-                await deliver_one()
-                if active and active.done():
-                    await active
-                    active, active_id = None, None
-                if active_id:
+                await deliver_batch(limit=20)
+
+                # Clean up completed tasks
+                done_ids = [jid for jid, t in active_tasks.items() if t.done()]
+                for jid in done_ids:
+                    task = active_tasks.pop(jid)
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+                    except Exception as e:
+                        logger.error(f"Task for job {jid} failed: {e}")
+
+                # Renew leases
+                if active_tasks:
                     with SessionLocal() as db:
-                        db.get(ProcessingJob, active_id).lease_until = now() + timedelta(seconds=60)
+                        for jid in list(active_tasks.keys()):
+                            j = db.get(ProcessingJob, jid)
+                            if j and j.status == 'processing':
+                                j.lease_until = now() + timedelta(seconds=60)
                         db.commit()
-                if active is None:
+
+                # Determine active counts
+                active_doc_count = 0
+                active_trans_count = 0
+                if active_tasks:
+                    with SessionLocal() as db:
+                        for jid in active_tasks.keys():
+                            j = db.get(ProcessingJob, jid)
+                            if j:
+                                if j.kind == 'document':
+                                    active_doc_count += 1
+                                elif j.kind == 'translation':
+                                    active_trans_count += 1
+
+                # Claim new jobs up to capacity
+                while active_doc_count < DOCUMENT_CONCURRENCY or active_trans_count < 1:
                     with SessionLocal() as db:
                         recover_expired_jobs(db)
-                        active_id = claim_next_job(db)
-                    if active_id:
-                        active = asyncio.create_task(run_heavy(active_id))
+                        next_id = claim_next_job(db, active_doc_count=active_doc_count, active_trans_count=active_trans_count)
+                    if not next_id:
+                        break
+                    with SessionLocal() as db:
+                        claimed_job = db.get(ProcessingJob, next_id)
+                        if not claimed_job:
+                            break
+                        kind = claimed_job.kind
+                    active_tasks[next_id] = asyncio.create_task(run_heavy(next_id))
+                    if kind == 'document':
+                        active_doc_count += 1
+                    elif kind == 'translation':
+                        active_trans_count += 1
+                    if active_doc_count >= DOCUMENT_CONCURRENCY and active_trans_count >= 1:
+                        break
+
                 local_time = now().astimezone(ZoneInfo('Asia/Ho_Chi_Minh'))
                 if local_time.hour == 2 and last_reconcile != local_time.date():
                     try:
@@ -411,13 +475,14 @@ async def main():
                     except HTTPException:
                         logger.warning('Reconcile chưa hoàn tất; sẽ thử lại')
                 try:
-                    await asyncio.wait_for(stop.wait(), timeout=2)
+                    await asyncio.wait_for(stop.wait(), timeout=1.0)
                 except asyncio.TimeoutError:
                     pass
         finally:
-            if active:
-                active.cancel()
-                await asyncio.gather(active, return_exceptions=True)
+            if active_tasks:
+                for t in active_tasks.values():
+                    t.cancel()
+                await asyncio.gather(*active_tasks.values(), return_exceptions=True)
             guard.execute(text('SELECT pg_advisory_unlock(20261020,1)'))
             guard.commit()
 

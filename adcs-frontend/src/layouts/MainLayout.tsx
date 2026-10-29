@@ -9,7 +9,7 @@ const PAGE_METADATA: Record<string, { title: string; subtitle: string; icon: str
   '/documents': { title: 'Tiếp nhận & Xử lý văn bản', subtitle: 'Bóc tách OCR & Phân luồng AI tự động', icon: 'description' },
   '/documents/my': { title: 'Văn bản của tôi', subtitle: 'Theo dõi hàng đợi & lịch sử tải lên cá nhân', icon: 'folder_shared' },
   '/translation': { title: 'Dịch thuật văn bản', subtitle: 'Dịch thuật tài liệu đa ngôn ngữ bằng AI', icon: 'translate' },
-  '/document-repository': { title: 'Kho văn bản', subtitle: 'Tra cứu ngữ nghĩa (Semantic Search) & Lưu trữ', icon: 'archive' },
+  '/document-repository': { title: 'Kho văn bản', subtitle: 'Tra cứu & Lưu trữ văn bản tập trung', icon: 'archive' },
   '/departments': { title: 'Sơ đồ Phòng ban', subtitle: 'Cơ cấu tổ chức & Ngữ cảnh phân luồng AI', icon: 'account_tree' },
   '/history': { title: 'Lịch sử xử lý', subtitle: 'Nhật ký phân tích LLM, lưu trữ & thông báo', icon: 'history' },
   '/profile': { title: 'Hồ sơ cá nhân', subtitle: 'Thông tin tài khoản, bảo mật & liên kết Telegram', icon: 'manage_accounts' },

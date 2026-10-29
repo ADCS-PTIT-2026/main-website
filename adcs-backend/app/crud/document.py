@@ -53,7 +53,8 @@ def create_queued_document(
     file_path: str,
     file_size_bytes: int,
     page_count: int = 1,
-    priority: int = 1
+    priority: int = 1,
+    file_hash: Optional[str] = None
 ) -> Document:
     """Tạo một bản ghi văn bản mới với trạng thái queued đưa vào hàng đợi."""
     doc = Document(
@@ -63,6 +64,7 @@ def create_queued_document(
         original_filename=original_filename,
         file_path=file_path,
         file_size_bytes=file_size_bytes,
+        file_hash=file_hash,
         page_count=page_count,
         priority=priority,
         retry_count=0,
@@ -102,6 +104,7 @@ def claim_next_document_for_processing(db: Session) -> Optional[Document]:
                 ) AS last_served_at
             FROM documents
             WHERE status = 'queued' AND retry_count < 3 AND deleted_at IS NULL
+                AND (next_attempt_at IS NULL OR next_attempt_at <= now())
         ),
         user_top_doc AS (
             SELECT 
@@ -287,6 +290,8 @@ def get_my_documents(
             "priority": doc.priority or 1,
             "retry_count": doc.retry_count or 0,
             "error_message": doc.error_message,
+            "error_details": doc.error_details,
+            "next_attempt_at": doc.next_attempt_at,
             "so_ky_hieu": doc.so_ky_hieu,
             "trich_yeu": doc.trich_yeu,
             "don_vi_ban_hanh": doc.don_vi_ban_hanh,
@@ -317,12 +322,14 @@ def retry_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if not is_admin and str(doc.uploaded_by_user_id) != str(user.user_id):
         raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện lại xử lý cho tài liệu này!")
 
-    if doc.status not in ["failed", "error", "needs_review"]:
-        raise HTTPException(status_code=400, detail="Chỉ có thể thử lại các văn bản đang ở trạng thái lỗi hoặc cần đối soát!")
+    if doc.status not in ["failed", "error", "needs_review", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Chỉ có thể thử lại các văn bản đang ở trạng thái lỗi, đã hủy hoặc cần đối soát!")
 
     doc.status = "queued"
     doc.retry_count = 0
     doc.error_message = None
+    doc.error_details = None
+    doc.next_attempt_at = None
     doc.processing_started_at = None
     doc.updated_at = datetime.utcnow()
     from app.services.integration_service import enqueue_sync
@@ -353,8 +360,10 @@ def cancel_my_document(db: Session, document_id: UUID, user: User) -> Document:
     if doc.status not in ["queued", "needs_review"]:
         raise HTTPException(status_code=400, detail="Chỉ có thể hủy văn bản khi đang ở trạng thái chờ trong hàng đợi hoặc cần đối soát!")
 
-    doc.status = "failed"
-    doc.error_message = "Đã hủy bởi người dùng"
+    doc.status = "cancelled"
+    doc.error_message = None
+    doc.error_details = None
+    doc.next_attempt_at = None
     doc.updated_at = datetime.utcnow()
     from app.services.integration_service import enqueue_sync
     enqueue_sync(db, doc)

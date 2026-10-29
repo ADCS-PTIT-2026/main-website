@@ -9,12 +9,22 @@ type Unmapped = { document_id: string; source_name: string; section: string; fil
 type Job = { id: string; kind: string; status: string; error_code: string | null };
 type Event = { id: string; operation: string; status: string; attempts: number; error_code: string | null };
 type Health = { unmapped_crawler: Unmapped[]; jobs: Job[]; outbox: Event[] };
+type AdminProcessingError = {
+  attempt_id: string;
+  document_id: string;
+  request_id: string;
+  status: string;
+  error?: { code?: string; message?: string; stage?: string; retryable?: boolean; [k: string]: unknown } | null;
+  warnings?: unknown[];
+  started_at?: string;
+};
 const field = 'rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm w-full';
 
 export default function CrawlerSourcesPage() {
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [departments, setDepartments] = useState<DepartmentTreeResponse[]>([]);
   const [health, setHealth] = useState<Health>({ unmapped_crawler: [], jobs: [], outbox: [] });
+  const [processingErrors, setProcessingErrors] = useState<AdminProcessingError[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,15 +34,17 @@ export default function CrawlerSourcesPage() {
     setLoading(true);
     setError('');
     try {
-      const [rows, tree, status, parameters] = await Promise.all([
+      const [rows, tree, status, parameters, pErrors] = await Promise.all([
         axiosClient.get<never, Mapping[]>('/crawler-source-mappings'), departmentApi.getAll(),
         axiosClient.get<never, Health>('/integration/status'),
         axiosClient.get<never, Record<string, string>>('/system-parameters'),
+        axiosClient.get<never, AdminProcessingError[]>('/integration/processing-errors').catch(() => []),
       ]);
       const flat: DepartmentTreeResponse[] = [];
       const walk = (items: DepartmentTreeResponse[]) => items.forEach(item => { flat.push(item); walk(item.children || []); });
       walk(tree);
       setMappings(rows); setDepartments(flat); setHealth(status);
+      setProcessingErrors(Array.isArray(pErrors) ? pErrors : []);
       setThreshold(parameters.searchSimilarityThreshold || '0.8');
     } catch { setError('Không tải được cấu hình. Vui lòng thử lại.'); }
     finally { setLoading(false); }
@@ -97,6 +109,67 @@ export default function CrawlerSourcesPage() {
           <span>{event.operation} · {event.status} · {event.attempts} lần · {event.error_code}</span>
           {event.status === 'failed' && <button disabled={saving} className="underline" onClick={() => void action(`/integration/outbox/${event.id}/retry`)}>Thử lại đồng bộ</button>}
         </div>)}
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Nhật ký lỗi xử lý AI gần nhất ({processingErrors.length})</h2>
+        {!processingErrors.length ? (
+          <p className="text-sm text-slate-500">Không có lỗi xử lý AI nào được ghi nhận gần đây.</p>
+        ) : (
+          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="py-2.5 px-3">Thời gian</th>
+                  <th className="py-2.5 px-3">Mã lỗi & Mô tả</th>
+                  <th className="py-2.5 px-3">Bước</th>
+                  <th className="py-2.5 px-3">Mã tra cứu</th>
+                  <th className="py-2.5 px-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {processingErrors.map((pe) => (
+                  <tr key={pe.attempt_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-500">
+                      {pe.started_at ? new Date(pe.started_at).toLocaleString('vi-VN') : '—'}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="font-semibold text-rose-600 dark:text-rose-400">
+                        {pe.error?.code || 'UNKNOWN'}
+                      </div>
+                      <div className="text-slate-600 dark:text-slate-400 line-clamp-1">
+                        {pe.error?.message || '—'}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap font-mono text-slate-500">
+                      {pe.error?.stage || '—'}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap font-mono text-slate-500">
+                      {pe.request_id || '—'}
+                    </td>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(pe.request_id || '');
+                          toast.success('Đã sao chép mã tra cứu!');
+                        }}
+                        className="underline text-primary"
+                      >
+                        Sao chép mã
+                      </button>
+                      <a
+                        href={`/documents?id=${pe.document_id}`}
+                        className="underline text-slate-600 dark:text-slate-300"
+                      >
+                        Xem tài liệu
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </>}
   </section>;

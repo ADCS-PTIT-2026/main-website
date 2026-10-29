@@ -16,8 +16,11 @@ def current_session_api(current_user: User = Depends(get_authenticated_user)):
 
 # 1. Đăng nhập
 @router.post("/login", response_model=LoginResponse)
-def login_api(request: LoginRequest, db: Session = Depends(get_db)):
-    return login(db, request.email, request.password)
+def login_api(request: LoginRequest, req: Request, db: Session = Depends(get_db)):
+    client_ip = req.headers.get("X-Real-IP") or req.headers.get("X-Forwarded-For") or (req.client.host if req.client else "unknown")
+    if "," in client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    return login(db, request.email, request.password, client_ip=client_ip)
 
 # 2. Đăng ký
 @router.post("/register", response_model=RegisterResponse)

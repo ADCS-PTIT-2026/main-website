@@ -161,13 +161,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
         </p>
       </div>
 
-      <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex justify-center gap-6">
-          <a className="text-xs text-slate-400 hover:text-primary cursor-pointer">Điều khoản</a>
-          <a className="text-xs text-slate-400 hover:text-primary cursor-pointer">Bảo mật</a>
-          <a className="text-xs text-slate-400 hover:text-primary cursor-pointer">Liên hệ</a>
-        </div>
-      </div>
+
 
       {/* Modal Hướng dẫn Quên mật khẩu */}
       {showForgotModal && (

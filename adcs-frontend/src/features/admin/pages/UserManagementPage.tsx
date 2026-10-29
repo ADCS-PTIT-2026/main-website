@@ -237,7 +237,7 @@ const UserManagementPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <main className="max-w-7xl xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
@@ -357,14 +357,14 @@ const UserManagementPage: React.FC = () => {
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[980px]">
                 <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                   <tr>
                     {['STT', 'Họ tên', 'Phòng ban', 'Email', 'Roles', 'Telegram', 'Trạng thái', 'Hành động'].map((header, idx) => (
                       <th
                         key={idx}
-                        className={`px-6 py-4 text-[12px] font-bold text-slate-500 uppercase tracking-wider ${
+                        className={`px-6 py-4 text-[12px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap ${
                           header === 'Hành động' ? 'text-right' : ''
                         }`}
                       >
@@ -392,11 +392,11 @@ const UserManagementPage: React.FC = () => {
 
                   {!isLoading && paginatedUsers.map((user, index) => (
                     <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                         {(currentPage - 1) * pageSize + index + 1}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${user.avatarBg}`}>
                             {user.avatarStr}
@@ -405,46 +405,46 @@ const UserManagementPage: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                         {user.dept}
                       </td>
 
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                         {user.email}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${user.roleStyle}`}>
                           {user.role}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {user.isTelegramConnected ? (
                           <span 
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap"
                             title={`Chat ID: ${user.telegramChatId || 'Hoạt động'}`}
                           >
                             <span className="material-symbols-outlined text-[13px] text-emerald-600 dark:text-emerald-400">check_circle</span>
                             Đã kết nối
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 whitespace-nowrap">
                             Chưa liên kết
                           </span>
                         )}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span className={`w-1.5 h-1.5 rounded-full ${user.statusDotClass}`}></span>
-                          <span className={`text-[12px] font-medium ${user.statusBadgeClass}`}>
+                          <span className={`text-[12px] font-medium ${user.statusBadgeClass} whitespace-nowrap`}>
                             {user.status}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => {

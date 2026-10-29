@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 import httpx
 from fastapi import HTTPException
 
+from app.core import error_contract as ec
 from app.core.logger import request_id_var, generate_request_id
 
 
@@ -44,12 +45,15 @@ class DataServiceClient:
             return response
         try:
             payload = response.json()
+            payload = payload if isinstance(payload, dict) else {}
             detail = payload.get("detail", payload)
             detail = detail if isinstance(detail, dict) else {}
         except (ValueError, AttributeError):
             detail = {}
+            payload = {}
         # Return only documented, bounded fields; never raw bodies or HTML proxy errors.
-        error = {"error_code": str(detail.get("error_code") or "DS_ERROR")[:100],
+        error = {**ec.normalize(payload, response.status_code, service='data-service'),
+                 "error_code": str(detail.get("error_code") or "DS_ERROR")[:100],
                  "message": str(detail.get("message") or "Dịch vụ dữ liệu từ chối yêu cầu")[:500],
                  "step": str(detail.get("step") or "")[:80],
                  "request_id": response.headers.get("X-Request-ID", headers["X-Request-ID"])}
