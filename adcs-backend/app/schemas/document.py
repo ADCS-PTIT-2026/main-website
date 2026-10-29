@@ -179,8 +179,6 @@ class MyDocumentItemResponse(BaseModel):
     priority: int = 1
     retry_count: int = 0
     error_message: Optional[str] = None
-    error_details: Optional[dict] = None
-    next_attempt_at: Optional[datetime] = None
     
     so_ky_hieu: Optional[str] = None
     trich_yeu: Optional[str] = None

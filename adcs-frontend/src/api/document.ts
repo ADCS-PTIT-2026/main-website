@@ -249,8 +249,6 @@ export type MyDocumentItem = {
   priority: number;
   retry_count: number;
   error_message?: string | null;
-  error_details?: ProcessingError | null;
-  next_attempt_at?: string | null;
   so_ky_hieu?: string | null;
   trich_yeu?: string | null;
   don_vi_ban_hanh?: string | null;
@@ -290,15 +288,3 @@ export async function retryDocument(documentId: string): Promise<{ message: stri
 export async function cancelDocument(documentId: string): Promise<{ message: string; document_id: string; status: string }> {
   return axiosClient.post(`/documents/${documentId}/cancel`);
 }
-
-
-export type ProcessingError = {
-  error_code: string; message: string; stage: string; service: string; dependency?: string | null;
-  request_id: string; retryable: boolean; next_retry_at?: string;
-};
-export type ProcessingAttempt = {
-  attempt_id: string; request_id: string; status: string; started_at: string; finished_at?: string;
-  error?: ProcessingError | null; warnings: ProcessingError[];
-};
-export const getProcessingAttempts = (id: string) =>
-  axiosClient.get<never, { attempts: ProcessingAttempt[] }>(`/documents/${id}/processing-attempts`);

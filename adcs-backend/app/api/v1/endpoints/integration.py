@@ -196,12 +196,3 @@ def retry_event(event_id: UUID, db: Session = Depends(get_db)):
     event.available_at = datetime.now(timezone.utc)
     db.commit()
     return {'status': 'pending'}
-
-
-@router.get('/integration/processing-errors', dependencies=[Depends(RoleChecker(['admin']))])
-def processing_errors(db: Session = Depends(get_db)):
-    from app.models.processing_attempt import ProcessingAttempt
-    rows = db.query(ProcessingAttempt).filter((ProcessingAttempt.error.isnot(None)) | ((ProcessingAttempt.warnings.isnot(None)) & (ProcessingAttempt.warnings != []))).order_by(ProcessingAttempt.started_at.desc()).limit(100).all()
-    return [{'attempt_id': str(row.id), 'document_id': str(row.document_id), 'request_id': row.request_id,
-             'status': row.status, 'error': row.error, 'warnings': row.warnings or [], 'started_at': row.started_at}
-            for row in rows if row.error or row.warnings]

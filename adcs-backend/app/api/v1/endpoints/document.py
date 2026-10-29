@@ -454,17 +454,3 @@ def cancel_document_api(
         "document_id": str(doc.document_id),
         "status": doc.status
     }
-
-@router.get('/{document_id}/processing-attempts')
-def document_processing_attempts(document_id: UUID, db: Session = Depends(get_db),
-                                 current_user: User = Depends(PermissionChecker('file.read'))):
-    from app.models.processing_attempt import ProcessingAttempt
-    doc = get_document_by_id(db, str(document_id))
-    if not doc: raise HTTPException(404, 'Không tìm thấy văn bản')
-    if not can_user_access_document(doc, current_user): raise HTTPException(403, 'Không có quyền xem văn bản')
-    rows = db.query(ProcessingAttempt).filter_by(document_id=document_id).order_by(ProcessingAttempt.started_at.desc()).limit(50).all()
-    return {'document_id': str(document_id), 'attempts': [
-        {'attempt_id': str(row.id), 'job_id': str(row.job_id) if row.job_id else None,
-         'request_id': row.request_id, 'status': row.status, 'error': row.error,
-         'warnings': row.warnings or [], 'started_at': row.started_at, 'finished_at': row.finished_at}
-        for row in rows]}

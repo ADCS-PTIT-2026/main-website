@@ -59,8 +59,6 @@ class Document(Base):
     priority = Column(Integer, default=1) # 1: User upload, 2: Translate, 3: Crawler
     retry_count = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
-    error_details = Column(JSONB, nullable=True)
-    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
     processing_started_at = Column(DateTime(timezone=True), nullable=True)
 
     is_chua_doc = Column(Boolean, default=True)

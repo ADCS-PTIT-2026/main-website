@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import axiosClient from '../../api/axiosClient';
 import { departmentApi, type DepartmentTreeResponse } from '../../api/department';
-import { approveAIResult, type ProcessingAttempt } from '../../api/document';
+import { approveAIResult } from '../../api/document';
 
 type Mapping = { source_name: string; section: string; department_id: string };
 type Unmapped = { document_id: string; source_name: string; section: string; filename: string };
@@ -12,7 +12,6 @@ type Health = { unmapped_crawler: Unmapped[]; jobs: Job[]; outbox: Event[] };
 const field = 'rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm w-full';
 
 export default function CrawlerSourcesPage() {
-  const [processingErrors, setProcessingErrors] = useState<(ProcessingAttempt & {document_id: string})[]>([]);
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [departments, setDepartments] = useState<DepartmentTreeResponse[]>([]);
   const [health, setHealth] = useState<Health>({ unmapped_crawler: [], jobs: [], outbox: [] });
@@ -25,16 +24,15 @@ export default function CrawlerSourcesPage() {
     setLoading(true);
     setError('');
     try {
-      const [rows, tree, status, parameters, failures] = await Promise.all([
+      const [rows, tree, status, parameters] = await Promise.all([
         axiosClient.get<never, Mapping[]>('/crawler-source-mappings'), departmentApi.getAll(),
         axiosClient.get<never, Health>('/integration/status'),
         axiosClient.get<never, Record<string, string>>('/system-parameters'),
-        axiosClient.get<never, (ProcessingAttempt & {document_id: string})[]>('/integration/processing-errors'),
       ]);
       const flat: DepartmentTreeResponse[] = [];
       const walk = (items: DepartmentTreeResponse[]) => items.forEach(item => { flat.push(item); walk(item.children || []); });
       walk(tree);
-      setMappings(rows); setDepartments(flat); setHealth(status); setProcessingErrors(failures);
+      setMappings(rows); setDepartments(flat); setHealth(status);
       setThreshold(parameters.searchSimilarityThreshold || '0.8');
     } catch { setError('Không tải được cấu hình. Vui lòng thử lại.'); }
     finally { setLoading(false); }
@@ -85,15 +83,6 @@ export default function CrawlerSourcesPage() {
             try { await approveAIResult(doc.document_id, { assigned_department_id: assignments[doc.document_id] }); await load(); toast.success('Đã phân công'); }
             catch { toast.error('Không thể phân công'); } finally { setSaving(false); }
           }}>Phân công tài liệu</button>
-        </div>)}
-      </section>
-      <section className="space-y-3"><h2 className="text-lg font-semibold">Lỗi xử lý văn bản gần đây</h2>
-        {processingErrors.length === 0 && <p>Chưa có lỗi được ghi nhận theo cơ chế mới.</p>}
-        {processingErrors.map(row => <div key={row.attempt_id} className="border rounded-xl p-3 text-sm space-y-1">
-          <p>Văn bản: {row.document_id} · {new Date(row.started_at).toLocaleString('vi-VN')} · {row.status}</p>
-          {row.error && <p>{row.error.error_code} · {row.error.stage} · {row.error.dependency || row.error.service}: {row.error.message}</p>}
-          {row.warnings.map((w, i) => <p key={i}>Cảnh báo: {w.error_code} · {w.message}</p>)}
-          <p className="select-all break-all">Mã tra cứu: {row.request_id}</p>
         </div>)}
       </section>
       <section className="space-y-3"><h2 className="text-lg font-semibold">Tác vụ cần đối soát</h2>

@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
-from app.core import error_contract as ec
 from app.core.logger import logger, request_id_var
 from app.services.department_service import get_active_departments_for_ai
 from app.crud.document import get_document_by_id, update_document_metadata, get_document_stats, get_documents
@@ -130,8 +129,6 @@ def normalize_ai_response(result):
     if not isinstance(result, dict):
         return None
     result = dict(result)
-    if result.get("status") == "error" or result.get("error_code"):
-        return result
     storage = result.get('storage_info') or {}
     if storage.get('action') == 'duplicate' or storage.get('is_duplicate'):
         return result
@@ -172,7 +169,7 @@ async def send_to_ai_service(
     page_count: int = None
 ):
     """Gửi file sang AI Service với danh mục phòng ban động từ CSDL và timeout linh hoạt"""
-    req_id = ec.request_id(request_id_var.get())
+    req_id = request_id_var.get()
     logger.info(f"Bắt đầu gửi file '{filename}' tới AI Service (save_document={is_save_file}, timeout={timeout:.1f}s, document_id={document_id})")
     
     # Lấy danh mục phòng ban động từ CSDL
@@ -226,25 +223,13 @@ async def send_to_ai_service(
             response = await client.post(AI_SERVICE_URL, files=files, data=data, headers=headers)
             response.raise_for_status()
             logger.info(f"AI Service phản hồi thành công cho file '{filename}'")
-            body = response.json()
-            if not isinstance(body, dict):
-                return ec.error('LLM_INVALID_RESPONSE', document_id=document_id, service='web-backend', dependency='ai-service')
-            return body
-    except httpx.HTTPStatusError as exc:
-        try: body = exc.response.json()
-        except ValueError: body = {}
-        failure = ec.normalize(body, exc.response.status_code, service='ai-service')
-        delay = exc.response.headers.get('Retry-After', '')
-        if delay.isdigit(): failure['retry_after_seconds'] = max(1, min(1800, int(delay)))
-        failure.update(document_id=document_id, request_id=req_id)
-        logger.warning('AI error code=%s stage=%s request_id=%s', failure['error_code'], failure['stage'], req_id)
-        return failure
-    except httpx.TimeoutException:
-        return ec.error('AI_RESPONSE_TIMEOUT', service='web-backend', dependency='ai-service', document_id=document_id)
-    except httpx.RequestError:
-        return ec.error('DEPENDENCY_UNAVAILABLE', service='web-backend', dependency='ai-service', stage='connecting_ai', document_id=document_id)
-    except (ValueError, TypeError):
-        return ec.error('LLM_INVALID_RESPONSE', service='web-backend', dependency='ai-service', document_id=document_id)
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Lỗi HTTP từ AI Service ({e.response.status_code}): {e.response.text}")
+        return None
+    except Exception as e:
+        logger.error(f"Lỗi kết nối httpx tới AI Service: {str(e)}", exc_info=True)
+        return None
 
 async def send_document_to_qlvb(db: Session, doc: Document, file_content: bytes, filename: str):
     """Gửi file raw và kết quả phân tích sang hệ thống QLVB (test.qlvb.ript.vn)"""
