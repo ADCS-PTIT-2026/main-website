@@ -7,6 +7,7 @@ import hashlib
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query, Form, WebSocket, WebSocketDisconnect, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -341,6 +342,20 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         manager.disconnect(client_id)
 
+def _count_pdf_pages(file_content: bytes) -> int:
+    try:
+        import pypdf
+        return len(pypdf.PdfReader(io.BytesIO(file_content)).pages)
+    except Exception as pe:
+        logger.warning(f"Không thể đọc số trang PDF qua pypdf: {pe}")
+        return 1
+
+
+def _write_upload(target_path: str, file_content: bytes):
+    with open(target_path, "wb") as f_out:
+        f_out.write(file_content)
+
+
 # 10. Upload tài liệu (Hàng đợi nền, lưu file đĩa ngay, trả về kết quả <200ms)
 @router.post("/upload", response_model=UploadResponse)
 async def upload_file_api(
@@ -371,19 +386,14 @@ async def upload_file_api(
             detail=f"Dung lượng tệp ({file_size / (1024*1024):.1f}MB) vượt quá giới hạn tối đa 50MB."
         )
 
-    file_hash = hashlib.sha256(file_content).hexdigest()
+    # Băm, đọc PDF và ghi file chạy trong thread pool để không chặn event loop khi nhiều người upload
+    file_hash = (await run_in_threadpool(hashlib.sha256, file_content)).hexdigest()
 
     # 3. Đếm số trang sơ bộ và kiểm tra giới hạn (tối đa 100 trang)
     t_before_pdf = time.perf_counter()
     page_count = 1
     if file.filename.lower().endswith(".pdf"):
-        try:
-            import pypdf
-            reader = pypdf.PdfReader(io.BytesIO(file_content))
-            page_count = len(reader.pages)
-        except Exception as pe:
-            logger.warning(f"Không thể đọc số trang PDF qua pypdf: {pe}")
-            page_count = 1
+        page_count = await run_in_threadpool(_count_pdf_pages, file_content)
     t_pdf = time.perf_counter() - t_before_pdf
 
     if page_count > 100:
@@ -404,8 +414,7 @@ async def upload_file_api(
     safe_filename = f"{uuid.uuid4()}{file_ext}"
     target_path = os.path.join(upload_dir, safe_filename)
 
-    with open(target_path, "wb") as f_out:
-        f_out.write(file_content)
+    await run_in_threadpool(_write_upload, target_path, file_content)
     t_write = time.perf_counter() - t_before_write
 
     # 5. Tạo bản ghi Document với trạng thái 'queued' và độ ưu tiên người dùng = 1

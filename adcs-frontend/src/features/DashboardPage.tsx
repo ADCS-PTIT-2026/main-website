@@ -240,6 +240,20 @@ const ActiveDashboardPage: React.FC = () => {
           dotClass: 'bg-rose-500',
           isPulsing: false,
         };
+      case 'needs_review':
+        return {
+          label: 'Cần kiểm tra',
+          badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
+          dotClass: 'bg-amber-500',
+          isPulsing: false,
+        };
+      case 'cancelled':
+        return {
+          label: 'Đã hủy',
+          badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+          dotClass: 'bg-slate-400',
+          isPulsing: false,
+        };
       default:
         return {
           label: status || 'Chờ xác minh',

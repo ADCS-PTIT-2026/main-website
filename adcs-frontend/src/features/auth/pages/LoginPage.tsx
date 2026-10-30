@@ -46,10 +46,19 @@ const LoginPage: React.FC = () => {
 
       navigate('/dashboard');
     } catch (error: any) {
-      if (error.response && error.response.data && error.response.data.detail) {
-         setErrorMsg(error.response.data.detail);
-      } else {
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string' && detail.trim()) {
+         setErrorMsg(detail);
+      } else if (!error.response) {
+         setErrorMsg('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.');
+      } else if (status === 429 || status === 503) {
+         // Nginx trả trang HTML khi vượt giới hạn tốc độ nên không có detail
+         setErrorMsg('Có quá nhiều yêu cầu đăng nhập. Vui lòng thử lại sau ít phút.');
+      } else if (status === 401) {
          setErrorMsg('Tài khoản hoặc mật khẩu không chính xác.');
+      } else {
+         setErrorMsg('Không thể đăng nhập lúc này. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.');
       }
     } finally {
       setIsLoading(false);
@@ -85,10 +94,6 @@ const LoginPage: React.FC = () => {
             PTIT ADCS
           </h2>
         </div>
-
-        <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90">
-          Trợ giúp
-        </button>
       </header>
 
       {/* Main Content Area */}

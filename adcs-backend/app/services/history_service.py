@@ -16,11 +16,38 @@ from app.api.v1.endpoints.telegram import get_system_bot_token, send_telegram_no
 
 DATA_SERVICE_URL = os.getenv("DATA_SERVICE_URL")
 
-def guess_mime_type(filename: Optional[str]) -> str:
-    if not filename:
-        return "application/pdf"
-    mime, _ = mimetypes.guess_type(filename)
-    return mime or "application/pdf"
+# Văn bản ở các trạng thái này không có kết quả để gửi qua Telegram
+UNSENDABLE_STATUSES = ["failed", "error", "cancelled", "needs_review"]
+
+def guess_mime_type(filename: Optional[str], fallback: Optional[str] = None) -> str:
+    mime = mimetypes.guess_type(filename)[0] if filename else None
+    return mime or fallback or "application/octet-stream"
+
+def llm_status_for_document(doc_status: Optional[str]) -> Optional[str]:
+    """Web DB là nguồn đúng khi văn bản không hoàn tất; Data Service có thể ghi success từ lượt trước."""
+    return {"failed": "failed", "error": "failed", "cancelled": "cancelled", "needs_review": "needs_review"}.get(doc_status)
+
+def _enrich_with_web_documents(db: Optional[Session], rows: List[dict]) -> List[dict]:
+    """Bổ sung metadata Web mà lịch sử Data Service không có. Người gọi phải lọc quyền xem trước."""
+    def web_id(row):
+        return str(row.get("web_document_id") or row.get("document_id") or "").strip().lower()
+
+    ids = {web_id(row) for row in rows}
+    ids = [value for value in ids if is_uuid(value)]
+    docs = {}
+    if db and ids:
+        found = db.query(Document).filter(Document.document_id.in_(ids), Document.deleted_at.is_(None)).all()
+        docs = {str(doc.document_id).lower(): doc for doc in found}
+
+    enriched = []
+    for row in rows:
+        row = dict(row, file_type=guess_mime_type(row.get("filename"), row.get("file_type")))
+        doc = docs.get(web_id(row))
+        if doc:
+            row.update(so_ky_hieu=doc.so_ky_hieu, trich_yeu=doc.trich_yeu,
+                       status_llm=llm_status_for_document(doc.status) or row.get("status_llm"))
+        enriched.append(row)
+    return enriched
 
 def item_matches_search(item: dict, search: Optional[str]) -> bool:
     if not search or not search.strip():
@@ -86,6 +113,7 @@ async def fetch_processing_history(
     # Nếu là Admin, trả về toàn bộ dữ liệu từ Data Service (lọc từ khóa nếu có)
     if is_admin:
         results = raw_data.get("results", []) if isinstance(raw_data, dict) else (raw_data if isinstance(raw_data, list) else [])
+        results = _enrich_with_web_documents(db, results)
         if search:
             results = [r for r in results if item_matches_search(r, search)]
         final_results = results[:limit]
@@ -115,20 +143,23 @@ async def fetch_processing_history(
         if did in user_doc_ids:
             filtered_results.append(item)
             seen_matched_ids.add(did)
+    filtered_results = _enrich_with_web_documents(db, filtered_results)
 
     # Bổ sung các tài liệu user đã tải lên trong Web DB mà Data Service history chưa có
     for doc in user_docs:
         if str(doc.document_id).lower() not in seen_matched_ids:
             status_val = doc.status or "queued"
-            llm_stat = "success" if status_val in ["processed", "approved"] else ("failed" if status_val in ["failed", "cancelled"] else "pending")
-            file_stat = "success" if status_val in ["processed", "approved"] else "pending"
-            vec_stat = "success" if status_val in ["processed", "approved"] else "pending"
-            
+            llm_stat = llm_status_for_document(status_val) or ("success" if status_val in ["processed", "approved"] else "pending")
+            file_stat = "success" if status_val in ["processed", "approved"] else ("skipped" if status_val == "cancelled" else "pending")
+            vec_stat = file_stat
+
             filtered_results.append({
                 "id": "web:" + str(doc.document_id),
                 "request_id": str(doc.document_id)[:8],
                 "action_type": "upload",
                 "filename": doc.original_filename,
+                "so_ky_hieu": doc.so_ky_hieu,
+                "trich_yeu": doc.trich_yeu,
                 "file_type": guess_mime_type(doc.original_filename),
                 "status_llm": llm_stat,
                 "status_save_file": file_stat,
@@ -234,15 +265,16 @@ async def fetch_history_detail(history_id: str, db: Session, user: User) -> dict
     else:
         overall_status = "success"
 
-    if doc_web and doc_web.status in ["failed", "cancelled", "needs_review"]:
-        status_llm = "failed" if doc_web.status in ["failed", "cancelled"] else "needs_review"
+    web_llm_status = llm_status_for_document(doc_web.status) if doc_web else None
+    if web_llm_status:
+        status_llm = overall_status = web_llm_status
 
     # 4. Tổng hợp payload chi tiết
     detail = {
         "id": raw_history_item.get("id"),
         "request_id": raw_history_item.get("request_id"),
         "filename": filename or (doc_web.original_filename if doc_web else "Tài liệu không tên"),
-        "file_type": raw_history_item.get("file_type") or guess_mime_type(filename or (doc_web.original_filename if doc_web else None)),
+        "file_type": guess_mime_type(filename or (doc_web.original_filename if doc_web else None), raw_history_item.get("file_type")),
         "action_type": raw_history_item.get("action_type") or "process",
         "status": overall_status,
         "status_llm": status_llm,
@@ -293,7 +325,7 @@ async def send_history_telegram_notification(history_id: int, user: User, db: Se
     detail = await fetch_history_detail(history_id, db, user)
 
     # Chỉ cho phép gửi nếu trạng thái hoàn tất thành công
-    if detail.get("status") in ["failed", "error"] or detail.get("status_llm") in ["failed", "error"]:
+    if detail.get("status") in UNSENDABLE_STATUSES or detail.get("status_llm") in UNSENDABLE_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Chỉ có thể gửi kết quả qua Telegram cho các văn bản đã xử lý thành công."
@@ -395,12 +427,13 @@ async def fetch_document_processing_detail(document_id: str, db: Session, user: 
     if overall_status == "processed":
         overall_status = "success"
 
-    if overall_status in ["failed", "cancelled", "needs_review"]:
-        status_llm = "failed" if overall_status in ["failed", "cancelled"] else "needs_review"
-    else:
-        status_llm = history_item.get("status_llm") if history_item else ("success" if overall_status in ["success", "approved"] else "processing")
+    status_llm = llm_status_for_document(overall_status) or (
+        history_item.get("status_llm") if history_item else ("success" if overall_status in ["success", "approved"] else "processing")
+    )
     status_file = history_item.get("status_save_file") if history_item else ("success" if overall_status in ["success", "approved"] else "pending")
     status_vector = history_item.get("status_save_vector") if history_item else ("success" if overall_status in ["success", "approved"] else "pending")
+    if overall_status == "cancelled":
+        status_file = status_vector = "skipped"
 
     detail = {
         "id": history_item.get("id") if history_item else (hash(str(doc_web.document_id)) % 10000000),
@@ -452,7 +485,7 @@ async def send_document_telegram_notification(document_id: str, user: User, db: 
 
     detail = await fetch_document_processing_detail(document_id, db, user)
 
-    if detail.get("status") in ["failed", "error"] or detail.get("status_llm") in ["failed", "error"]:
+    if detail.get("status") in UNSENDABLE_STATUSES or detail.get("status_llm") in UNSENDABLE_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Chỉ có thể gửi kết quả qua Telegram cho các văn bản đã xử lý thành công."

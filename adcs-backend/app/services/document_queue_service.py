@@ -296,7 +296,6 @@ class DocumentQueueManager:
                         except Exception:
                             pass
 
-                    from datetime import timezone
                     doc.updated_at = datetime.now(timezone.utc)
                     enqueue_sync(db, doc)
                     db.commit()
@@ -320,6 +319,8 @@ class DocumentQueueManager:
                     failure = ai_res if ai_res and ai_res.get('error_code') else ec.error('LLM_INVALID_RESPONSE', service='web-backend')
                     if failure.get('error_code') == 'AI_INVALID_RESPONSE':
                         failure = ec.error('LLM_INVALID_RESPONSE', service='web-backend')
+                    elif not all(failure.get(field) for field in ('message', 'stage', 'request_id')):
+                        failure = ec.normalize(failure, failure.get('http_status') or 500, service='ai-service')
                     apply_failure(doc, failure, attempt_id, job_id)
                     enqueue_sync(db, doc)
                     attempt = db.get(ProcessingAttempt, attempt_id)

@@ -29,13 +29,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, onSSO, isLoading, errorMs
     setLocalError(null);
 
     // Validate Email nội bộ
-    if (!formData.email.endsWith('@ptit.edu.vn')) {
-      setLocalError('Email phải có định dạng đuôi @ptit.edu.vn');
+    const lowerEmail = formData.email.trim().toLowerCase();
+    const isPtitEmail = lowerEmail.endsWith('@ptit.edu.vn') || lowerEmail.endsWith('@stu.ptit.edu.vn');
+    if (!isPtitEmail) {
+      setLocalError('Email phải thuộc tên miền @ptit.edu.vn hoặc @stu.ptit.edu.vn');
       return;
     }
 
     // Truyền dữ liệu lên component cha
-    onSubmit({ ...formData, remember });
+    onSubmit({ ...formData, email: lowerEmail, remember });
   };
 
   return (

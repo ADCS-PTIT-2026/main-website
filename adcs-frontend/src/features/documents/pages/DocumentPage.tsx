@@ -565,13 +565,19 @@ const DocumentPage: React.FC = () => {
                     ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 animate-pulse border border-blue-200 dark:border-blue-700'
                     : documentDetail?.status === 'failed'
                     ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-700'
+                    : documentDetail?.status === 'needs_review'
+                    ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700'
+                    : documentDetail?.status === 'cancelled'
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                     : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700'
                 }`}
               >
                 {isQueued && <span className="material-symbols-outlined text-[14px] mr-1">hourglass_top</span>}
                 {isProcessing && <span className="material-symbols-outlined text-[14px] mr-1 animate-spin">sync</span>}
                 {documentDetail?.status === 'failed' && <span className="material-symbols-outlined text-[14px] mr-1">error</span>}
-                {!isPending && documentDetail?.status !== 'failed' && (
+                {documentDetail?.status === 'needs_review' && <span className="material-symbols-outlined text-[14px] mr-1">warning</span>}
+                {documentDetail?.status === 'cancelled' && <span className="material-symbols-outlined text-[14px] mr-1">block</span>}
+                {!isPending && !['failed', 'needs_review', 'cancelled'].includes(documentDetail?.status ?? '') && (
                   <span className="material-symbols-outlined text-[14px] mr-1">check_circle</span>
                 )}
                 {isQueued
@@ -584,6 +590,8 @@ const DocumentPage: React.FC = () => {
                   ? "Đã ghi nhận bản trùng"
                   : documentDetail?.status === 'needs_review'
                   ? "Cần admin đối soát"
+                  : documentDetail?.status === 'cancelled'
+                  ? "Đã hủy"
                   : "Xử lý hoàn tất"}
               </span>
             </div>

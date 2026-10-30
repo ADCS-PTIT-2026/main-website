@@ -130,7 +130,9 @@ const ProcessingHistoryPage: React.FC = () => {
 
   const getOverallStatus = (record: HistoryRecord) => {
     const statuses = [record.status_llm, record.status_save_file, record.status_save_vector];
+    if (record.status_llm === 'cancelled') return 'Đã hủy';
     if (statuses.includes('failed') || statuses.includes('error')) return 'Lỗi';
+    if (record.status_llm === 'needs_review') return 'Cần kiểm tra';
     if (statuses.includes('pending') || statuses.includes('processing')) return 'Đang xử lý';
     return 'Hoàn tất';
   };
@@ -141,6 +143,12 @@ const ProcessingHistoryPage: React.FC = () => {
         return {
           wrapper: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60',
           dot: 'bg-emerald-500',
+          pulse: false,
+        };
+      case 'cần kiểm tra':
+        return {
+          wrapper: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
+          dot: 'bg-amber-500',
           pulse: false,
         };
       case 'đang xử lý':
@@ -235,7 +243,7 @@ const ProcessingHistoryPage: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full pl-10 pr-16 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-              placeholder="Tìm kiếm tên tài liệu, phòng ban..."
+              placeholder="Tìm theo tên tệp, số ký hiệu, trích yếu, phòng ban..."
               type="text"
             />
             <button

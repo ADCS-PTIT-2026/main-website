@@ -7,12 +7,28 @@ interface ProcessingErrorPanelProps {
   documentId: string;
   error?: ProcessingError | null;
   errorMessage?: string | null;
+  warnings?: (ProcessingError | string)[];
 }
+
+const ATTEMPT_BADGES: Record<string, { label: string; className: string }> = {
+  succeeded: { label: 'Thành công', className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
+  running: { label: 'Đang xử lý', className: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' },
+  processing: { label: 'Đang xử lý', className: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' },
+  queued: { label: 'Chờ thử lại', className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' },
+  needs_review: { label: 'Cần kiểm tra', className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' },
+  cancelled: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+  duplicate: { label: 'Bản trùng', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+};
+const FAILED_BADGE = { label: 'Thất bại', className: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' };
+
+const warningText = (warning: ProcessingError | string) =>
+  typeof warning === 'string' ? warning : warning.message || warning.error_code;
 
 export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
   documentId,
   error,
   errorMessage,
+  warnings = [],
 }) => {
   const [attempts, setAttempts] = useState<ProcessingAttempt[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -48,10 +64,31 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
   };
 
   const suggestion = getActionSuggestion(error);
+  const showWarningsOnly = !error && !errorMessage && warnings.length > 0;
 
   return (
     <div className="space-y-4 text-xs text-slate-700 dark:text-slate-300">
+      {/* Cảnh báo không làm mất kết quả phân tích */}
+      {warnings.length > 0 && (
+        <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-start gap-2.5">
+          <span className="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">
+            warning
+          </span>
+          <div className="space-y-1 w-full">
+            <h4 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
+              Văn bản đã có kết quả phân tích nhưng còn cảnh báo
+            </h4>
+            <ul className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed list-disc pl-4">
+              {warnings.map((warning, idx) => (
+                <li key={idx}>{warningText(warning)}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Primary Error Box */}
+      {!showWarningsOnly && (
       <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-3">
         <div className="flex items-start gap-2.5">
           <span className="material-symbols-outlined text-rose-500 text-[20px] shrink-0 mt-0.5">
@@ -59,7 +96,7 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
           </span>
           <div className="space-y-1 w-full">
             <h4 className="font-semibold text-rose-900 dark:text-rose-200 text-sm">
-              {error?.message || errorMessage || 'Dịch vụ phân tích văn bản gặp sự cố.'}
+              {error?.message || errorMessage || 'Chưa có chi tiết lỗi'}
             </h4>
             <p className="text-[11px] text-rose-700 dark:text-rose-300 leading-relaxed">
               {suggestion}
@@ -106,6 +143,7 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Attempts History */}
       <div className="space-y-2 pt-1">
@@ -127,8 +165,7 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
         ) : (
           <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
             {attempts.map((att, idx) => {
-              const isSuccess = att.status === 'succeeded';
-              const isRunning = att.status === 'running';
+              const badge = ATTEMPT_BADGES[att.status] || FAILED_BADGE;
               const timeStr = new Date(att.started_at).toLocaleString('vi-VN');
 
               return (
@@ -138,16 +175,8 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
                 >
                   <div className="flex items-center justify-between font-medium">
                     <span className="text-slate-500 dark:text-slate-400">{timeStr}</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                        isSuccess
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-                          : isRunning
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
-                          : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'
-                      }`}
-                    >
-                      {isSuccess ? 'Thành công' : isRunning ? 'Đang xử lý' : 'Thất bại'}
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${badge.className}`}>
+                      {badge.label}
                     </span>
                   </div>
 
@@ -159,7 +188,7 @@ export const ProcessingErrorPanel: React.FC<ProcessingErrorPanelProps> = ({
 
                   {att.warnings && att.warnings.length > 0 && (
                     <div className="text-amber-600 dark:text-amber-400">
-                      Cảnh báo: {att.warnings.map((w) => w.message || w.error_code).join(', ')}
+                      Cảnh báo: {att.warnings.map(warningText).join(', ')}
                     </div>
                   )}
 

@@ -336,7 +336,7 @@ def test_fair_share_round_robin_between_users(document, monkeypatch):
             doc.status = 'queued'
             doc.sync_status = 'synced'
             enqueue_processing(db, doc.document_id, priority=1)
-        db.commit()
+            db.commit()  # Mỗi job một transaction để created_at khác nhau, thứ tự không phụ thuộc UUID ngẫu nhiên
 
         # Claim 1: Phải là A1 (lượt 1 của owner)
         claimed_1 = claim_next_job(db)
@@ -449,7 +449,7 @@ def test_recover_only_expired_leases_and_resume_translation_without_recreating_j
         db.add_all([live, expired_translation]); db.commit()
         recover_expired_jobs(db)
         assert live.status == 'processing' and expired_translation.status == 'queued'
-        assert claim_next_job(db) is None
+        assert claim_next_job(db, active_trans_count=1) is None
         live.lease_until = datetime.now(timezone.utc)-timedelta(seconds=1); db.commit()
         recover_expired_jobs(db)
         assert live.status == 'needs_review' and db.get(Document, ref).status == 'needs_review'

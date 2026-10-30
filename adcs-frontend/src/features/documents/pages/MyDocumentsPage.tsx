@@ -41,6 +41,9 @@ interface UploadingFile {
   errorMessage?: string;
 }
 
+const isWarningOnly = (doc: MyDocumentItem) =>
+  !doc.error_details && !doc.error_message && Boolean(doc.warnings?.length);
+
 const MyDocumentsPage: React.FC = () => {
   const { hasPermission } = usePermission();
   const navigate = useNavigate();
@@ -171,6 +174,12 @@ const MyDocumentsPage: React.FC = () => {
 
   // Thử lại văn bản lỗi / đã hủy / cần kiểm tra
   const handleRetry = async (doc: MyDocumentItem) => {
+    if (
+      doc.error_details?.error_code === 'AI_RESPONSE_TIMEOUT' &&
+      !window.confirm('Web đã hết thời gian chờ nhưng AI có thể vẫn đang xử lý văn bản này. Gửi lại có thể tạo xử lý trùng. Bạn vẫn muốn thử lại?')
+    ) {
+      return;
+    }
     const toastId = toast.loading(`Đang đưa "${doc.original_filename}" vào lại hàng đợi...`);
     try {
       await retryDocument(doc.document_id);
@@ -536,10 +545,20 @@ const MyDocumentsPage: React.FC = () => {
                           )}
 
                           {isCompleted && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                              <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                              Đã xử lý xong
-                            </span>
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                                <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                                Đã xử lý xong
+                              </span>
+                              {isWarningOnly(doc) && (
+                                <button
+                                  onClick={() => setErrorDetailTarget(doc)}
+                                  className="block text-[10px] font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+                                >
+                                  Có cảnh báo (Xem)
+                                </button>
+                              )}
+                            </div>
                           )}
 
                           {isNeedsReview && (
@@ -688,9 +707,11 @@ const MyDocumentsPage: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-rose-600">
-                  <span className="material-symbols-outlined text-2xl">error</span>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Chi tiết lỗi xử lý AI</h3>
+                <div className={`flex items-center gap-2 ${isWarningOnly(errorDetailTarget) ? 'text-amber-600' : 'text-rose-600'}`}>
+                  <span className="material-symbols-outlined text-2xl">{isWarningOnly(errorDetailTarget) ? 'warning' : 'error'}</span>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    {isWarningOnly(errorDetailTarget) ? 'Cảnh báo xử lý' : 'Chi tiết lỗi xử lý AI'}
+                  </h3>
                 </div>
                 <button
                   onClick={() => setErrorDetailTarget(null)}
@@ -708,6 +729,7 @@ const MyDocumentsPage: React.FC = () => {
                 documentId={errorDetailTarget.document_id}
                 error={errorDetailTarget.error_details}
                 errorMessage={errorDetailTarget.error_message}
+                warnings={errorDetailTarget.warnings}
               />
 
               <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -717,17 +739,19 @@ const MyDocumentsPage: React.FC = () => {
                 >
                   Đóng
                 </button>
-                <button
-                  onClick={() => {
-                    const doc = errorDetailTarget;
-                    setErrorDetailTarget(null);
-                    handleRetry(doc);
-                  }}
-                  className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[16px]">replay</span>
-                  Thử lại ngay
-                </button>
+                {!isWarningOnly(errorDetailTarget) && (
+                  <button
+                    onClick={() => {
+                      const doc = errorDetailTarget;
+                      setErrorDetailTarget(null);
+                      handleRetry(doc);
+                    }}
+                    className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">replay</span>
+                    Thử lại ngay
+                  </button>
+                )}
               </div>
             </div>
           </div>

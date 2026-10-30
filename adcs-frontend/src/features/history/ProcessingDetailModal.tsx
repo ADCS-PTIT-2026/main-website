@@ -13,12 +13,36 @@ const processingStage = (status: string | null) => {
   switch (status) {
     case 'success': return { label: 'Hoàn tất', icon: 'check_circle', color: 'text-emerald-500' };
     case 'failed': case 'error': return { label: 'Thất bại', icon: 'error', color: 'text-rose-500' };
+    case 'cancelled': return { label: 'Đã hủy', icon: 'block', color: 'text-slate-400' };
+    case 'needs_review': return { label: 'Cần kiểm tra', icon: 'warning', color: 'text-amber-500' };
     case 'skipped': return { label: 'Không áp dụng', icon: 'remove_circle_outline', color: 'text-slate-400' };
     case 'processing': return { label: 'Đang xử lý', icon: 'hourglass_top', color: 'text-amber-500' };
     case 'pending': return { label: 'Chờ xử lý', icon: 'hourglass_top', color: 'text-amber-500' };
     default: return { label: 'Chưa ghi nhận', icon: 'help_outline', color: 'text-slate-400' };
   }
 };
+
+const overallBadge = (status: string) => {
+  switch (status) {
+    case 'failed': case 'error':
+      return { label: 'Thất bại', badge: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400', dot: 'bg-rose-500' };
+    case 'processing': case 'queued': case 'pending':
+      return { label: 'Đang xử lý', badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400', dot: 'bg-amber-500 animate-pulse' };
+    case 'needs_review':
+      return { label: 'Cần kiểm tra', badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400', dot: 'bg-amber-500' };
+    case 'cancelled':
+      return { label: 'Đã hủy', badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300', dot: 'bg-slate-400' };
+    case 'duplicate':
+      return { label: 'Bản trùng', badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300', dot: 'bg-slate-400' };
+    default:
+      return { label: 'Hoàn tất', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400', dot: 'bg-emerald-500' };
+  }
+};
+
+// Văn bản ở các trạng thái này không có kết quả để gửi qua Telegram
+const UNSENDABLE_STATUSES = ['failed', 'error', 'cancelled', 'needs_review'];
+const hasNoResult = (detail: ProcessingDetail) =>
+  UNSENDABLE_STATUSES.includes(detail.status) || UNSENDABLE_STATUSES.includes(detail.status_llm ?? '');
 
 export interface ProcessingDetailModalProps {
   historyId?: number | string | null;
@@ -96,7 +120,7 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
       toast.error('Tài khoản của bạn chưa kết nối Telegram. Vui lòng kết nối tại Bảng điều khiển.');
       return;
     }
-    if (detail.status === 'failed' || detail.status_llm === 'failed') {
+    if (hasNoResult(detail)) {
       toast.error('Chỉ có thể gửi kết quả cho các lượt xử lý thành công.');
       return;
     }
@@ -124,7 +148,8 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
     }
   };
 
-  const isSuccess = detail && detail.status !== 'failed' && detail.status_llm !== 'failed';
+  const isSuccess = detail && !hasNoResult(detail);
+  const statusBadge = detail ? overallBadge(detail.status) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -143,18 +168,10 @@ export const ProcessingDetailModal: React.FC<ProcessingDetailModalProps> = ({
                 <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate max-w-md" title={detail?.filename}>
                   {detail?.filename || (isLoading ? 'Đang tải thông tin...' : 'Chi tiết văn bản')}
                 </h3>
-                {detail && (
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                    detail.status === 'failed' 
-                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' 
-                      : detail.status === 'processing' || detail.status === 'queued'
-                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
-                      : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                  }`}>
-                    <span className={`size-1.5 rounded-full ${
-                      detail.status === 'failed' ? 'bg-rose-500' : (detail.status === 'processing' || detail.status === 'queued') ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
-                    }`} />
-                    {detail.status === 'failed' ? 'Thất bại' : (detail.status === 'processing' || detail.status === 'queued') ? 'Đang xử lý' : 'Hoàn tất'}
+                {statusBadge && (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${statusBadge.badge}`}>
+                    <span className={`size-1.5 rounded-full ${statusBadge.dot}`} />
+                    {statusBadge.label}
                   </span>
                 )}
               </div>

@@ -14,7 +14,7 @@ type AdminProcessingError = {
   document_id: string;
   request_id: string;
   status: string;
-  error?: { code?: string; message?: string; stage?: string; retryable?: boolean; [k: string]: unknown } | null;
+  error?: { error_code?: string; message?: string; stage?: string; retryable?: boolean; [k: string]: unknown } | null;
   warnings?: unknown[];
   started_at?: string;
 };
@@ -134,7 +134,7 @@ export default function CrawlerSourcesPage() {
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="font-semibold text-rose-600 dark:text-rose-400">
-                        {pe.error?.code || 'UNKNOWN'}
+                        {pe.error?.error_code || (pe.warnings?.length ? 'Cảnh báo' : 'UNKNOWN')}
                       </div>
                       <div className="text-slate-600 dark:text-slate-400 line-clamp-1">
                         {pe.error?.message || '—'}

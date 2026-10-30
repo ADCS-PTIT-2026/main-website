@@ -184,7 +184,8 @@ class MyDocumentItemResponse(BaseModel):
     error_message: Optional[str] = None
     error_details: Optional[Dict[str, Any]] = None
     next_attempt_at: Optional[datetime] = None
-    
+    warnings: List[Any] = []
+
     so_ky_hieu: Optional[str] = None
     trich_yeu: Optional[str] = None
     don_vi_ban_hanh: Optional[str] = None

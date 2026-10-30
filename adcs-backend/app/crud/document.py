@@ -274,6 +274,17 @@ def get_my_documents(
         for row in db.execute(fair_share_rank_sql).fetchall():
             queued_ranks[row.document_id] = row.pos
 
+    # Cảnh báo của lượt thành công mới nhất (sắp xếp tăng dần để lượt mới ghi đè lượt cũ)
+    warnings_by_doc = {}
+    completed_ids = [doc.document_id for doc in documents if doc.status in ("processed", "approved", "success")]
+    if completed_ids:
+        from app.models.processing_attempt import ProcessingAttempt
+        attempts = db.query(ProcessingAttempt).filter(
+            ProcessingAttempt.document_id.in_(completed_ids),
+            ProcessingAttempt.status == "succeeded"
+        ).order_by(ProcessingAttempt.started_at.asc()).all()
+        warnings_by_doc = {attempt.document_id: attempt.warnings or [] for attempt in attempts}
+
     from app.services.integration_service import document_public_state
     items = []
     for doc in documents:
@@ -292,6 +303,7 @@ def get_my_documents(
             "error_message": doc.error_message,
             "error_details": doc.error_details,
             "next_attempt_at": doc.next_attempt_at,
+            "warnings": warnings_by_doc.get(doc.document_id, []),
             "so_ky_hieu": doc.so_ky_hieu,
             "trich_yeu": doc.trich_yeu,
             "don_vi_ban_hanh": doc.don_vi_ban_hanh,

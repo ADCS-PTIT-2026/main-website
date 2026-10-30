@@ -144,6 +144,8 @@ async def http_error_handler(request: Request, exc: StarletteHTTPException):
     data['detail'] = exc.detail  # preserve existing business messages/clients
     if isinstance(exc.detail, str):
         data['message'] = exc.detail
+    elif isinstance(detail_obj.get('message'), str) and detail_obj['message'].strip():
+        data['message'] = detail_obj['message']
     return JSONResponse(data, status_code=exc.status_code, headers=exc.headers)
 
 @app.exception_handler(Exception)

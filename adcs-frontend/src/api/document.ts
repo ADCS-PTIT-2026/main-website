@@ -254,6 +254,7 @@ export type MyDocumentItem = {
   error_message?: string | null;
   error_details?: ProcessingError | null;
   next_attempt_at?: string | null;
+  warnings?: (ProcessingError | string)[];
   so_ky_hieu?: string | null;
   trich_yeu?: string | null;
   don_vi_ban_hanh?: string | null;

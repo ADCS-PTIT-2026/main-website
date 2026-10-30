@@ -1,6 +1,7 @@
 """Cross-service history contract; load only pure definitions, with all providers mocked."""
 import ast
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -15,7 +16,7 @@ from uuid import UUID, uuid4
 
 import httpx
 import pytest
-from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 ROOT = Path(os.getenv('ADCS_AI_HISTORY_ROOT', str(Path(__file__).resolve().parents[5] / 'Document-AI-Service')))
@@ -70,6 +71,7 @@ def test_history_http_body_contains_explicit_skipped_and_canonical_uuid(definiti
         async def __aenter__(self): return transport
         async def __aexit__(self, *args): pass
     monkeypatch.setattr(client.httpx, 'AsyncClient', lambda **kw: Context())
+    monkeypatch.setitem(sys.modules, 'app.core.config', SimpleNamespace(settings=SimpleNamespace(data_service_api_key='synthetic')))
     service = object.__new__(client.DataServiceClient)
     service.base_url, service.timeout = 'https://synthetic.invalid', 10
     result = asyncio.run(service.post_history(client.HistoryPayload(
@@ -93,7 +95,9 @@ def test_analyze_http_form_passes_valid_web_uuid_to_history(tmp_path, monkeypatc
     monkeypatch.setitem(sys.modules, catalog.__name__, catalog)
     result = {'trang_thai': 'success', 'tom_tat': 'Summary', 'extracted_fields': {'so_hieu_van_ban': '123/TB'}}
     storage = SimpleNamespace(process=AsyncMock(return_value={'storage_info': {'save_document': False}, 'related_documents': []}))
-    namespace = dict(globals(), router=APIRouter(), settings=SimpleNamespace(temp_dir=str(tmp_path)),
+    from app.core import error_contract as ec  # module giống hệt nhau ở cả ba service
+    namespace = dict(globals(), ec=ec, request_limiter=SimpleNamespace(guard=contextlib.nullcontext),
+        router=APIRouter(), settings=SimpleNamespace(temp_dir=str(tmp_path)),
         AgentFactory=SimpleNamespace(get_default_agent=lambda: object()),
         FileUtils=SimpleNamespace(detect_mime_type=lambda path: 'image/png'),
         document_router=SimpleNamespace(process_document=lambda path: {'text': 'Synthetic text', 'pages': 1},
